@@ -8,8 +8,9 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development, nothing usable yet. The plan is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** early development. Stage 0.1 is implemented and under test: hotkey,
+suggestion panel and paste, with a screenshot of the chat as model input. It
+needs your own API key. The plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
 
@@ -41,6 +42,16 @@ uv run pytest
 
 `uv.lock` pins the version of every dependency.
 
+To run the app, store your model API key and start it:
+
+```
+uv run python -m respondoia --set-api-key
+uv run python -m respondoia
+```
+
+The key goes to the Windows Credential Manager, never to a file. The app sits
+in the tray. Set a monthly spend limit on the provider account before use.
+
 `config.example.toml` lists every setting. Module responsibilities and the
 rules the code must follow are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -58,6 +69,7 @@ src/respondoia/   application package
   i18n/           interface translations
 context/          example knowledge base
 docs/             roadmap and architecture
+evals/            model comparison scripts
 server/           relay server for product accounts
 tests/            tests and fictional fixtures
 ```

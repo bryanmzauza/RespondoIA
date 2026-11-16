@@ -11,6 +11,9 @@
 
 | Module | Responsibility | Built on |
 |---|---|---|
+| `domain` | Plain data shared by the modules: rectangles, windows, the open chat | |
+| `session` | One hotkey press, from the foreground window to the pasted reply. System calls come in as ports, so the safety rules are tested without a desktop | |
+| `app` | Wire tray, hotkey, panel and the worker thread that runs the session | PySide6 |
 | `hotkey` | Register, change and validate the global hotkey | Win32 `RegisterHotKey` |
 | `capture` | Identify the foreground window and capture its content | `pywin32`, Windows Graphics Capture or `PrintWindow` |
 | `reader` | Read contact name, messages and chat bounds | UI Automation |
@@ -30,6 +33,9 @@
 Text read through accessibility is the default input. A screenshot of the chat
 is the automatic fallback when reading fails, so the app keeps working if the
 WhatsApp layout changes.
+
+Stage 0.1 sends only the screenshot. Accessibility is already used there, but
+just for the contact name and the bounds of the open chat.
 
 ## Model output
 

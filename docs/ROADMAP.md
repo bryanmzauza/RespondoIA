@@ -18,19 +18,22 @@ stage is done. `main` always holds the last finished stage.
 
 Hotkey to pasted reply, using a screenshot of the chat as model input.
 
-- [ ] `hotkey`: register the default global hotkey, ignore it outside WhatsApp
-- [ ] `capture`: capture the WhatsApp window itself (not a screen region), crop
+- [x] `hotkey`: register the default global hotkey, ignore it outside WhatsApp
+- [x] `capture`: capture the WhatsApp window itself (not a screen region), crop
       to the open chat, downscale to about 1300 px
-- [ ] `llm`: send the image with the system prompt, validate the JSON reply
-- [ ] `ui/panel`: summary, message checkboxes, 2 or 3 options, quick
+- [x] `llm`: send the image with the system prompt, validate the JSON reply
+- [x] `ui/panel`: summary, message checkboxes, 2 or 3 options, quick
       instruction, regenerate without capturing again
-- [ ] `paste`: check window and chat are still the same, save and restore the
+- [x] `paste`: check window and chat are still the same, save and restore the
       clipboard, paste, never press Enter
-- [ ] `privacy`: private contacts list
-- [ ] `ui/tray`: pause and quit
-- [ ] `i18n`: every interface string in translation files, pt-BR and en
-- [ ] Fixtures: fictional screenshots (short, long, group, dark mode, image,
+- [x] `privacy`: private contacts list
+- [x] `ui/tray`: pause and quit
+- [x] `i18n`: every interface string in translation files, pt-BR and en
+- [x] Fixtures: fictional screenshots (short, long, group, dark mode, image,
       audio, quoted reply) in both languages
+- [x] `reader`: contact name and chat bounds through accessibility
+- [x] `config`: minimal settings file and API key in the Credential Manager
+- [x] `evals`: scripts for the model comparison and the blind review
 - [ ] Model comparison on 30 fictional chats to pick the default model
 
 Exit criteria:
@@ -44,14 +47,16 @@ Exit criteria:
 Read the chat as text through accessibility. The screenshot becomes the
 fallback.
 
-- [ ] `reader`: contact name, message text with author and time, chat bounds.
-      Must rely on structure and position, not on translated labels
+- [ ] `reader`: message text with author and time, on top of the contact name
+      and chat bounds from 0.1. Must rely on structure and position, not on
+      translated labels
 - [ ] `privacy`: mask CPF, CNPJ, card numbers, Pix keys and similar before
       anything is sent, with Brazilian and international formats
 - [ ] Text mode as default input, automatic fallback to screenshot with a
       notice to the user
 - [ ] `ui/settings`: settings window with hotkey recorder and conflict check
-- [ ] `config`: read and write `config.toml`, API key in the Credential Manager
+- [ ] `config`: read and write every setting in `config.toml` from the settings
+      window. 0.1 reads a subset and only writes private contacts
 
 Exit criteria:
 
