@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="pt_BR">
+<context>
+    <name>ui</name>
+    <message>
+        <source>panel.loading</source>
+        <translation>Lendo a conversa…</translation>
+    </message>
+    <message>
+        <source>panel.summary</source>
+        <translation>Resumo</translation>
+    </message>
+    <message>
+        <source>panel.messages</source>
+        <translation>Mensagens</translation>
+    </message>
+    <message>
+        <source>panel.note</source>
+        <translation>Observação</translation>
+    </message>
+    <message>
+        <source>panel.adjust</source>
+        <translation>Ajustar</translation>
+    </message>
+    <message>
+        <source>panel.instruction_placeholder</source>
+        <translation>Instrução rápida…</translation>
+    </message>
+    <message>
+        <source>panel.regenerate</source>
+        <translation>Gerar de novo</translation>
+    </message>
+    <message>
+        <source>panel.mark_private</source>
+        <translation>Nunca ler esta conversa</translation>
+    </message>
+    <message>
+        <source>panel.retry</source>
+        <translation>Tentar de novo</translation>
+    </message>
+    <message>
+        <source>panel.esc</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>tray.tooltip</source>
+        <translation>RespondoIA</translation>
+    </message>
+    <message>
+        <source>tray.tooltip_paused</source>
+        <translation>RespondoIA (pausado)</translation>
+    </message>
+    <message>
+        <source>tray.pause</source>
+        <translation>Pausar atalho</translation>
+    </message>
+    <message>
+        <source>tray.resume</source>
+        <translation>Retomar atalho</translation>
+    </message>
+    <message>
+        <source>tray.quit</source>
+        <translation>Sair</translation>
+    </message>
+    <message>
+        <source>notice.started</source>
+        <translation>RespondoIA está ativo. Atalho: {hotkey}</translation>
+    </message>
+    <message>
+        <source>notice.chat_changed</source>
+        <translation>A conversa mudou. A resposta foi copiada, não colada.</translation>
+    </message>
+    <message>
+        <source>notice.focus_failed</source>
+        <translation>Não foi possível voltar ao WhatsApp. A resposta foi copiada.</translation>
+    </message>
+    <message>
+        <source>notice.copied</source>
+        <translation>Resposta copiada.</translation>
+    </message>
+    <message>
+        <source>notice.private_added</source>
+        <translation>Esta conversa não será mais lida.</translation>
+    </message>
+    <message>
+        <source>notice.unknown_chat</source>
+        <translation>Não foi possível identificar a conversa aberta. Nada foi lido.</translation>
+    </message>
+    <message>
+        <source>notice.hotkey_in_use</source>
+        <translation>O atalho {hotkey} já está em uso por outro programa.</translation>
+    </message>
+    <message>
+        <source>error.no_api_key</source>
+        <translation>Nenhuma chave de API configurada.</translation>
+    </message>
+    <message>
+        <source>error.auth</source>
+        <translation>A chave de API foi recusada.</translation>
+    </message>
+    <message>
+        <source>error.rate_limit</source>
+        <translation>Muitas solicitações. Tente de novo em instantes.</translation>
+    </message>
+    <message>
+        <source>error.network</source>
+        <translation>Sem conexão com o modelo.</translation>
+    </message>
+    <message>
+        <source>error.server</source>
+        <translation>O serviço do modelo falhou. Tente de novo.</translation>
+    </message>
+    <message>
+        <source>error.refused</source>
+        <translation>O modelo recusou esta conversa.</translation>
+    </message>
+    <message>
+        <source>error.truncated</source>
+        <translation>A resposta veio incompleta. Tente de novo.</translation>
+    </message>
+    <message>
+        <source>error.invalid_reply</source>
+        <translation>A resposta veio incompleta. Tente de novo.</translation>
+    </message>
+    <message>
+        <source>error.capture</source>
+        <translation>Não foi possível capturar a janela do WhatsApp.</translation>
+    </message>
+    <message>
+        <source>error.config</source>
+        <translation>O config.toml tem um valor inválido: {key}</translation>
+    </message>
+</context>
+</TS>
