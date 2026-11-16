@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "respondoia"
+version = "0.1.0.dev0"
+description = "Reply suggestions in your own writing style. Works with WhatsApp Desktop on Windows."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Bryan Munaretto Zauza" }]
+dependencies = [
+    "PySide6>=6.7",
+    "pywin32>=306",
+    "pydantic>=2",
+    "anthropic",
+    "keyring>=24",
+    "tomli-w>=1.0",
+    "Pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.gui-scripts]
+respondoia = "respondoia.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/respondoia"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

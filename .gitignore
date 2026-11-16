@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local config and user data: never commit
+config.toml
+context/*
+!context/*.example.md
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.log
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Local notes
+.private/
+
+# Server
+node_modules/
+.wrangler/
+.dev.vars
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

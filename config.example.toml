@@ -1,0 +1,51 @@
+# Reference for every setting. The app writes its own config.toml from the
+# settings screen; you do not need to create one by hand.
+# API keys are never stored here. They go in the Windows Credential Manager.
+
+[general]
+hotkey = "ctrl+shift+space"
+insert_mode = "paste"           # "paste" or "copy"
+allowed_windows = ["WhatsApp"]
+panel_position = "bottom-right"
+start_with_windows = false
+language = "auto"               # "auto" (follows Windows), "pt-BR" or "en"
+
+[suggestions]
+count = 3
+quick_instructions = ["shorter", "more_formal", "decline_politely", "ask_for_time"]
+
+[auto]
+mode = "manual"                 # "manual", "selective" or "all"
+labels = ["client"]
+dwell_seconds = 1.5
+daily_limit = 100
+
+[ai]
+mode = "cloud"                  # "cloud", "hybrid" or "local"
+access = "account"              # "account" or "own_key"
+provider = "anthropic"
+model = "claude-haiku-5-5"
+max_image_side = 1300
+input = "text"                  # "text" (screenshot as fallback) or "screenshot"
+
+[local_ai]
+downloaded = false
+model = "qwen3.5:4b"
+
+[privacy]
+save_screenshots = false
+log_content = false
+crop_to_chat = true
+mask_sensitive_data = true
+private_contacts = []
+
+[history]
+enabled = true                  # chosen on the first-run screen
+scope = "used"                  # "used", "all" or "per_contact"
+include_groups = false
+snippets_per_suggestion = 5
+follow = true
+quick_load_screens = 15
+max_load_screens = 80
+max_load_months = 6
+retention_months = 12
