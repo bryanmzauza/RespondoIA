@@ -13,14 +13,15 @@ dependencies = [
     "PySide6>=6.7",
     "pywin32>=306",
     "pydantic>=2",
-    "anthropic",
+    "anthropic>=2",
     "keyring>=24",
     "tomli-w>=1.0",
     "Pillow>=10",
+    "comtypes>=1.4",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest"]
+[dependency-groups]
+dev = ["pytest>=8", "pytest-qt>=4.4", "ruff>=0.6"]
 
 [project.gui-scripts]
 respondoia = "respondoia.__main__:main"
@@ -30,3 +31,14 @@ packages = ["src/respondoia"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
+qt_api = "pyside6"
+addopts = "-m 'not live and not desktop'"
+markers = [
+    "live: calls the real model API and costs money",
+    "desktop: touches the real clipboard or windows",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

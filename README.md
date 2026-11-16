@@ -32,13 +32,14 @@ message for you.
 
 ## Development
 
-Requires Windows 10 or 11 and Python 3.12+.
+Requires Windows 10 or 11, Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```
-py -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
+uv sync
+uv run pytest
 ```
+
+`uv.lock` pins the version of every dependency.
 
 `config.example.toml` lists every setting. Module responsibilities and the
 rules the code must follow are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
