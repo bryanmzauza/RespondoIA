@@ -229,3 +229,12 @@ def test_panel_sits_inside_the_chat_area_above_the_composer(qtbot, reply3):
     chat_bottom = min(CHAT.bottom, screen.y() + screen.height())
     assert panel.y() + panel.height() <= chat_bottom
     assert panel.x() >= 0 and panel.y() >= 0
+
+
+def test_bring_to_front_does_not_reopen_a_hidden_panel(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    panel.bring_to_front()
+    assert panel.isVisible()
+    panel.dismiss()
+    panel.bring_to_front()
+    assert not panel.isVisible()

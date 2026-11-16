@@ -24,7 +24,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         config.set_api_key(key)
         print("API key stored in the Windows Credential Manager.")
         return 0
-    raise SystemExit("respondoia: nothing to run yet, see docs/ROADMAP.md")
+    # Imported here so that the command above does not load Qt.
+    from respondoia import app
+
+    return app.run(sys.argv)
 
 
 if __name__ == "__main__":

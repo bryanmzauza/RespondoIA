@@ -131,5 +131,9 @@
         <source>error.config</source>
         <translation>O config.toml tem um valor inválido: {key}</translation>
     </message>
+    <message>
+        <source>error.unexpected</source>
+        <translation>Algo deu errado. Tente de novo.</translation>
+    </message>
 </context>
 </TS>

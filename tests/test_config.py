@@ -105,3 +105,14 @@ def test_set_api_key_flag_stores_the_typed_key(monkeypatch, memory_keyring):
     monkeypatch.setattr("getpass.getpass", lambda prompt="": " sk-test-typed ")
     assert main(["--set-api-key"]) == 0
     assert get_api_key() == "sk-test-typed"
+
+
+def test_a_file_that_is_not_valid_toml_is_a_config_error(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text("[general\nhotkey = ", encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_settings(path)
+    assert err.value.key == "config.toml"
+    with pytest.raises(ConfigError):
+        add_private_contact(path, "Marina Duarte")
+    assert path.read_text(encoding="utf-8") == "[general\nhotkey = "

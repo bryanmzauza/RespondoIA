@@ -151,9 +151,7 @@ class SuggestionPanel(QWidget):
             button.hide()
         self._place()
         self.show()
-        self.raise_()
-        self.activateWindow()
-        self.setFocus()
+        self.bring_to_front()
 
     def show_reply(self, reply: SuggestionReply) -> None:
         self._reply = reply
@@ -196,6 +194,13 @@ class SuggestionPanel(QWidget):
     def show_notice(self, key: str) -> None:
         self._set_status(t(key))
         self._place()
+
+    def bring_to_front(self) -> None:
+        """Raise and focus the panel if it is open. A hidden panel stays hidden."""
+        if self.isVisible():
+            self.raise_()
+            self.activateWindow()
+            self.setFocus()
 
     def dismiss(self) -> None:
         """Hide without emitting closed."""

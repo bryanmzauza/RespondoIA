@@ -70,7 +70,10 @@ _KEYS = {
 def _read(path: Path) -> dict:
     if not path.exists():
         return {}
-    return tomllib.loads(path.read_text(encoding="utf-8"))
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
+        raise ConfigError("config.toml") from exc
 
 
 def _settings_from(data: dict) -> Settings:
