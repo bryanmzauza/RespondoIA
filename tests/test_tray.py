@@ -56,3 +56,12 @@ def test_notify_shows_the_translated_text(qapp, monkeypatch):
     monkeypatch.setattr(tray, "showMessage", lambda *args: shown.append(args[:2]), raising=False)
     tray.notify("notice.started", hotkey="Ctrl+Shift+Space")
     assert shown == [("RespondoIA", "RespondoIA está ativo. Atalho: Ctrl+Shift+Space")]
+
+
+def test_notify_accepts_a_placeholder_named_key(qapp, monkeypatch):
+    i18n.install(qapp, "en")
+    tray = Tray()
+    shown = []
+    monkeypatch.setattr(tray, "showMessage", lambda *args: shown.append(args[1]), raising=False)
+    tray.notify("error.config", key="suggestions.count")
+    assert shown == ["config.toml has an invalid value: suggestions.count"]

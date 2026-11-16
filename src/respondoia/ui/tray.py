@@ -52,7 +52,7 @@ class Tray(QSystemTrayIcon):
         self.setToolTip(t("tray.tooltip_paused") if paused else t("tray.tooltip"))
         self.pause_action.setText(t("tray.resume") if paused else t("tray.pause"))
 
-    def notify(self, key: str, **values: object) -> None:
+    def notify(self, key: str, /, **values: object) -> None:
         """Show the translated text for key as a balloon."""
         self.showMessage(t("tray.tooltip"), t(key, **values), self.icon(), NOTICE_MS)
 

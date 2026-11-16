@@ -36,6 +36,7 @@ def install(app: QCoreApplication, language: str) -> None:
     _installed = translator
 
 
-def t(key: str, **values: object) -> str:
+def t(key: str, /, **values: object) -> str:
+    # Positional-only, so a placeholder may itself be called "key".
     text = QCoreApplication.translate("ui", key)
     return text.format(**values) if values else text

@@ -86,3 +86,10 @@ def test_no_literal_text_in_widgets():
     )
     for path in (SRC / "ui").glob("*.py"):
         assert not re.search(pattern, path.read_text(encoding="utf-8")), path.name
+
+
+def test_a_placeholder_named_key_is_filled(qapp):
+    install(qapp, "en")
+    assert t("error.config", key="suggestions.count") == (
+        "config.toml has an invalid value: suggestions.count"
+    )
