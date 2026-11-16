@@ -22,11 +22,14 @@ from respondoia.hotkey import (
     parse_hotkey,
 )
 from respondoia.llm import AnthropicClient, LlmError, SuggestRequest, SuggestResult
-from respondoia.session import ChooseResult, Ports, Session, StartStatus
+from respondoia.session import ChooseResult, Ports, Session, StartResult, StartStatus
 from respondoia.ui.panel import SuggestionPanel
 from respondoia.ui.tray import Tray
 
 logger = logging.getLogger("respondoia")
+
+# A hotkey press that waited longer than this behind a slow call is dropped.
+MAX_START_DELAY_S = 1.0
 
 _NOTICES = {
     ChooseResult.COPIED: "notice.copied",
@@ -58,9 +61,14 @@ class Worker(QObject):
     def set_settings(self, settings: Settings) -> None:
         self._settings = settings
 
-    @Slot(int)
-    def start(self, generation: int) -> None:
+    @Slot(int, float)
+    def start(self, generation: int, requested_at: float) -> None:
         self.close()
+        if time.monotonic() - requested_at > MAX_START_DELAY_S:
+            # The window in front now is not the one the hotkey was pressed on.
+            logger.info("start expired")
+            self.started.emit(generation, StartResult(StartStatus.EXPIRED))
+            return
 
         def begin():
             session = Session(self._ports, self._settings)
@@ -121,15 +129,27 @@ class Worker(QObject):
 class Controller(QObject):
     """Interface-thread logic: one session at a time, from the hotkey to the notice."""
 
-    request_start = Signal(int)
+    request_start = Signal(int, float)
     request_suggest = Signal(int)
     request_regenerate = Signal(int, tuple, str)
     request_choose = Signal(int, int)
     request_close = Signal()
     request_settings = Signal(object)
 
-    def __init__(self, worker, panel, tray, hotkey, settings, config_file: Path | None = None):
+    def __init__(
+        self,
+        worker,
+        panel,
+        tray,
+        hotkey,
+        settings,
+        config_file: Path | None = None,
+        config_error: str | None = None,
+    ):
         super().__init__()
+        # With an invalid config.toml the private list is unknown, so nothing is read.
+        self._config_error = config_error
+        self._last_request: tuple = ("suggest",)
         self._panel = panel
         self._tray = tray
         self._hotkey = hotkey
@@ -162,6 +182,8 @@ class Controller(QObject):
         tray.pause_toggled.connect(self._on_pause_toggled)
 
     def on_hotkey(self) -> None:
+        if self._config_error:
+            return
         if self._active:
             self._panel.bring_to_front()
             return
@@ -172,10 +194,13 @@ class Controller(QObject):
         self._active = True
         self._pressed_at = time.perf_counter()
         self._waiting_for = "suggestion"
-        self.request_start.emit(self._generation)
+        self.request_start.emit(self._generation, time.monotonic())
 
     def resume(self) -> bool:
-        """Register the hotkey. False, with a notice, if another program holds it."""
+        """Register the hotkey. False, with a notice, if it cannot be used."""
+        if self._config_error:
+            self._tray.notify("error.config", key=self._config_error)
+            return False
         try:
             self._hotkey.register(parse_hotkey(self._settings.hotkey))
         except HotkeyRegistrationError:
@@ -194,6 +219,7 @@ class Controller(QObject):
                 self._tray.notify("notice.unknown_chat")
             return
         self._chat = result.chat
+        self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         self.request_suggest.emit(generation)
 
@@ -231,13 +257,19 @@ class Controller(QObject):
         if self._active and self._chat is not None:
             self._pressed_at = time.perf_counter()
             self._waiting_for = "regenerate"
+            self._last_request = ("regenerate", selected_ids, instruction)
             self._panel.show_loading(self._chat.title, self._chat.bounds)
             self.request_regenerate.emit(self._generation, selected_ids, instruction)
 
     def _on_retry(self) -> None:
+        """Repeat the request that failed, with the same messages and instruction."""
         if self._active and self._chat is not None:
+            self._pressed_at = time.perf_counter()
             self._panel.show_loading(self._chat.title, self._chat.bounds)
-            self.request_suggest.emit(self._generation)
+            if self._last_request[0] == "regenerate":
+                self.request_regenerate.emit(self._generation, *self._last_request[1:])
+            else:
+                self.request_suggest.emit(self._generation)
 
     def _on_mark_private(self) -> None:
         if not self._active or self._chat is None:
@@ -303,12 +335,13 @@ def run(argv: Sequence[str]) -> int:
     app = QApplication(list(argv))
     app.setQuitOnLastWindowClosed(False)
 
-    bad_key = None
+    bad_key = None  # reported, the app still reads chats
+    config_error = None  # reported, the hotkey stays off: the private list is unknown
     try:
         settings = config.load_settings(config.config_path())
         parse_hotkey(settings.hotkey)
     except ConfigError as exc:
-        settings, bad_key = Settings(), exc.key
+        settings, config_error = Settings(), exc.key
     except HotkeyError:
         settings, bad_key = replace(settings, hotkey=Settings().hotkey), "general.hotkey"
 
@@ -323,7 +356,7 @@ def run(argv: Sequence[str]) -> int:
     worker = Worker(build_ports(settings), settings)
     worker.moveToThread(thread)
     thread.start()
-    controller = Controller(worker, panel, tray, hotkey, settings)
+    controller = Controller(worker, panel, tray, hotkey, settings, config_error=config_error)
     tray.quit_requested.connect(app.quit)
 
     if bad_key:

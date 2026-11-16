@@ -1,4 +1,5 @@
 import logging
+import time
 import tomllib
 
 import pytest
@@ -38,7 +39,8 @@ class FakeWorker(Recorder):
     chosen = Signal(int, object)
     crashed = Signal(int)
 
-    def start(self, generation):
+    def start(self, generation, requested_at):
+        self.requested_at = requested_at
         self.record("start", generation)
 
     def suggest(self, generation):
@@ -84,7 +86,7 @@ class FakeTray(Recorder):
     pause_toggled = Signal(bool)
     quit_requested = Signal()
 
-    def notify(self, key, **values):
+    def notify(self, key, /, **values):
         self.record("notify", key, values)
 
     def notices(self):
@@ -111,7 +113,7 @@ class FakeHotkey(Recorder):
 
 
 class Rig:
-    def __init__(self, tmp_path, settings=None):
+    def __init__(self, tmp_path, settings=None, config_error=None):
         self.worker, self.panel, self.tray, self.hotkey = (
             FakeWorker(),
             FakePanel(),
@@ -126,6 +128,7 @@ class Rig:
             self.hotkey,
             settings or Settings(),
             config_file=self.config_file,
+            config_error=config_error,
         )
         self.controller.resume()
 
@@ -244,7 +247,9 @@ def test_resume_reports_a_taken_hotkey(tmp_path):
     assert not rig.hotkey.registered
 
 
-@pytest.mark.parametrize("status", [StartStatus.NOT_WHATSAPP, StartStatus.PRIVATE])
+@pytest.mark.parametrize(
+    "status", [StartStatus.NOT_WHATSAPP, StartStatus.PRIVATE, StartStatus.EXPIRED]
+)
 def test_private_and_other_windows_show_nothing(rig, status):
     rig.press()
     rig.worker.started.emit(1, StartResult(status))
@@ -324,7 +329,7 @@ def test_worker_runs_a_session_from_start_to_paste(qapp):
     fake = FakePorts()
     worker = Worker(fake.ports(), Settings())
     seen = Catcher(worker)
-    worker.start(1)
+    worker.start(1, time.monotonic())
     worker.suggest(1)
     worker.regenerate(1, (2,), "pedir prazo")
     worker.choose(1, 0)
@@ -338,12 +343,12 @@ def test_worker_maps_failures_to_codes(qapp):
     fake = FakePorts()
     worker = Worker(fake.ports(), Settings())
     seen = Catcher(worker)
-    worker.start(1)
+    worker.start(1, time.monotonic())
     fake.suggest_error = LlmError("rate_limit")
     worker.suggest(1)
     fake.suggest_error = None
     fake.capture_error = CaptureError("blank")
-    worker.start(2)
+    worker.start(2, time.monotonic())
     worker.suggest(2)
     assert [e for e in seen.events if e[0] == "failed"] == [
         ("failed", 1, "rate_limit"),
@@ -355,7 +360,7 @@ def test_worker_reports_an_unexpected_error_without_its_text(qapp, caplog):
     fake = FakePorts()
     worker = Worker(fake.ports(), Settings())
     seen = Catcher(worker)
-    worker.start(1)
+    worker.start(1, time.monotonic())
     fake.suggest_error = ValueError("ZZ-SECRET-TEXT")
     with caplog.at_level(logging.INFO, logger="respondoia"):
         worker.suggest(1)
@@ -370,7 +375,7 @@ def test_worker_uses_new_settings_for_the_next_session(qapp):
     worker = Worker(fake.ports(), Settings())
     seen = Catcher(worker)
     worker.set_settings(Settings(private_contacts=("Marina Duarte",)))
-    worker.start(1)
+    worker.start(1, time.monotonic())
     assert seen.events[-1][2].status is StartStatus.PRIVATE
     worker.suggest(1)
     assert fake.count("capture_chat") == 0 and fake.count("suggest") == 0
@@ -379,7 +384,7 @@ def test_worker_uses_new_settings_for_the_next_session(qapp):
 def test_closing_the_worker_session_blocks_late_requests(qapp):
     fake = FakePorts()
     worker = Worker(fake.ports(), Settings())
-    worker.start(1)
+    worker.start(1, time.monotonic())
     worker.suggest(1)
     worker.close()
     worker.choose(1, 0)
@@ -421,3 +426,37 @@ def test_session_work_happens_on_the_worker_thread(qtbot, tmp_path):
     assert threads and threading.get_ident() not in threads
     assert fake.calls[-1] == ("insert_text", 100, "sugestão 1")
     assert tray.notices() == []
+
+
+def test_the_hotkey_request_carries_the_time_it_was_pressed(rig):
+    rig.press()
+    assert abs(rig.worker.requested_at - time.monotonic()) < 1
+
+
+def test_invalid_config_keeps_the_hotkey_off(tmp_path):
+    rig = Rig(tmp_path, config_error="suggestions.count")
+    assert not rig.hotkey.registered
+    assert rig.tray.calls[-1] == ("notify", "error.config", {"key": "suggestions.count"})
+    rig.tray.pause_toggled.emit(True)
+    rig.tray.pause_toggled.emit(False)
+    assert not rig.hotkey.registered
+    rig.press()  # nothing is registered, but a stray signal must not start a session either
+    assert rig.worker.calls == []
+
+
+def test_retry_repeats_the_request_that_failed(rig):
+    generation = rig.open_panel()
+    rig.panel.regenerate_requested.emit((2,), "pedir prazo")
+    rig.worker.failed.emit(generation, "network")
+    rig.panel.retry_requested.emit()
+    assert rig.panel.calls[-1] == ("show_loading", "Marina Duarte", CHAT.bounds)
+    assert rig.worker.calls[-1] == ("regenerate", generation, (2,), "pedir prazo")
+
+
+def test_worker_drops_a_start_that_waited_behind_a_slow_call(qapp):
+    fake = FakePorts()
+    worker = Worker(fake.ports(), Settings())
+    seen = Catcher(worker)
+    worker.start(1, time.monotonic() - 5)
+    assert seen.events == [("started", 1, StartResult(StartStatus.EXPIRED))]
+    assert fake.calls == []
