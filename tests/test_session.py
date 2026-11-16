@@ -276,3 +276,45 @@ def test_logs_carry_no_content(caplog):
     assert caplog.records, "the session should log its events"
     assert "ZZ-SECRET" not in caplog.text and "sugestão" not in caplog.text
     assert "network" in caplog.text and "claude-haiku-5-5" in caplog.text
+
+
+def failed_capture(settings=None):
+    fake = FakePorts()
+    session = started(fake, settings)
+    fake.capture_error = CaptureError("blank")
+    with pytest.raises(CaptureError):
+        session.suggest()
+    fake.capture_error = None
+    return fake, session
+
+
+def test_retry_after_a_failed_capture_reads_the_chat_again():
+    fake, session = failed_capture()
+    fake.chat = OpenChat("Caio Lima", BOUNDS)  # the user opened another chat meanwhile
+    with pytest.raises(CaptureError):
+        session.suggest()
+    assert fake.count("capture_chat") == 1 and fake.count("suggest") == 0
+
+
+def test_retry_after_a_failed_capture_never_sends_a_private_chat():
+    fake, session = failed_capture(Settings(private_contacts=("Bia Rocha",)))
+    fake.chat = OpenChat("Bia Rocha", BOUNDS)
+    with pytest.raises(CaptureError):
+        session.suggest()
+    assert fake.count("capture_chat") == 1 and fake.count("suggest") == 0
+
+
+def test_retry_after_a_failed_capture_stops_if_the_window_is_gone():
+    fake, session = failed_capture()
+    fake.window_alive = False
+    with pytest.raises(CaptureError):
+        session.suggest()
+    assert fake.count("capture_chat") == 1
+
+
+def test_retry_after_a_failed_capture_uses_the_current_bounds():
+    fake, session = failed_capture()
+    moved = Rect(500, 0, 1700, 900)
+    fake.chat = OpenChat("Marina Duarte", moved)
+    session.suggest()
+    assert fake.calls[-2] == ("capture_chat", HWND, moved)

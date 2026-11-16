@@ -10,7 +10,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 
-from respondoia.capture import is_allowed_window
+from respondoia.capture import CaptureError, is_allowed_window
 from respondoia.config import Settings
 from respondoia.domain import ChatRef, OpenChat, Rect, WindowInfo
 from respondoia.llm import LlmError, SuggestionReply, SuggestRequest, SuggestResult, check_reply
@@ -42,6 +42,7 @@ class StartStatus(Enum):
     NOT_WHATSAPP = "not_whatsapp"
     PRIVATE = "private"
     UNKNOWN_CHAT = "unknown_chat"
+    EXPIRED = "expired"  # the request waited too long to run
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,7 @@ class Session:
         self._bounds: Rect | None = None
         self._image: bytes | None = None
         self._reply: SuggestionReply | None = None
+        self._recheck = False
 
     @property
     def chat(self) -> ChatRef | None:
@@ -89,7 +91,11 @@ class Session:
         """Capture the chat once, then ask the model."""
         chat = self._open_chat()
         if self._image is None:
+            if self._recheck:
+                self._check_chat_again(chat)
+            self._recheck = True  # until a capture succeeds
             self._image = self._ports.capture_chat(chat.hwnd, self._bounds)
+            self._recheck = False
         request = SuggestRequest(self._image, self._settings.suggestion_count)
         return self._ask("suggest", request)
 
@@ -138,6 +144,19 @@ class Session:
         self._reply = None
         self._chat = None
         self._bounds = None
+
+    def _check_chat_again(self, captured: ChatRef) -> None:
+        """Before a retried capture: same window, same chat, still allowed, new bounds."""
+        chat = None
+        if self._ports.window_info(captured.hwnd) is not None:
+            chat = self._ports.read_open_chat(captured.hwnd)
+        current = ChatRef(captured.hwnd, chat.title) if chat is not None else None
+        same = check_before_paste(captured, current, "paste") is PasteDecision.PASTE
+        allowed = check_before_send(chat, self._settings.private_contacts)
+        if not same or allowed is not SendDecision.ALLOW:
+            logger.info("retry refused reason=chat_changed")
+            raise CaptureError("the open chat changed")
+        self._bounds = chat.bounds
 
     def _open_chat(self) -> ChatRef:
         if self._chat is None:
