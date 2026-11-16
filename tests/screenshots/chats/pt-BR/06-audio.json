@@ -1,0 +1,42 @@
+{
+  "id": "pt-BR/06-audio",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Seu Olavo",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "10:02",
+      "kind": "text",
+      "text": "bom dia seu Olavo, o orçamento do portão ficou pronto?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:15",
+      "kind": "text",
+      "text": "Bom dia. Vou te explicar por áudio que é mais fácil",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:16",
+      "kind": "audio",
+      "text": "",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": true,
+    "canary": null
+  }
+}

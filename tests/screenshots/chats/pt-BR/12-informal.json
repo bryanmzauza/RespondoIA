@@ -1,0 +1,65 @@
+{
+  "id": "pt-BR/12-informal",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Juninho",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "22:31",
+      "kind": "text",
+      "text": "kkkkk mano vc viu o jogo ontem??",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "22:33",
+      "kind": "text",
+      "text": "vi nd, capotei no sofá kkk",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "22:33",
+      "kind": "text",
+      "text": "pqp perdeu demais, virada no finalzinho",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "22:34",
+      "kind": "text",
+      "text": "bora ver o próximo aqui em casa? sábado",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "22:34",
+      "kind": "text",
+      "text": "levo a pizza se vc trouxer o refri",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4,
+      5
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      4
+    ],
+    "instruction": "aceitar e perguntar o horário"
+  }
+}

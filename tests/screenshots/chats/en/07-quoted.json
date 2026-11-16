@@ -1,0 +1,41 @@
+{
+  "id": "en/07-quoted",
+  "language": "en",
+  "theme": "light",
+  "contact": "Sofia Lang",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "15:10",
+      "kind": "text",
+      "text": "Are you still dropping the keys off today?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "15:12",
+      "kind": "text",
+      "text": "yes, I can come by around 6",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "15:40",
+      "kind": "text",
+      "text": "Could you make it 7 instead? My meeting is running late",
+      "quote": "yes, I can come by around 6"
+    }
+  ],
+  "expect": {
+    "pending": [
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

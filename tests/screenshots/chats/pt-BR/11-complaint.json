@@ -1,0 +1,57 @@
+{
+  "id": "pt-BR/11-complaint",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Regina Tavares",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "15:00",
+      "kind": "text",
+      "text": "Oi Regina! Seu pedido saiu pra entrega 🚚",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:20",
+      "kind": "text",
+      "text": "Chegou, mas o bolo veio todo amassado de um lado",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:21",
+      "kind": "text",
+      "text": "Era pro aniversário da minha filha hoje à noite. Fiquei bem chateada",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:21",
+      "kind": "text",
+      "text": "O que vocês podem fazer?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      4
+    ],
+    "instruction": "pedir desculpas e oferecer refazer o bolo"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "en/09-price-missing",
+  "language": "en",
+  "theme": "light",
+  "contact": "Karen Dalton",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:30",
+      "kind": "text",
+      "text": "Hi! Thanks for coming by to look at the fence yesterday",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:34",
+      "kind": "text",
+      "text": "Hi Karen, no problem at all. It was good to see it in person.",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:40",
+      "kind": "text",
+      "text": "How much would it cost to repaint the whole thing?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:41",
+      "kind": "text",
+      "text": "And could you start before the end of the month?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "ask for a couple of days to send the quote"
+  }
+}

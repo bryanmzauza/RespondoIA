@@ -1,0 +1,56 @@
+{
+  "id": "pt-BR/10-schedule",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Otávio Nunes",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "13:05",
+      "kind": "text",
+      "text": "Oi! Precisamos alinhar o cronograma da reforma",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "13:10",
+      "kind": "text",
+      "text": "Oi Otávio, claro. Quando fica bom pra você?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "13:12",
+      "kind": "text",
+      "text": "Pode ser quinta às 15h ou sexta de manhã?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "13:13",
+      "kind": "text",
+      "text": "Prefere por vídeo ou eu passo aí no escritório?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "sugerir sexta às 10h"
+  }
+}

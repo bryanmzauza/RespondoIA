@@ -1,0 +1,57 @@
+{
+  "id": "en/11-complaint",
+  "language": "en",
+  "theme": "light",
+  "contact": "Linda Park",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "13:15",
+      "kind": "text",
+      "text": "Hi Linda, your order was delivered this morning 📦",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:02",
+      "kind": "text",
+      "text": "It arrived, but the lamp is missing its shade",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:03",
+      "kind": "text",
+      "text": "This was a gift for tomorrow, so I'm quite disappointed",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:03",
+      "kind": "text",
+      "text": "What can you do about it?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      4
+    ],
+    "instruction": "apologise and offer to send the missing part today"
+  }
+}

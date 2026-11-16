@@ -1,0 +1,65 @@
+{
+  "id": "en/12-informal",
+  "language": "en",
+  "theme": "light",
+  "contact": "Jake",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "23:02",
+      "kind": "text",
+      "text": "duuude did u see that ending??",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "23:04",
+      "kind": "text",
+      "text": "nope fell asleep lol",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "23:04",
+      "kind": "text",
+      "text": "omg u missed everything, last minute goal",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "23:05",
+      "kind": "text",
+      "text": "watch the next one at mine? saturday",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "23:05",
+      "kind": "text",
+      "text": "ill get wings if u bring drinks",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4,
+      5
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      4
+    ],
+    "instruction": "accept and ask what time"
+  }
+}

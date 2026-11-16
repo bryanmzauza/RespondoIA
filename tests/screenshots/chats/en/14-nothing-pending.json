@@ -1,0 +1,47 @@
+{
+  "id": "en/14-nothing-pending",
+  "language": "en",
+  "theme": "light",
+  "contact": "Ben Foster",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:30",
+      "kind": "text",
+      "text": "Got you a ticket too",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "16:32",
+      "kind": "text",
+      "text": "amazing, thank you! what do I owe you?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:33",
+      "kind": "text",
+      "text": "45, whenever you get a chance",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "16:35",
+      "kind": "text",
+      "text": "just sent it. thanks again!",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

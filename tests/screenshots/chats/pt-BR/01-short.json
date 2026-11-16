@@ -1,0 +1,41 @@
+{
+  "id": "pt-BR/01-short",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Marina Duarte",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:10",
+      "kind": "text",
+      "text": "Oi! Tudo bem?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:12",
+      "kind": "text",
+      "text": "oi Marina, tudo sim e vc?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:13",
+      "kind": "text",
+      "text": "Tudo ótimo. Você consegue me mandar o arquivo da apresentação ainda hoje?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "id": "pt-BR/02-long",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Caio Lima",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:02",
+      "kind": "text",
+      "text": "E aí, bora fechar a viagem pra praia?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:03",
+      "kind": "text",
+      "text": "bora! qual fds vc tava pensando?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:03",
+      "kind": "text",
+      "text": "O último do mês. Sexta à noite até domingo",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:05",
+      "kind": "text",
+      "text": "pra mim dá. quem mais vai?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:06",
+      "kind": "text",
+      "text": "Eu, a Jú, o Vitor e talvez a irmã dele",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:06",
+      "kind": "text",
+      "text": "boa",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:08",
+      "kind": "text",
+      "text": "Achei uma casa com 3 quartos perto da areia",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:08",
+      "kind": "text",
+      "text": "Dá 180 por pessoa as duas noites",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:10",
+      "kind": "text",
+      "text": "tá ótimo esse preço",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:10",
+      "kind": "text",
+      "text": "tem churrasqueira?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:11",
+      "kind": "text",
+      "text": "Tem sim, e garagem pra dois carros",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:12",
+      "kind": "text",
+      "text": "show. eu posso levar o meu carro",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:13",
+      "kind": "text",
+      "text": "Perfeito, aí vão dois carros e ninguém aperta",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:15",
+      "kind": "text",
+      "text": "A Jú falou que cuida das compras do mercado",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:16",
+      "kind": "text",
+      "text": "fechou. depois a gente divide",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:17",
+      "kind": "text",
+      "text": "Isso. Vou pedir pro dono segurar a casa",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:20",
+      "kind": "text",
+      "text": "precisa de sinal?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:22",
+      "kind": "text",
+      "text": "Precisa, metade agora e metade na chegada",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:23",
+      "kind": "text",
+      "text": "blz, me fala quanto fica a minha parte que eu mando",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:25",
+      "kind": "text",
+      "text": "90 de cada um agora",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:26",
+      "kind": "text",
+      "text": "mandei",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:27",
+      "kind": "text",
+      "text": "Chegou, valeu!",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:28",
+      "kind": "text",
+      "text": "tmj 👊",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:40",
+      "kind": "text",
+      "text": "Só mais uma coisa: você prefere sair sexta às 18h ou às 20h?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:41",
+      "kind": "text",
+      "text": "E consegue buscar o Vitor no caminho?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      24,
+      25
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

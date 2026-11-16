@@ -1,0 +1,57 @@
+{
+  "id": "en/13-multi-question",
+  "language": "en",
+  "theme": "light",
+  "contact": "Chloe Martin",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:20",
+      "kind": "text",
+      "text": "Chloe, I'm in for the lake trip next weekend",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:24",
+      "kind": "text",
+      "text": "Yay! Are you driving up Friday or Saturday?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:24",
+      "kind": "text",
+      "text": "Do you have a spare sleeping bag?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:25",
+      "kind": "text",
+      "text": "And are you okay sharing a tent?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "say I'll confirm later"
+  }
+}

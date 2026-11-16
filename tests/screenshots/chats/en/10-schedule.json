@@ -1,0 +1,56 @@
+{
+  "id": "en/10-schedule",
+  "language": "en",
+  "theme": "light",
+  "contact": "Daniel Osei",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:02",
+      "kind": "text",
+      "text": "Hi, we should go over the draft before it goes out",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "11:06",
+      "kind": "text",
+      "text": "Hi Daniel, agreed. When suits you?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:08",
+      "kind": "text",
+      "text": "Tuesday at 10 or Wednesday after lunch?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:08",
+      "kind": "text",
+      "text": "Also, call or in person?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "suggest Wednesday at 2"
+  }
+}

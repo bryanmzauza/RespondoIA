@@ -1,0 +1,56 @@
+{
+  "id": "pt-BR/09-price-missing",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Sônia Carvalho",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:50",
+      "kind": "text",
+      "text": "Bom dia! Deixei o celular aí ontem, lembra?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "08:55",
+      "kind": "text",
+      "text": "Bom dia, Sônia! Lembro sim, já abri ele aqui.",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:12",
+      "kind": "text",
+      "text": "Quanto fica o conserto da tela?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:12",
+      "kind": "text",
+      "text": "E fica pronto ainda essa semana?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "pedir prazo"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "id": "en/03-group",
+  "language": "en",
+  "theme": "light",
+  "contact": "Book Club",
+  "group": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": "Priya Shah",
+      "time": "19:30",
+      "kind": "text",
+      "text": "Reminder: we meet Thursday at 7 at my place",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Tom Gallagher",
+      "time": "19:32",
+      "kind": "text",
+      "text": "I'll be there. Only halfway through the book though",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Hannah Weiss",
+      "time": "19:33",
+      "kind": "text",
+      "text": "Same, no spoilers please",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "19:35",
+      "kind": "text",
+      "text": "I finished it last night, I'll keep quiet 🤐",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Priya Shah",
+      "time": "19:36",
+      "kind": "text",
+      "text": "Ha! Since you're done, could you pick the next book?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Tom Gallagher",
+      "time": "19:37",
+      "kind": "text",
+      "text": "And can you bring the extra chairs again?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      5,
+      6
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

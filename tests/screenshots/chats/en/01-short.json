@@ -1,0 +1,41 @@
+{
+  "id": "en/01-short",
+  "language": "en",
+  "theme": "light",
+  "contact": "Emma Clarke",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:02",
+      "kind": "text",
+      "text": "Hey! How's your week going?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "14:05",
+      "kind": "text",
+      "text": "pretty busy but good, you?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:06",
+      "kind": "text",
+      "text": "Same here. Are you free for a quick call this afternoon?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

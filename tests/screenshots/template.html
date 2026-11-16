@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="$lang">
+<head>
+<meta charset="utf-8">
+<title>$title</title>
+<style>
+  :root {
+    --page: #efe7dd; --bar: #f0f2f5; --line: #d1d7db; --text: #111b21; --muted: #667781;
+    --in: #ffffff; --out: #d9fdd3; --quote: rgba(0, 0, 0, 0.06); --accent: #06806b;
+    --field: #ffffff; --photo-a: #b9c7d1; --photo-b: #8fa3b1;
+  }
+  body.dark {
+    --page: #0b141a; --bar: #202c33; --line: #2a3942; --text: #e9edef; --muted: #8696a0;
+    --in: #202c33; --out: #005c4b; --quote: rgba(255, 255, 255, 0.08); --accent: #53bdeb;
+    --field: #2a3942; --photo-a: #3b4a54; --photo-b: #2a3942;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 900px; height: 1300px; overflow: hidden; }
+  body {
+    display: flex; flex-direction: column; background: var(--page); color: var(--text);
+    font: 15px/1.35 "Segoe UI", "Segoe UI Emoji", sans-serif;
+  }
+  header {
+    flex: none; height: 62px; padding: 0 18px; display: flex; align-items: center; gap: 14px;
+    background: var(--bar); border-bottom: 1px solid var(--line);
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--photo-b); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 600;
+  }
+  .name { font-size: 16px; font-weight: 600; }
+  .sub { font-size: 13px; color: var(--muted); }
+  /* Anchored to the bottom: when the chat is long the oldest messages fall off the top. */
+  main {
+    flex: 1; min-height: 0; overflow: hidden; padding: 14px 56px;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  }
+  .row { display: flex; }
+  .row.out { justify-content: flex-end; }
+  .bubble {
+    max-width: 62%; padding: 7px 10px 6px; border-radius: 8px; background: var(--in);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.13); white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .out .bubble { background: var(--out); }
+  .sender { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+  .quote {
+    margin-bottom: 5px; padding: 5px 9px; border-left: 4px solid var(--accent);
+    border-radius: 5px; background: var(--quote); color: var(--muted); font-size: 14px;
+  }
+  .time { float: right; margin: 6px 0 0 14px; font-size: 11px; color: var(--muted); }
+  .photo {
+    width: 300px; height: 200px; margin-bottom: 5px; border-radius: 6px; position: relative;
+    overflow: hidden; background: linear-gradient(160deg, var(--photo-a), var(--photo-b));
+  }
+  .photo::before {
+    content: ""; position: absolute; left: 60px; top: 50px; width: 180px; height: 130px;
+    border: 6px solid rgba(255, 255, 255, 0.55); border-radius: 4px;
+  }
+  .photo::after {
+    content: ""; position: absolute; left: 66px; top: 112px; width: 168px; height: 6px;
+    background: rgba(255, 255, 255, 0.55);
+  }
+  .audio { display: flex; align-items: center; gap: 12px; width: 280px; padding: 4px 2px; }
+  .play {
+    width: 0; height: 0; border-left: 16px solid var(--muted);
+    border-top: 10px solid transparent; border-bottom: 10px solid transparent;
+  }
+  .wave {
+    flex: 1; height: 22px;
+    background: repeating-linear-gradient(90deg, var(--muted) 0 3px, transparent 3px 7px);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0 20%, #000 20% 80%, transparent 80%);
+    border-radius: 2px; opacity: 0.7;
+  }
+  .len { font-size: 12px; color: var(--muted); }
+  footer {
+    flex: none; height: 62px; padding: 0 18px; display: flex; align-items: center;
+    background: var(--bar);
+  }
+  .field {
+    flex: 1; height: 42px; padding: 0 16px; border-radius: 21px; background: var(--field);
+    color: var(--muted); display: flex; align-items: center;
+  }
+</style>
+</head>
+<body class="$theme">
+<header>
+  <div class="avatar">$initial</div>
+  <div><div class="name">$title</div>$subtitle</div>
+</header>
+<main>
+$messages
+</main>
+<footer><div class="field">$composer</div></footer>
+</body>
+</html>

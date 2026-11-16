@@ -1,0 +1,50 @@
+{
+  "id": "en/04-dark",
+  "language": "en",
+  "theme": "dark",
+  "contact": "Marcus Reed",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "20:44",
+      "kind": "text",
+      "text": "Hey, do you still have that extension ladder?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "20:46",
+      "kind": "text",
+      "text": "yeah it's in the shed, why?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "20:47",
+      "kind": "text",
+      "text": "I need to clean the gutters on Sunday. Could I borrow it?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "20:47",
+      "kind": "text",
+      "text": "I can pick it up Saturday evening if that works",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

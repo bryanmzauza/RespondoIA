@@ -1,0 +1,42 @@
+{
+  "id": "en/06-audio",
+  "language": "en",
+  "theme": "light",
+  "contact": "Walter Finch",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "08:40",
+      "kind": "text",
+      "text": "Hi Walter, any update on the quote for the deck?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:52",
+      "kind": "text",
+      "text": "Morning. Easier if I explain in a voice message",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:53",
+      "kind": "audio",
+      "text": "",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": true,
+    "canary": null
+  }
+}

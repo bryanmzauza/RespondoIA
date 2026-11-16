@@ -1,0 +1,57 @@
+{
+  "id": "pt-BR/13-multi-question",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Camila Reis",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "17:45",
+      "kind": "text",
+      "text": "Camila, amanhã estou aí pra ajudar no evento",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "17:50",
+      "kind": "text",
+      "text": "Que bom! Que horas você chega?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "17:50",
+      "kind": "text",
+      "text": "Vai trazer o seu notebook?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "17:51",
+      "kind": "text",
+      "text": "E consegue ficar até o fim da tarde?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "dizer que confirmo mais tarde"
+  }
+}

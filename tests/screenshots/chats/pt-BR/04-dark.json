@@ -1,0 +1,50 @@
+{
+  "id": "pt-BR/04-dark",
+  "language": "pt-BR",
+  "theme": "dark",
+  "contact": "Renato Farias",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:14",
+      "kind": "text",
+      "text": "Fala! Você ainda tem aquela furadeira?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "21:15",
+      "kind": "text",
+      "text": "tenho sim, por quê?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:16",
+      "kind": "text",
+      "text": "Preciso pendurar umas prateleiras no sábado. Me empresta?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:16",
+      "kind": "text",
+      "text": "Devolvo no domingo sem falta",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

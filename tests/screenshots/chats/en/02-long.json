@@ -1,0 +1,210 @@
+{
+  "id": "en/02-long",
+  "language": "en",
+  "theme": "light",
+  "contact": "Noah Bennett",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:01",
+      "kind": "text",
+      "text": "Morning! Still on for helping me move on Saturday?",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:03",
+      "kind": "text",
+      "text": "yep, still on. what time?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:04",
+      "kind": "text",
+      "text": "The van is booked from 9 to 2",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:05",
+      "kind": "text",
+      "text": "ok. how much stuff are we talking about?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:06",
+      "kind": "text",
+      "text": "Mostly boxes, a couch, the bed and my desk",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:07",
+      "kind": "text",
+      "text": "is the desk the huge one?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:07",
+      "kind": "text",
+      "text": "Yes... the huge one. Sorry in advance",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:08",
+      "kind": "text",
+      "text": "haha fine. does it come apart?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:10",
+      "kind": "text",
+      "text": "The legs come off, I'll do that Friday night",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:11",
+      "kind": "text",
+      "text": "good. is there an elevator at the new place?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:12",
+      "kind": "text",
+      "text": "Third floor, no elevator",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:13",
+      "kind": "text",
+      "text": "of course there isn't",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:14",
+      "kind": "text",
+      "text": "I'm buying lunch for everyone to make up for it",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:15",
+      "kind": "text",
+      "text": "deal. who else is coming?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:16",
+      "kind": "text",
+      "text": "My brother and Maya from work",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:17",
+      "kind": "text",
+      "text": "nice, four people should be enough",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:19",
+      "kind": "text",
+      "text": "I hope so. I've got gloves and straps for the couch",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:20",
+      "kind": "text",
+      "text": "do you need more boxes? I have some in the garage",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:21",
+      "kind": "text",
+      "text": "That would be great, I'm about 10 short",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:22",
+      "kind": "text",
+      "text": "I'll bring what I have",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:23",
+      "kind": "text",
+      "text": "You're the best",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:24",
+      "kind": "text",
+      "text": "anything else?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:35",
+      "kind": "text",
+      "text": "Two things: can you drive the van? My license expired last month",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:36",
+      "kind": "text",
+      "text": "And should we start at the old place at 9 or meet at 8:30 for coffee first?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      23,
+      24
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

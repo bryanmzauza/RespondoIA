@@ -1,0 +1,50 @@
+{
+  "id": "en/05-image",
+  "language": "en",
+  "theme": "light",
+  "contact": "Olivia Hart",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "12:15",
+      "kind": "text",
+      "text": "I think I found the couch",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "12:17",
+      "kind": "text",
+      "text": "ooh show me",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "12:18",
+      "kind": "image",
+      "text": "This one, in green",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "12:18",
+      "kind": "text",
+      "text": "Too big for the living room, or am I overthinking it?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

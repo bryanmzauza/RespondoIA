@@ -1,0 +1,47 @@
+{
+  "id": "pt-BR/14-nothing-pending",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Fábio Teles",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "12:10",
+      "kind": "text",
+      "text": "Consegui o ingresso pra você também",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "12:12",
+      "kind": "text",
+      "text": "aee, valeu demais! quanto te devo?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "12:13",
+      "kind": "text",
+      "text": "60, pode mandar quando der",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "12:15",
+      "kind": "text",
+      "text": "mandei agora. obrigado de novo!",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "pt-BR/05-image",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Lívia Antunes",
+  "group": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:28",
+      "kind": "text",
+      "text": "Terminei de montar a estante!",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "14:29",
+      "kind": "text",
+      "text": "aee, manda foto",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:31",
+      "kind": "image",
+      "text": "Olha como ficou",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:31",
+      "kind": "text",
+      "text": "Ficou torta ou é impressão minha?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      3,
+      4
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "pt-BR/15-decline",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Priscila Amaral",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:40",
+      "kind": "text",
+      "text": "Pri, parabéns pela promoção!! 🎉",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:02",
+      "kind": "text",
+      "text": "Obrigada!! Sábado vou fazer um jantar aqui em casa pra comemorar",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:03",
+      "kind": "text",
+      "text": "Queria muito que você viesse. Topa?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "recusar com educação"
+  }
+}

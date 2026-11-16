@@ -1,0 +1,82 @@
+{
+  "id": "pt-BR/03-group",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Turma do Vôlei",
+  "group": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": "Bia Rocha",
+      "time": "20:01",
+      "kind": "text",
+      "text": "Gente, sábado tem jogo às 9h na quadra do clube",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Leandro Pires",
+      "time": "20:03",
+      "kind": "text",
+      "text": "Tô dentro",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Tati Moraes",
+      "time": "20:05",
+      "kind": "text",
+      "text": "Eu chego um pouco atrasada, umas 9h20",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Bia Rocha",
+      "time": "20:07",
+      "kind": "text",
+      "text": "Sem problema. Quem leva a bola dessa vez?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Leandro Pires",
+      "time": "20:08",
+      "kind": "text",
+      "text": "A minha furou semana passada 😅",
+      "quote": null
+    },
+    {
+      "author": "user",
+      "sender": null,
+      "time": "20:10",
+      "kind": "text",
+      "text": "eu vou tb! a minha tá nova",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Bia Rocha",
+      "time": "20:11",
+      "kind": "text",
+      "text": "Boa! Então você leva a bola e a rede?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": "Tati Moraes",
+      "time": "20:12",
+      "kind": "text",
+      "text": "E alguém me dá carona na volta?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      7,
+      8
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  }
+}

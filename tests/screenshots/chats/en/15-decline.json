@@ -1,0 +1,48 @@
+{
+  "id": "en/15-decline",
+  "language": "en",
+  "theme": "light",
+  "contact": "Aisha Karim",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "17:50",
+      "kind": "text",
+      "text": "Congrats on the new place, Aisha! 🎉",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:05",
+      "kind": "text",
+      "text": "Thank you!! I'm having a housewarming on Saturday night",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:06",
+      "kind": "text",
+      "text": "I'd love for you to come. Can you make it?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null
+  },
+  "regenerate": {
+    "selected": [
+      3
+    ],
+    "instruction": "decline politely"
+  }
+}
