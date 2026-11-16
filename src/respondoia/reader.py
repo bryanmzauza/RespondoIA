@@ -71,7 +71,7 @@ def find_open_chat(root: UiNode) -> OpenChat | None:
         return None
     band_bottom = panel.rect.top + HEADER_BAND
     for node in _walk(panel):
-        if node is panel or node.control_type != "Text" or not node.name:
+        if node is panel or node.control_type != "Text":
             continue
         if node.rect.top >= panel.rect.top and node.rect.bottom <= band_bottom:
             # The title is the first text in the header. Status lines come after it.

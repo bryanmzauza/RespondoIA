@@ -86,6 +86,21 @@ def test_text_below_the_header_band_is_ignored():
     assert find_open_chat(node_from_dict(panel)) is None
 
 
+
+def test_an_unreadable_first_header_text_is_not_skipped():
+    # If the name is drawn as an image, the next text is the status line, never the title.
+    panel = {
+        "control_type": "Group",
+        "automation_id": "main",
+        "rect": [420, 0, 1600, 900],
+        "children": [
+            {"control_type": "Text", "name": "", "rect": [491, 12, 640, 32]},
+            {"control_type": "Text", "name": "online", "rect": [491, 34, 640, 50]},
+        ],
+    }
+    assert find_open_chat(node_from_dict(panel)) is None
+
+
 @pytest.mark.desktop
 def test_snapshot_of_a_window_that_does_not_exist_is_none():
     from respondoia.reader import read_open_chat, snapshot
