@@ -10,6 +10,7 @@ from respondoia.llm import (
     ChatMessage,
     LlmError,
     Suggestion,
+    SuggestionPreview,
     SuggestionReply,
     SuggestResult,
 )
@@ -43,6 +44,7 @@ class FakePorts:
         self.suggest_error = None
         self.capture_error = None
         self.insert_ok = True
+        self.preview_first = True
 
     def names(self):
         return [call[0] for call in self.calls]
@@ -68,11 +70,14 @@ class FakePorts:
             raise self.capture_error
         return b"png-bytes"
 
-    def suggest(self, request):
+    def suggest(self, request, on_preview=None):
         self.calls.append(("suggest", request))
+        if on_preview is not None and self.preview_first:
+            on_preview(SuggestionPreview(summary=self.reply.summary,
+                                         suggestions=self.reply.suggestions))
         if self.suggest_error:
             raise self.suggest_error
-        return SuggestResult(self.reply, "claude-haiku-5-5", 2100, 640, 1234)
+        return SuggestResult(self.reply, "claude-haiku-5-5", 2100, 640, 1234, 900)
 
     def insert_text(self, hwnd, text):
         self.calls.append(("insert_text", hwnd, text))
@@ -318,3 +323,59 @@ def test_retry_after_a_failed_capture_uses_the_current_bounds():
     fake.chat = OpenChat("Marina Duarte", moved)
     session.suggest()
     assert fake.calls[-2] == ("capture_chat", HWND, moved)
+
+
+def test_suggest_hands_the_preview_over():
+    fake = FakePorts()
+    session = started(fake)
+    previews = []
+    session.suggest(previews.append)
+    assert [p.suggestions for p in previews] == [fake.reply.suggestions]
+
+
+def test_choice_uses_the_preview_when_the_list_failed():
+    fake = FakePorts()
+    session = started(fake)
+    fake.suggest_error = LlmError("truncated")  # the stream broke after the suggestions
+    with pytest.raises(LlmError):
+        session.suggest()
+    assert session.choose(1) is ChooseResult.PASTED
+    assert ("insert_text", HWND, "sugestão 2") in fake.calls
+
+
+def test_a_refused_reply_is_never_pasted_even_after_a_preview():
+    fake = FakePorts()
+    session = started(fake)
+    fake.suggest_error = LlmError("refused")
+    with pytest.raises(LlmError):
+        session.suggest()
+    with pytest.raises(LlmError) as err:
+        session.choose(0)
+    assert err.value.code == "refused"
+    assert fake.count("insert_text") == 0 and fake.count("copy_text") == 0
+
+
+def test_without_a_preview_a_failed_call_leaves_nothing_to_choose():
+    fake = FakePorts()
+    fake.preview_first = False
+    session = started(fake)
+    fake.suggest_error = LlmError("network")
+    with pytest.raises(LlmError):
+        session.suggest()
+    with pytest.raises(LlmError) as err:
+        session.choose(0)
+    assert err.value.code == "network"
+    assert fake.count("insert_text") == 0
+
+
+def test_a_choice_during_a_failed_regenerate_never_pastes_an_old_option():
+    fake = FakePorts()
+    fake.preview_first = False
+    session = started(fake)
+    session.suggest()
+    fake.suggest_error = LlmError("network")  # fails before any new option is shown
+    with pytest.raises(LlmError):
+        session.regenerate((2,), "pedir prazo")
+    with pytest.raises(LlmError):
+        session.choose(0)
+    assert fake.count("insert_text") == 0 and fake.count("copy_text") == 0

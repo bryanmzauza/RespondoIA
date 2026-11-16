@@ -21,7 +21,13 @@ from respondoia.hotkey import (
     display_hotkey,
     parse_hotkey,
 )
-from respondoia.llm import AnthropicClient, LlmError, SuggestRequest, SuggestResult
+from respondoia.llm import (
+    AnthropicClient,
+    LlmError,
+    PreviewCallback,
+    SuggestRequest,
+    SuggestResult,
+)
 from respondoia.session import ChooseResult, Ports, Session, StartResult, StartStatus
 from respondoia.ui.panel import SuggestionPanel
 from respondoia.ui.tray import Tray
@@ -46,9 +52,11 @@ class Worker(QObject):
     """
 
     started = Signal(int, object)  # generation, StartResult
+    previewed = Signal(int, object)  # generation, SuggestionPreview
     replied = Signal(int, object)  # generation, SuggestionReply
     failed = Signal(int, str)  # generation, error code
     chosen = Signal(int, object)  # generation, ChooseResult
+    choose_failed = Signal(int, str)  # generation, error code
     crashed = Signal(int)  # generation
 
     def __init__(self, ports: Ports, settings: Settings) -> None:
@@ -81,17 +89,30 @@ class Worker(QObject):
 
     @Slot(int)
     def suggest(self, generation: int) -> None:
-        self._ask(generation, lambda session: session.suggest())
+        self._ask(generation, lambda session, preview: session.suggest(preview))
 
     @Slot(int, tuple, str)
     def regenerate(self, generation: int, selected_ids: tuple, instruction: str) -> None:
-        self._ask(generation, lambda session: session.regenerate(selected_ids, instruction))
+        self._ask(
+            generation,
+            lambda session, preview: session.regenerate(selected_ids, instruction, preview),
+        )
 
     @Slot(int, int)
     def choose(self, generation: int, index: int) -> None:
         session, self._session = self._session, None
-        if session is not None:
-            self._guard(generation, lambda: self.chosen.emit(generation, session.choose(index)))
+        if session is None:
+            return
+
+        def choose():
+            try:
+                result = session.choose(index)
+            except LlmError as exc:  # the model refused after the options were shown
+                self.choose_failed.emit(generation, exc.code)
+            else:
+                self.chosen.emit(generation, result)
+
+        self._guard(generation, choose)
 
     @Slot()
     def close(self) -> None:
@@ -106,7 +127,7 @@ class Worker(QObject):
 
         def ask():
             try:
-                reply = call(session)
+                reply = call(session, lambda shown: self.previewed.emit(generation, shown))
             except LlmError as exc:
                 self.failed.emit(generation, exc.code)
             except CaptureError:
@@ -150,6 +171,8 @@ class Controller(QObject):
         # With an invalid config.toml the private list is unknown, so nothing is read.
         self._config_error = config_error
         self._last_request: tuple = ("suggest",)
+        # A choice made while the reply is still streaming waits for the worker.
+        self._choosing = False
         self._panel = panel
         self._tray = tray
         self._hotkey = hotkey
@@ -168,9 +191,11 @@ class Controller(QObject):
         self.request_close.connect(worker.close)
         self.request_settings.connect(worker.set_settings)
         worker.started.connect(self._on_started)
+        worker.previewed.connect(self._on_previewed)
         worker.replied.connect(self._on_replied)
         worker.failed.connect(self._on_failed)
         worker.chosen.connect(self._on_chosen)
+        worker.choose_failed.connect(self._on_choose_failed)
         worker.crashed.connect(self._on_crashed)
 
         hotkey.triggered.connect(self.on_hotkey)
@@ -192,6 +217,7 @@ class Controller(QObject):
             return
         self._generation += 1
         self._active = True
+        self._choosing = False
         self._pressed_at = time.perf_counter()
         self._waiting_for = "suggestion"
         self.request_start.emit(self._generation, time.monotonic())
@@ -223,23 +249,39 @@ class Controller(QObject):
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         self.request_suggest.emit(generation)
 
+    def _on_previewed(self, generation: int, preview) -> None:
+        if generation != self._generation or not self._active or self._choosing:
+            return
+        self._panel.show_preview(preview)
+        total_ms = round((time.perf_counter() - self._pressed_at) * 1000)
+        logger.info("%s preview total_ms=%d", self._waiting_for, total_ms)
+
     def _on_replied(self, generation: int, reply) -> None:
-        if generation != self._generation or not self._active:
+        if generation != self._generation or not self._active or self._choosing:
             return
         self._panel.show_reply(reply)
         total_ms = round((time.perf_counter() - self._pressed_at) * 1000)
         logger.info("%s ok total_ms=%d", self._waiting_for, total_ms)
 
     def _on_failed(self, generation: int, code: str) -> None:
-        if generation == self._generation and self._active:
+        # After a choice the worker reports how the choice went; the panel stays closed.
+        if generation == self._generation and self._active and not self._choosing:
             self._panel.show_error(code)
 
     def _on_chosen(self, generation: int, result) -> None:
         if generation != self._generation:
             return
         self._active = False
+        self._choosing = False
         if result in _NOTICES:
             self._tray.notify(_NOTICES[result])
+
+    def _on_choose_failed(self, generation: int, code: str) -> None:
+        if generation != self._generation:
+            return
+        self._active = False
+        self._choosing = False
+        self._tray.notify("error." + code)
 
     def _on_crashed(self, generation: int) -> None:
         if generation != self._generation:
@@ -249,7 +291,8 @@ class Controller(QObject):
         self._tray.notify("error.unexpected")
 
     def _on_suggestion_chosen(self, index: int) -> None:
-        if self._active:
+        if self._active and not self._choosing:
+            self._choosing = True
             self._panel.dismiss()
             self.request_choose.emit(self._generation, index)
 
@@ -297,17 +340,18 @@ class Controller(QObject):
     def _end_session(self) -> None:
         """Leave the current session. Answers still on their way will be dropped."""
         self._active = False
+        self._choosing = False
         self._chat = None
         self._generation += 1
         self.request_close.emit()
 
 
 def build_ports(settings: Settings) -> Ports:
-    def suggest(request: SuggestRequest) -> SuggestResult:
+    def suggest(request: SuggestRequest, on_preview: PreviewCallback | None) -> SuggestResult:
         key = config.get_api_key()
         if not key:
             raise LlmError("auth")
-        return AnthropicClient(key, settings.model).suggest(request)
+        return AnthropicClient(key, settings.model).suggest(request, on_preview)
 
     return Ports(
         foreground_window=capture.foreground_window,

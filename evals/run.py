@@ -88,6 +88,8 @@ def summarize(rows: list[dict], prices: dict) -> dict:
     for model in sorted({row["model"] for row in rows}):
         mine = [row for row in rows if row["model"] == model]
         latencies = [row["latency_ms"] for row in mine]
+        # Time until summary and suggestions were complete: what the panel waits for.
+        previews = [row["preview_ms"] for row in mine if row.get("preview_ms") is not None]
         names = sorted({name for row in mine for name in row["checks"]})
         entry = {
             "calls": len(mine),
@@ -98,6 +100,8 @@ def summarize(rows: list[dict], prices: dict) -> dict:
             },
             "p50_ms": percentile(latencies, 50),
             "p95_ms": percentile(latencies, 95),
+            "preview_p50_ms": percentile(previews, 50),
+            "preview_p95_ms": percentile(previews, 95),
             "input_tokens": sum(row["input_tokens"] for row in mine),
             "output_tokens": sum(row["output_tokens"] for row in mine),
         }
@@ -116,6 +120,10 @@ def print_summary(summary: dict) -> None:
         for name, rate in entry["pass_rate"].items():
             print(f"  {name:<22}{rate:6.0%}")
         print(f"  latency p50 {entry['p50_ms']} ms, p95 {entry['p95_ms']} ms")
+        print(
+            f"  options shown p50 {entry['preview_p50_ms']} ms, "
+            f"p95 {entry['preview_p95_ms']} ms"
+        )
         print(f"  tokens in {entry['input_tokens']}, out {entry['output_tokens']}")
         if "cost" in entry:
             per_call = entry["cost"] / entry["calls"]
@@ -174,6 +182,7 @@ class Runner:
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
                 "latency_ms": result.latency_ms,
+                "preview_ms": result.preview_ms,
                 "checks": check_case(chat, result.reply, COUNT, instruction=instruction),
                 "reply": result.reply.model_dump(),
             }

@@ -14,6 +14,7 @@ from respondoia.llm import (
     SuggestRequest,
     build_params,
     check_reply,
+    read_preview,
 )
 
 
@@ -88,6 +89,34 @@ def fake_response(stop_reason="end_turn", text=None):
     )
 
 
+class FakeStream:
+    """Stands in for the SDK's MessageStream: text deltas, then the final message."""
+
+    def __init__(self, response, chunk=7, error_after=None):
+        text = next((b.text for b in response.content if b.type == "text"), "")
+        self.chunks = [text[i : i + chunk] for i in range(0, len(text), chunk)]
+        self.response = response
+        self.error_after = error_after
+        self.handed = 0  # chunks given out so far
+        self.text_stream = self._deltas()
+
+    def _deltas(self):
+        for index, piece in enumerate(self.chunks):
+            if self.error_after is not None and index == self.error_after:
+                raise self.error_after_exc
+            self.handed = index + 1
+            yield piece
+
+    def get_final_message(self):
+        return self.response
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
 def status_error(cls, status):
     request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
     return cls("failed", response=httpx2.Response(status, request=request), body=None)
@@ -96,14 +125,14 @@ def status_error(cls, status):
 def client_returning(monkeypatch, outcome, seen=None):
     client = AnthropicClient("sk-test-not-a-real-key", "claude-haiku-5-5")
 
-    def create(**params):
+    def stream(**params):
         if seen is not None:
             seen.update(params)
         if isinstance(outcome, Exception):
             raise outcome
-        return outcome
+        return outcome if isinstance(outcome, FakeStream) else FakeStream(outcome)
 
-    monkeypatch.setattr(client._client.messages, "create", create)
+    monkeypatch.setattr(client._client.messages, "stream", stream)
     return client
 
 
@@ -117,7 +146,7 @@ def test_suggest_returns_reply_usage_and_latency(monkeypatch):
         2100,
         640,
     )
-    assert result.latency_ms >= 0
+    assert 0 <= result.preview_ms <= result.latency_ms
 
 
 def test_suggest_asks_for_the_reply_schema_with_low_effort(monkeypatch):
@@ -129,6 +158,66 @@ def test_suggest_asks_for_the_reply_schema_with_low_effort(monkeypatch):
     assert seen["output_config"]["format"]["type"] == "json_schema"
     assert "suggestions" in seen["output_config"]["format"]["schema"]["properties"]
     assert not {"output_format", "thinking", "temperature", "top_p", "top_k"} & set(seen)
+
+
+def test_suggestions_come_before_the_message_list():
+    order = list(SuggestionReply.model_json_schema()["properties"])
+    assert order.index("summary") < order.index("suggestions") < order.index("messages")
+
+
+def test_preview_arrives_once_before_the_message_list(monkeypatch):
+    reply = make_reply()
+    stream = FakeStream(fake_response(text=reply.model_dump_json()))
+    client = client_returning(monkeypatch, stream)
+    previews = []
+
+    def on_preview(preview):
+        consumed = sum(len(c) for c in stream.chunks[: stream.handed])
+        previews.append((preview, consumed))
+
+    result = client.suggest(SuggestRequest(b"png", 3), on_preview)
+    assert len(previews) == 1
+    preview, consumed = previews[0]
+    assert preview.summary == reply.summary and preview.suggestions == reply.suggestions
+    full = reply.model_dump_json()
+    assert consumed < full.index('"messages"')  # shown before the list was written
+    assert result.reply == reply
+
+
+def test_read_preview_needs_every_suggestion_complete():
+    full = make_reply().model_dump_json()
+    cut = full[: full.index("Olá, tudo bem?") + 3]  # the second text is still being written
+    assert read_preview(cut, 3) is None
+    until_third = full[: full.index('"messages"')]
+    preview = read_preview(until_third, 3)
+    assert [s.text for s in preview.suggestions] == ["Oi!", "Olá, tudo bem?", "Oi, já te respondo"]
+    assert read_preview(until_third, 2) is None  # a third one appeared: count is wrong
+    assert read_preview("not json", 3) is None and read_preview("", 3) is None
+
+
+def test_read_preview_rejects_an_empty_suggestion():
+    reply = make_reply(texts=("a", "   ", "c"))
+    text = reply.model_dump_json()
+    assert read_preview(text[: text.index('"messages"')], 3) is None
+
+
+def test_refusal_after_the_preview_is_still_refused(monkeypatch):
+    text = make_reply().model_dump_json()
+    client = client_returning(monkeypatch, fake_response(stop_reason="refusal", text=text))
+    previews = []
+    with pytest.raises(LlmError) as err:
+        client.suggest(SuggestRequest(b"png", 3), previews.append)
+    assert err.value.code == "refused" and len(previews) == 1
+
+
+def test_network_error_in_the_middle_of_the_stream(monkeypatch):
+    request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    stream = FakeStream(fake_response(text=make_reply().model_dump_json()), error_after=3)
+    stream.error_after_exc = anthropic.APIConnectionError(request=request)
+    client = client_returning(monkeypatch, stream)
+    with pytest.raises(LlmError) as err:
+        client.suggest(SuggestRequest(b"png", 3))
+    assert err.value.code == "network"
 
 
 def test_stop_reason_and_errors_map_to_codes(monkeypatch):

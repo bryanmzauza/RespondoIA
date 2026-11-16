@@ -238,3 +238,38 @@ def test_bring_to_front_does_not_reopen_a_hidden_panel(qtbot, reply3):
     panel.dismiss()
     panel.bring_to_front()
     assert not panel.isVisible()
+
+
+def preview_of(reply):
+    from respondoia.llm import SuggestionPreview
+
+    return SuggestionPreview(summary=reply.summary, suggestions=reply.suggestions)
+
+
+def test_preview_shows_options_that_can_be_chosen(qtbot, reply3):
+    panel = loading_panel(qtbot)
+    panel.show_preview(preview_of(reply3))
+    assert "Quer saber prazo e valor do pedido" in panel.summary_label.text()
+    assert len([b for b in panel.option_buttons if not b.isHidden()]) == 3
+    assert panel.adjust_button.isHidden()  # the message list has not arrived yet
+    with qtbot.waitSignal(panel.suggestion_chosen) as sig:
+        qtbot.keyClick(panel, "3")
+    assert sig.args == [2]
+
+
+def test_tab_does_nothing_until_the_message_list_arrives(qtbot, reply3):
+    panel = loading_panel(qtbot)
+    panel.show_preview(preview_of(reply3))
+    qtbot.keyClick(panel, Qt.Key.Key_Tab)
+    assert panel.details.isHidden()
+    panel.show_reply(reply3)
+    qtbot.keyClick(panel, Qt.Key.Key_Tab)
+    assert not panel.details.isHidden()
+
+
+def test_error_after_a_preview_disables_the_options(qtbot, reply3):
+    panel = loading_panel(qtbot)
+    panel.show_preview(preview_of(reply3))
+    panel.show_error("refused")
+    with qtbot.assertNotEmitted(panel.suggestion_chosen):
+        qtbot.keyClick(panel, "1")

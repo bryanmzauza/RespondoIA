@@ -1,11 +1,13 @@
 """Model client. Sends the chat and parses the JSON reply."""
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
 import anthropic
 import pydantic
+import pydantic_core
 from pydantic import BaseModel
 
 from respondoia.context import SYSTEM_PROMPT, build_user_content
@@ -24,11 +26,20 @@ class Suggestion(BaseModel):
 
 
 class SuggestionReply(BaseModel):
-    contact: str
+    # Field order is the order the model writes them in. Summary and suggestions come
+    # first so the panel can show them while the message list is still streaming.
     summary: str
-    messages: list[ChatMessage]
     suggestions: list[Suggestion]
     note: str | None = None
+    contact: str
+    messages: list[ChatMessage]
+
+
+class SuggestionPreview(BaseModel):
+    """The part of a reply the panel needs first."""
+
+    summary: str
+    suggestions: list[Suggestion]
 
 
 @dataclass(frozen=True)
@@ -47,6 +58,7 @@ class SuggestResult:
     input_tokens: int
     output_tokens: int
     latency_ms: int
+    preview_ms: int | None = None  # until summary and suggestions were complete
 
 
 class LlmError(Exception):
@@ -57,8 +69,13 @@ class LlmError(Exception):
         self.code = code
 
 
+PreviewCallback = Callable[[SuggestionPreview], None]
+
+
 class ModelClient(Protocol):
-    def suggest(self, request: SuggestRequest) -> SuggestResult: ...
+    def suggest(
+        self, request: SuggestRequest, on_preview: PreviewCallback | None = None
+    ) -> SuggestResult: ...
 
 
 def build_params(request: SuggestRequest, model: str) -> dict:
@@ -90,12 +107,28 @@ def check_reply(reply: SuggestionReply, count: int) -> SuggestionReply:
     return reply
 
 
+def read_preview(partial_json: str, count: int) -> SuggestionPreview | None:
+    """Summary and suggestions from the start of a streamed reply, once all are complete."""
+    try:
+        # Unfinished strings are left out, so a text that is present is a finished text.
+        data = pydantic_core.from_json(partial_json, allow_partial=True)
+        preview = SuggestionPreview.model_validate(data)
+    except ValueError:  # not JSON yet, or summary or suggestions still missing
+        return None
+    suggestions = preview.suggestions
+    if len(suggestions) != count or any(not s.text.strip() for s in suggestions):
+        return None
+    return preview
+
+
 class AnthropicClient:
     def __init__(self, api_key: str, model: str, timeout_s: float = 20.0) -> None:
         self._client = anthropic.Anthropic(api_key=api_key, timeout=timeout_s, max_retries=1)
         self._model = model
 
-    def suggest(self, request: SuggestRequest) -> SuggestResult:
+    def suggest(
+        self, request: SuggestRequest, on_preview: PreviewCallback | None = None
+    ) -> SuggestResult:
         params = build_params(request, self._model)
         # The schema goes in output_config and the reply is validated here, not by
         # messages.parse: that helper parses the text before the stop reason can be read.
@@ -105,8 +138,19 @@ class AnthropicClient:
             "format": {"type": "json_schema", "schema": schema},
         }
         started = time.perf_counter()
+        preview_ms = None
         try:
-            response = self._client.messages.create(**params)
+            with self._client.messages.stream(**params) as stream:
+                text = ""
+                for delta in stream.text_stream:
+                    text += delta
+                    if preview_ms is None:
+                        preview = read_preview(text, request.count)
+                        if preview is not None:
+                            preview_ms = round((time.perf_counter() - started) * 1000)
+                            if on_preview is not None:
+                                on_preview(preview)
+                response = stream.get_final_message()
         except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
             raise LlmError("auth") from exc
         except anthropic.RateLimitError as exc:
@@ -131,4 +175,5 @@ class AnthropicClient:
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
             latency_ms=latency_ms,
+            preview_ms=preview_ms,
         )

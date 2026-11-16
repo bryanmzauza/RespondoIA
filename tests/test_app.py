@@ -37,6 +37,8 @@ class FakeWorker(Recorder):
     replied = Signal(int, object)
     failed = Signal(int, str)
     chosen = Signal(int, object)
+    choose_failed = Signal(int, str)
+    previewed = Signal(int, object)
     crashed = Signal(int)
 
     def start(self, generation, requested_at):
@@ -71,6 +73,9 @@ class FakePanel(Recorder):
 
     def show_reply(self, reply):
         self.record("show_reply", reply)
+
+    def show_preview(self, preview):
+        self.record("show_preview", preview)
 
     def show_error(self, code):
         self.record("show_error", code)
@@ -321,7 +326,8 @@ def test_a_worker_crash_notifies_and_frees_the_hotkey(rig):
 class Catcher:
     def __init__(self, worker):
         self.events = []
-        for name in ("started", "replied", "failed", "chosen", "crashed"):
+        for name in ("started", "previewed", "replied", "failed", "chosen", "choose_failed",
+                     "crashed"):
             getattr(worker, name).connect(lambda *args, n=name: self.events.append((n, *args)))
 
 
@@ -333,7 +339,9 @@ def test_worker_runs_a_session_from_start_to_paste(qapp):
     worker.suggest(1)
     worker.regenerate(1, (2,), "pedir prazo")
     worker.choose(1, 0)
-    assert [event[0] for event in seen.events] == ["started", "replied", "replied", "chosen"]
+    assert [event[0] for event in seen.events] == [
+        "started", "previewed", "replied", "previewed", "replied", "chosen"
+    ]
     assert seen.events[0][2].chat == OpenChat("Marina Duarte", BOUNDS)
     assert seen.events[-1] == ("chosen", 1, ChooseResult.PASTED)
     assert fake.count("capture_chat") == 1 and fake.count("insert_text") == 1
@@ -350,7 +358,7 @@ def test_worker_maps_failures_to_codes(qapp):
     fake.capture_error = CaptureError("blank")
     worker.start(2, time.monotonic())
     worker.suggest(2)
-    assert [e for e in seen.events if e[0] == "failed"] == [
+    assert [e for e in seen.events if e[0] == "failed"][-2:] == [
         ("failed", 1, "rate_limit"),
         ("failed", 2, "capture"),
     ]
@@ -400,9 +408,9 @@ def test_session_work_happens_on_the_worker_thread(qtbot, tmp_path):
     threads = set()
     original = fake.suggest
 
-    def suggest(request):
+    def suggest(request, on_preview=None):
         threads.add(threading.get_ident())
-        return original(request)
+        return original(request, on_preview)
 
     fake.suggest = suggest
     thread = QThread()
@@ -460,3 +468,59 @@ def test_worker_drops_a_start_that_waited_behind_a_slow_call(qapp):
     worker.start(1, time.monotonic() - 5)
     assert seen.events == [("started", 1, StartResult(StartStatus.EXPIRED))]
     assert fake.calls == []
+
+
+def preview_of(reply):
+    from respondoia.llm import SuggestionPreview
+
+    return SuggestionPreview(summary=reply.summary, suggestions=reply.suggestions)
+
+
+def test_preview_fills_the_panel_and_is_logged(rig, caplog):
+    reply = make_reply()
+    with caplog.at_level(logging.INFO, logger="respondoia"):
+        rig.press()
+        rig.worker.started.emit(1, STARTED)
+        rig.worker.previewed.emit(1, preview_of(reply))
+        assert rig.panel.calls[-1] == ("show_preview", preview_of(reply))
+        rig.worker.replied.emit(1, reply)
+    assert rig.panel.calls[-1] == ("show_reply", reply)
+    assert "suggestion preview total_ms=" in caplog.text
+
+
+def test_choice_during_the_stream_waits_for_the_worker(rig):
+    rig.press()
+    rig.worker.started.emit(1, STARTED)
+    rig.worker.previewed.emit(1, preview_of(make_reply()))
+    rig.panel.suggestion_chosen.emit(2)
+    assert rig.panel.calls[-1] == ("dismiss",)
+    assert rig.worker.calls[-1] == ("choose", 1, 2)
+    rig.worker.replied.emit(1, make_reply())  # the list arrives after the choice
+    rig.worker.failed.emit(1, "truncated")  # or the end of the stream broke
+    assert rig.panel.calls[-1] == ("dismiss",)  # the panel stays closed
+    rig.worker.chosen.emit(1, ChooseResult.PASTED)
+    rig.press()
+    assert rig.worker.calls[-1][0] == "start"
+
+
+def test_a_choice_that_cannot_be_made_is_reported(rig):
+    rig.press()
+    rig.worker.started.emit(1, STARTED)
+    rig.worker.previewed.emit(1, preview_of(make_reply()))
+    rig.panel.suggestion_chosen.emit(0)
+    rig.worker.choose_failed.emit(1, "refused")
+    assert rig.tray.notices() == ["error.refused"]
+    rig.press()
+    assert rig.worker.calls[-1][0] == "start"
+
+
+def test_worker_reports_a_choice_after_a_refusal(qapp):
+    fake = FakePorts()
+    worker = Worker(fake.ports(), Settings())
+    seen = Catcher(worker)
+    worker.start(1, time.monotonic())
+    fake.suggest_error = LlmError("refused")
+    worker.suggest(1)
+    worker.choose(1, 0)
+    assert seen.events[-1] == ("choose_failed", 1, "refused")
+    assert fake.count("insert_text") == 0

@@ -39,6 +39,7 @@ def test_summary_has_pass_rates_latency_tokens_and_cost():
         {
             "model": "m",
             "latency_ms": 1000,
+            "preview_ms": 400,
             "input_tokens": 2000,
             "output_tokens": 500,
             "checks": {"count": True, "note_present": False},
@@ -46,6 +47,7 @@ def test_summary_has_pass_rates_latency_tokens_and_cost():
         {
             "model": "m",
             "latency_ms": 3000,
+            "preview_ms": 1200,
             "input_tokens": 2000,
             "output_tokens": 1500,
             "checks": {"count": True},
@@ -55,6 +57,7 @@ def test_summary_has_pass_rates_latency_tokens_and_cost():
     assert summary["calls"] == 2
     assert summary["pass_rate"] == {"count": 1.0, "note_present": 0.0}
     assert summary["p50_ms"] == 1000 and summary["p95_ms"] == 3000
+    assert summary["preview_p50_ms"] == 400 and summary["preview_p95_ms"] == 1200
     assert (summary["input_tokens"], summary["output_tokens"]) == (4000, 2000)
     assert summary["cost"] == 4000 / 1e6 * 1.0 + 2000 / 1e6 * 10.0
     assert "cost" not in summarize(rows, {})["m"]

@@ -13,7 +13,16 @@ from enum import Enum
 from respondoia.capture import CaptureError, is_allowed_window
 from respondoia.config import Settings
 from respondoia.domain import ChatRef, OpenChat, Rect, WindowInfo
-from respondoia.llm import LlmError, SuggestionReply, SuggestRequest, SuggestResult, check_reply
+from respondoia.llm import (
+    LlmError,
+    PreviewCallback,
+    Suggestion,
+    SuggestionPreview,
+    SuggestionReply,
+    SuggestRequest,
+    SuggestResult,
+    check_reply,
+)
 from respondoia.privacy import (
     PasteDecision,
     SendDecision,
@@ -32,7 +41,7 @@ class Ports:
     window_info: Callable[[int], WindowInfo | None]
     read_open_chat: Callable[[int], OpenChat | None]
     capture_chat: Callable[[int, Rect], bytes]  # hwnd, chat bounds -> PNG bytes
-    suggest: Callable[[SuggestRequest], SuggestResult]
+    suggest: Callable[[SuggestRequest, PreviewCallback | None], SuggestResult]
     insert_text: Callable[[int, str], bool]
     copy_text: Callable[[str], None]
 
@@ -65,7 +74,9 @@ class Session:
         self._chat: ChatRef | None = None
         self._bounds: Rect | None = None
         self._image: bytes | None = None
-        self._reply: SuggestionReply | None = None
+        self._reply: SuggestionReply | None = None  # last complete reply
+        self._choices: list[Suggestion] | None = None  # what the panel shows now
+        self._failure: str | None = None  # code of the last failed request
         self._recheck = False
 
     @property
@@ -87,7 +98,7 @@ class Session:
         logger.info("start ok")
         return StartResult(StartStatus.STARTED, chat)
 
-    def suggest(self) -> SuggestionReply:
+    def suggest(self, on_preview: PreviewCallback | None = None) -> SuggestionReply:
         """Capture the chat once, then ask the model."""
         chat = self._open_chat()
         if self._image is None:
@@ -97,9 +108,14 @@ class Session:
             self._image = self._ports.capture_chat(chat.hwnd, self._bounds)
             self._recheck = False
         request = SuggestRequest(self._image, self._settings.suggestion_count)
-        return self._ask("suggest", request)
+        return self._ask("suggest", request, on_preview)
 
-    def regenerate(self, selected_ids: Sequence[int], instruction: str) -> SuggestionReply:
+    def regenerate(
+        self,
+        selected_ids: Sequence[int],
+        instruction: str,
+        on_preview: PreviewCallback | None = None,
+    ) -> SuggestionReply:
         """Ask again with the image and the reply already in memory. The screen is not read."""
         self._open_chat()
         if self._image is None or self._reply is None:
@@ -111,13 +127,16 @@ class Session:
             selected_ids=tuple(selected_ids),
             instruction=instruction,
         )
-        return self._ask("regenerate", request)
+        return self._ask("regenerate", request, on_preview)
 
     def choose(self, index: int) -> ChooseResult:
         captured = self._open_chat()
-        if self._reply is None:
+        if self._choices is None:
+            # Nothing was shown, or the model refused after the options were shown.
+            if self._failure is not None:
+                raise LlmError(self._failure)
             raise RuntimeError("no reply to choose from")
-        text = self._reply.suggestions[index].text
+        text = self._choices[index].text
         try:
             # Read again: the window may be gone or showing another chat by now.
             current = None
@@ -142,6 +161,7 @@ class Session:
         """Drop the screenshot and the reply. The session cannot be used afterwards."""
         self._image = None
         self._reply = None
+        self._choices = None
         self._chat = None
         self._bounds = None
 
@@ -163,20 +183,36 @@ class Session:
             raise RuntimeError("session is not started or is already closed")
         return self._chat
 
-    def _ask(self, event: str, request: SuggestRequest) -> SuggestionReply:
+    def _ask(
+        self, event: str, request: SuggestRequest, on_preview: PreviewCallback | None
+    ) -> SuggestionReply:
+        # The options of an earlier reply must never be pasted for this request.
+        self._choices = None
+        self._failure = None
+
+        def preview(shown: SuggestionPreview) -> None:
+            self._choices = shown.suggestions
+            if on_preview is not None:
+                on_preview(shown)
+
         started = time.perf_counter()
         try:
-            result = self._ports.suggest(request)
+            result = self._ports.suggest(request, preview)
             reply = check_reply(result.reply, request.count)
         except LlmError as exc:
             ms = round((time.perf_counter() - started) * 1000)
             logger.info("%s failed code=%s ms=%d", event, exc.code, ms)
+            self._failure = exc.code
+            if exc.code == "refused":
+                self._choices = None
             raise
         self._reply = reply
+        self._choices = reply.suggestions
         logger.info(
-            "%s ok ms=%d model=%s tokens_in=%d tokens_out=%d",
+            "%s ok ms=%d preview_ms=%s model=%s tokens_in=%d tokens_out=%d",
             event,
             result.latency_ms,
+            result.preview_ms,
             result.model,
             result.input_tokens,
             result.output_tokens,

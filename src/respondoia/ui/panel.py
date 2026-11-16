@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 
 from respondoia.domain import Rect
 from respondoia.i18n import t
-from respondoia.llm import SuggestionReply
+from respondoia.llm import Suggestion, SuggestionPreview, SuggestionReply
 
 COMPOSER_CLEARANCE = 72  # logical pixels kept free above the bottom of the chat area
 MARGIN = 12
@@ -68,7 +68,8 @@ class SuggestionPanel(QWidget):
         self.setStyleSheet(_STYLE)
         self.setFixedWidth(WIDTH)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self._reply: SuggestionReply | None = None
+        self._reply: SuggestionReply | None = None  # with the message list
+        self._choices: list[Suggestion] | None = None  # the options on screen
         self._anchor: tuple[Rect, Rect] | None = None  # chat area and screen, logical pixels
         self._message_ids: list[int] = []
 
@@ -141,6 +142,7 @@ class SuggestionPanel(QWidget):
         """Open, or stay open, in the loading state. Bounds are in screen pixels."""
         self._retranslate()
         self._reply = None
+        self._choices = None
         self._anchor = self._logical_anchor(chat_bounds)
         self.title_label.setText(chat_title)
         self._set_status(t("panel.loading"))
@@ -153,26 +155,21 @@ class SuggestionPanel(QWidget):
         self.show()
         self.bring_to_front()
 
+    def show_preview(self, preview: SuggestionPreview) -> None:
+        """Summary and options while the message list is still arriving."""
+        self._show_options(preview.summary, preview.suggestions)
+        self.note_label.hide()
+        self.adjust_button.hide()
+        self.details.hide()
+        self._place()
+        self.setFocus()
+
     def show_reply(self, reply: SuggestionReply) -> None:
         self._reply = reply
-        self.status_label.hide()
-        self.retry_button.hide()
-        self.summary_label.setText(t("panel.summary") + ": " + reply.summary)
-        self.summary_label.show()
+        self._show_options(reply.summary, reply.suggestions)
         self.note_label.setVisible(bool(reply.note))
         if reply.note:
             self.note_label.setText(t("panel.note") + ": " + reply.note)
-        available = WIDTH - 2 * MARGIN - 24
-        for index, button in enumerate(self.option_buttons):
-            if index >= len(reply.suggestions):
-                button.hide()
-                continue
-            suggestion = reply.suggestions[index]
-            line = f"{index + 1}  {suggestion.label}  {_one_line(suggestion.text)}"
-            elided = button.fontMetrics().elidedText(line, Qt.TextElideMode.ElideRight, available)
-            button.setText(elided)
-            button.setToolTip(suggestion.text)
-            button.show()
         self._fill_messages(reply)
         self.instruction.clear()
         self.adjust_button.show()
@@ -180,9 +177,28 @@ class SuggestionPanel(QWidget):
         self._place()
         self.setFocus()
 
+    def _show_options(self, summary: str, suggestions: list[Suggestion]) -> None:
+        self._choices = suggestions
+        self.status_label.hide()
+        self.retry_button.hide()
+        self.summary_label.setText(t("panel.summary") + ": " + summary)
+        self.summary_label.show()
+        available = WIDTH - 2 * MARGIN - 24
+        for index, button in enumerate(self.option_buttons):
+            if index >= len(suggestions):
+                button.hide()
+                continue
+            suggestion = suggestions[index]
+            line = f"{index + 1}  {suggestion.label}  {_one_line(suggestion.text)}"
+            elided = button.fontMetrics().elidedText(line, Qt.TextElideMode.ElideRight, available)
+            button.setText(elided)
+            button.setToolTip(suggestion.text)
+            button.show()
+
     def show_error(self, code: str) -> None:
         """Show the translated error and the retry button. Options become unavailable."""
         self._reply = None
+        self._choices = None
         for button in self.option_buttons:
             button.hide()
         for widget in (self.summary_label, self.note_label, self.adjust_button, self.details):
@@ -239,7 +255,7 @@ class SuggestionPanel(QWidget):
         self.status_label.show()
 
     def _choose(self, index: int) -> None:
-        if self._reply is not None and index < len(self._reply.suggestions):
+        if self._choices is not None and index < len(self._choices):
             self.suggestion_chosen.emit(index)
 
     def _toggle_details(self) -> None:
