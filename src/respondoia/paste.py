@@ -105,6 +105,12 @@ def focus_window(hwnd: int, timeout_ms: int = 500) -> bool:
     return False
 
 
+def _foreground_window() -> int:
+    import win32gui
+
+    return win32gui.GetForegroundWindow()
+
+
 def _modifiers_released(timeout_ms: int) -> bool:
     import ctypes
 
@@ -119,7 +125,8 @@ def _modifiers_released(timeout_ms: int) -> bool:
         time.sleep(0.01)
 
 
-def _send_keys(events: list[tuple[int, bool]]) -> None:
+def _send_keys(events: list[tuple[int, bool]]) -> int:
+    """Return how many events Windows accepted."""
     import ctypes
     import ctypes.wintypes as wt
 
@@ -152,7 +159,7 @@ def _send_keys(events: list[tuple[int, bool]]) -> None:
     for slot, (key, is_up) in zip(inputs, events):
         slot.type = _INPUT_KEYBOARD
         slot.union.ki = KeyboardInput(key, 0, _KEYEVENTF_KEYUP if is_up else 0, 0, 0)
-    ctypes.windll.user32.SendInput(len(events), inputs, ctypes.sizeof(Input))
+    return ctypes.windll.user32.SendInput(len(events), inputs, ctypes.sizeof(Input))
 
 
 def insert_text(hwnd: int, text: str) -> bool:
@@ -161,7 +168,12 @@ def insert_text(hwnd: int, text: str) -> bool:
     copy_text(prepare_text(text))
     if not focus_window(hwnd) or not _modifiers_released(500):
         return False
-    _send_keys(ctrl_v_events())
+    # Focus can move while the user is still releasing keys: check right before pasting.
+    if _foreground_window() != hwnd:
+        return False
+    events = ctrl_v_events()
+    if _send_keys(events) != len(events):
+        return False
     time.sleep(0.4)  # let the target read the clipboard before it is put back
     restore_clipboard(saved)
     return True
