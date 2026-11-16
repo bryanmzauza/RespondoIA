@@ -3,6 +3,17 @@
 Each stage ends with a working build. A stage is done only when its exit
 criteria pass.
 
+Work for a stage happens on its own branch and is merged into `main` when the
+stage is done. `main` always holds the last finished stage.
+
+| Stage | Branch |
+|---|---|
+| 0.1 Core | `stage/0.1-core` |
+| 0.2 Local reading | `stage/0.2-local-reading` |
+| 0.3 Style and context | `stage/0.3-style-context` |
+| 0.4 History | `stage/0.4-history` |
+| 0.5 Release | `stage/0.5-release` |
+
 ## 0.1 Core
 
 Hotkey to pasted reply, using a screenshot of the chat as model input.
