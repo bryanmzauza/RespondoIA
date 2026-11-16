@@ -40,8 +40,9 @@ def test_system_prompt_keeps_the_safety_rules():
         assert phrase in SYSTEM_PROMPT
 
 
-def test_system_prompt_caps_the_list_and_defines_pending():
-    assert "at most the 8 most recent" in SYSTEM_PROMPT
+def test_system_prompt_defines_pending_and_lists_every_visible_message():
+    # A cap made the models pick the wrong messages in long chats and drop the pending ones.
+    assert "at most" not in SYSTEM_PROMPT
     assert "after the user's last message is pending" in SYSTEM_PROMPT
     assert "not only the last one" in SYSTEM_PROMPT
     assert "including the summary, the note, suggestion labels" in SYSTEM_PROMPT
