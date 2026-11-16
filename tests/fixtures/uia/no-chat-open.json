@@ -1,0 +1,205 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  900
+ ],
+ "children": [
+  {
+   "control_type": "Pane",
+   "name": "",
+   "automation_id": "",
+   "aria_role": "",
+   "rect": [
+    0,
+    0,
+    1600,
+    900
+   ],
+   "children": [
+    {
+     "control_type": "Document",
+     "name": "WhatsApp",
+     "automation_id": "",
+     "aria_role": "document",
+     "rect": [
+      0,
+      0,
+      1600,
+      900
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "app",
+       "aria_role": "group",
+       "rect": [
+        0,
+        0,
+        1600,
+        900
+       ],
+       "children": [
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "side",
+         "aria_role": "group",
+         "rect": [
+          0,
+          0,
+          420,
+          900
+         ],
+         "children": [
+          {
+           "control_type": "Edit",
+           "name": "Pesquisar ou começar uma nova conversa",
+           "automation_id": "",
+           "aria_role": "textbox",
+           "rect": [
+            89,
+            76,
+            380,
+            97
+           ],
+           "children": []
+          },
+          {
+           "control_type": "DataGrid",
+           "name": "",
+           "automation_id": "pane-side",
+           "aria_role": "grid",
+           "rect": [
+            0,
+            120,
+            420,
+            900
+           ],
+           "children": [
+            {
+             "control_type": "DataItem",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "row",
+             "rect": [
+              0,
+              120,
+              420,
+              192
+             ],
+             "children": [
+              {
+               "control_type": "Text",
+               "name": "Caio Lima",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                130,
+                300,
+                150
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Text",
+               "name": "Fechado, até sábado",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                154,
+                380,
+                172
+               ],
+               "children": []
+              }
+             ]
+            },
+            {
+             "control_type": "DataItem",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "row",
+             "rect": [
+              0,
+              192,
+              420,
+              264
+             ],
+             "children": [
+              {
+               "control_type": "Text",
+               "name": "Renato Farias",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                202,
+                300,
+                222
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          420,
+          0,
+          1600,
+          900
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            0,
+            1600,
+            900
+           ],
+           "children": [
+            {
+             "control_type": "Text",
+             "name": "Envie e receba mensagens",
+             "automation_id": "",
+             "aria_role": "description",
+             "rect": [
+              800,
+              40,
+              1220,
+              70
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

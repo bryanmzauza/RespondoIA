@@ -1,0 +1,421 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  900
+ ],
+ "children": [
+  {
+   "control_type": "Pane",
+   "name": "",
+   "automation_id": "",
+   "aria_role": "",
+   "rect": [
+    0,
+    0,
+    1600,
+    900
+   ],
+   "children": [
+    {
+     "control_type": "Document",
+     "name": "WhatsApp",
+     "automation_id": "",
+     "aria_role": "document",
+     "rect": [
+      0,
+      0,
+      1600,
+      900
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "app",
+       "aria_role": "group",
+       "rect": [
+        0,
+        0,
+        1600,
+        900
+       ],
+       "children": [
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "side",
+         "aria_role": "group",
+         "rect": [
+          0,
+          0,
+          420,
+          900
+         ],
+         "children": [
+          {
+           "control_type": "Edit",
+           "name": "Pesquisar ou começar uma nova conversa",
+           "automation_id": "",
+           "aria_role": "textbox",
+           "rect": [
+            89,
+            76,
+            380,
+            97
+           ],
+           "children": []
+          },
+          {
+           "control_type": "DataGrid",
+           "name": "",
+           "automation_id": "pane-side",
+           "aria_role": "grid",
+           "rect": [
+            0,
+            120,
+            420,
+            900
+           ],
+           "children": [
+            {
+             "control_type": "DataItem",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "row",
+             "rect": [
+              0,
+              120,
+              420,
+              192
+             ],
+             "children": [
+              {
+               "control_type": "Text",
+               "name": "Caio Lima",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                130,
+                300,
+                150
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Text",
+               "name": "Fechado, até sábado",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                154,
+                380,
+                172
+               ],
+               "children": []
+              }
+             ]
+            },
+            {
+             "control_type": "DataItem",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "row",
+             "rect": [
+              0,
+              192,
+              420,
+              264
+             ],
+             "children": [
+              {
+               "control_type": "Text",
+               "name": "Renato Farias",
+               "automation_id": "",
+               "aria_role": "description",
+               "rect": [
+                80,
+                202,
+                300,
+                222
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          420,
+          0,
+          1600,
+          900
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "main",
+           "aria_role": "group",
+           "rect": [
+            420,
+            0,
+            1600,
+            900
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              0,
+              1600,
+              900
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "banner",
+             "rect": [
+              420,
+              0,
+              1600,
+              65
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                420,
+                0,
+                1391,
+                65
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  436,
+                  12,
+                  491,
+                  53
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    436,
+                    12,
+                    476,
+                    53
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Button",
+                 "name": "Dados do perfil",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  420,
+                  0,
+                  1391,
+                  65
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  491,
+                  11,
+                  1375,
+                  33
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Text",
+                   "name": "Bia 🌻",
+                   "automation_id": "",
+                   "aria_role": "description",
+                   "rect": [
+                    491,
+                    12,
+                    640,
+                    32
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Button",
+               "name": "Pesquisar",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                1488,
+                12,
+                1528,
+                53
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Mais opções",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                1544,
+                12,
+                1584,
+                53
+               ],
+               "children": []
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              64,
+              1600,
+              836
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "row",
+               "rect": [
+                420,
+                700,
+                1600,
+                760
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "Oi! Tudo bem?",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  480,
+                  712,
+                  700,
+                  732
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "row",
+               "rect": [
+                420,
+                764,
+                1600,
+                824
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "oi, tudo sim e vc?",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  1200,
+                  776,
+                  1540,
+                  796
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "contentinfo",
+             "rect": [
+              420,
+              836,
+              1600,
+              900
+             ],
+             "children": [
+              {
+               "control_type": "Edit",
+               "name": "Digite uma mensagem",
+               "automation_id": "",
+               "aria_role": "textbox",
+               "rect": [
+                524,
+                850,
+                1537,
+                874
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
