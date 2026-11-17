@@ -40,6 +40,7 @@ class FakeWorker(Recorder):
     choose_failed = Signal(int, str)
     previewed = Signal(int, object)
     crashed = Signal(int)
+    fell_back = Signal(int)
 
     def start(self, generation, requested_at):
         self.requested_at = requested_at
@@ -354,13 +355,14 @@ class Catcher:
             "chosen",
             "choose_failed",
             "crashed",
+            "fell_back",
         ):
             getattr(worker, name).connect(lambda *args, n=name: self.events.append((n, *args)))
 
 
 def test_worker_runs_a_session_from_start_to_paste(qapp):
     fake = FakePorts()
-    worker = Worker(fake.ports(), Settings())
+    worker = Worker(fake.ports(), Settings(input="screenshot"))
     seen = Catcher(worker)
     worker.start(1, time.monotonic())
     worker.suggest(1)
@@ -446,7 +448,7 @@ def test_session_work_happens_on_the_worker_thread(qtbot, tmp_path):
 
     fake.suggest = suggest
     thread = QThread()
-    worker = Worker(fake.ports(), Settings())
+    worker = Worker(fake.ports(), Settings(input="screenshot"))
     worker.moveToThread(thread)
     thread.start()
     panel, tray, hotkey = FakePanel(), FakeTray(), FakeHotkey()
@@ -639,3 +641,22 @@ def test_settings_from_the_panel_open_the_window(rig, monkeypatch):
     monkeypatch.setattr(rig.controller, "open_settings", lambda: opened.append(True))
     rig.panel.settings_requested.emit()
     assert opened == [True]
+
+
+def test_fallback_notifies_once_per_session(rig):
+    rig.press()
+    rig.worker.started.emit(1, STARTED)
+    rig.worker.fell_back.emit(1)
+    rig.worker.fell_back.emit(1)  # a retry falls back again
+    assert rig.tray.notices() == ["notice.screenshot_fallback"]
+    rig.worker.fell_back.emit(0)  # an older session
+    assert rig.tray.notices() == ["notice.screenshot_fallback"]
+
+
+def test_worker_reports_the_fallback(qapp):
+    fake = FakePorts()  # no lines read: the session sends the screenshot
+    worker = Worker(fake.ports(), Settings())
+    seen = Catcher(worker)
+    worker.start(1, time.monotonic())
+    worker.suggest(1)
+    assert ("fell_back", 1) in seen.events

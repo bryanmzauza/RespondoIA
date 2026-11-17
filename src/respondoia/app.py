@@ -59,6 +59,7 @@ class Worker(QObject):
     chosen = Signal(int, object)  # generation, ChooseResult
     choose_failed = Signal(int, str)  # generation, error code
     crashed = Signal(int)  # generation
+    fell_back = Signal(int)  # generation: the screenshot was sent instead of text
 
     def __init__(self, ports: Ports, settings: Settings) -> None:
         super().__init__()
@@ -94,7 +95,14 @@ class Worker(QObject):
 
     @Slot(int)
     def suggest(self, generation: int) -> None:
-        self._ask(generation, lambda session, preview: session.suggest(preview))
+        def call(session, preview):
+            try:
+                return session.suggest(preview)
+            finally:
+                if session.fell_back:
+                    self.fell_back.emit(generation)
+
+        self._ask(generation, call)
 
     @Slot(int, tuple, str)
     def regenerate(self, generation: int, selected_ids: tuple, instruction: str) -> None:
@@ -183,6 +191,7 @@ class Controller(QObject):
         self._hotkey = hotkey
         self._settings = settings
         self._config_file = config_file
+        self._fallback_shown = False
         self._settings_window: SettingsWindow | None = None
         self._generation = 0
         self._active = False
@@ -203,6 +212,7 @@ class Controller(QObject):
         worker.chosen.connect(self._on_chosen)
         worker.choose_failed.connect(self._on_choose_failed)
         worker.crashed.connect(self._on_crashed)
+        worker.fell_back.connect(self._on_fell_back)
 
         hotkey.triggered.connect(self.on_hotkey)
         panel.suggestion_chosen.connect(self._on_suggestion_chosen)
@@ -227,6 +237,7 @@ class Controller(QObject):
         self._generation += 1
         self._active = True
         self._choosing = False
+        self._fallback_shown = False
         self._pressed_at = time.perf_counter()
         self._waiting_for = "suggestion"
         self.request_start.emit(self._generation, time.monotonic())
@@ -291,6 +302,11 @@ class Controller(QObject):
         self._active = False
         self._choosing = False
         self._tray.notify("error." + code)
+
+    def _on_fell_back(self, generation: int) -> None:
+        if generation == self._generation and not self._fallback_shown:
+            self._fallback_shown = True
+            self._tray.notify("notice.screenshot_fallback")
 
     def _on_crashed(self, generation: int) -> None:
         if generation != self._generation:
@@ -429,7 +445,7 @@ def build_ports(current: Callable[[], Settings]) -> Ports:
     return Ports(
         foreground_window=capture.foreground_window,
         window_info=capture.window_info,
-        read_open_chat=reader.read_open_chat,
+        read_chat_view=reader.read_chat_view,
         capture_chat=lambda hwnd, bounds: capture.capture_chat(
             hwnd, bounds, current().max_image_side
         ),
@@ -486,6 +502,10 @@ def run(argv: Sequence[str]) -> int:
     code = app.exec()
     hotkey.unregister()
     thread.quit()
-    thread.wait(3000)
+    if not thread.wait(3000):
+        # A model call is still running. Stop the thread instead of destroying it
+        # while it runs, which would abort the process.
+        thread.terminate()
+        thread.wait(1000)
     logger.info("app stopped")
     return code

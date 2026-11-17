@@ -74,3 +74,20 @@ def test_prepare_image_limits_the_longer_side():
 def test_blank_detection():
     assert is_blank(Image.new("RGB", (500, 500), "black"))
     assert not is_blank(noise((500, 500)))
+
+
+def test_win32_errors_while_capturing_are_capture_errors(monkeypatch):
+    import pywintypes
+    import win32gui
+
+    from respondoia import capture
+
+    info = WindowInfo(5, "WhatsApp", "WhatsApp.Root.exe", Rect(0, 0, 800, 600), False)
+    monkeypatch.setattr(capture, "window_info", lambda hwnd: info)
+
+    def gone(hwnd):
+        raise pywintypes.error(1400, "GetWindowDC", "Invalid window handle.")
+
+    monkeypatch.setattr(win32gui, "GetWindowDC", gone)
+    with pytest.raises(CaptureError):
+        capture.grab_window(5)

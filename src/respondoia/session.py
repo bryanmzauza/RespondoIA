@@ -12,7 +12,7 @@ from enum import Enum
 
 from respondoia.capture import CaptureError, is_allowed_window
 from respondoia.config import Settings
-from respondoia.domain import ChatRef, OpenChat, Rect, WindowInfo
+from respondoia.domain import ChatLine, ChatRef, ChatView, OpenChat, Rect, WindowInfo
 from respondoia.llm import (
     LlmError,
     PreviewCallback,
@@ -28,6 +28,7 @@ from respondoia.privacy import (
     SendDecision,
     check_before_paste,
     check_before_send,
+    mask_lines,
 )
 
 # Log lines carry event names, durations, model ids and error codes. Never a chat
@@ -39,7 +40,7 @@ logger = logging.getLogger("respondoia")
 class Ports:
     foreground_window: Callable[[], WindowInfo | None]
     window_info: Callable[[int], WindowInfo | None]
-    read_open_chat: Callable[[int], OpenChat | None]
+    read_chat_view: Callable[[int], ChatView | None]  # title, bounds and visible lines
     capture_chat: Callable[[int, Rect], bytes]  # hwnd, chat bounds -> PNG bytes
     suggest: Callable[[SuggestRequest, PreviewCallback | None], SuggestResult]
     insert_text: Callable[[int, str], bool]
@@ -78,30 +79,53 @@ class Session:
         self._choices: list[Suggestion] | None = None  # what the panel shows now
         self._failure: str | None = None  # code of the last failed request
         self._recheck = False
+        self._lines: tuple[ChatLine, ...] = ()  # read at start, never again
+        self._masked: tuple[ChatLine, ...] | None = None  # what is sent in text mode
+        self._fell_back = False
 
     @property
     def chat(self) -> ChatRef | None:
         return self._chat
+
+    @property
+    def fell_back(self) -> bool:
+        """True when text was wanted but the screenshot had to be sent."""
+        return self._fell_back
 
     def start(self) -> StartResult:
         window = self._ports.foreground_window()
         if window is None or not is_allowed_window(window, self._settings.allowed_windows):
             return StartResult(StartStatus.NOT_WHATSAPP)
         # The title is read locally first: it decides whether anything else may be read.
-        chat = self._ports.read_open_chat(window.hwnd)
+        view = self._ports.read_chat_view(window.hwnd)
+        chat = view.chat if view is not None else None
         decision = check_before_send(chat, self._settings.private_contacts)
         if decision is not SendDecision.ALLOW:
             logger.info("start refused reason=%s", decision.value)
             return StartResult(StartStatus(decision.value))
         self._chat = ChatRef(window.hwnd, chat.title)
         self._bounds = chat.bounds
+        self._lines = view.lines
         logger.info("start ok")
         return StartResult(StartStatus.STARTED, chat)
 
     def suggest(self, on_preview: PreviewCallback | None = None) -> SuggestionReply:
-        """Capture the chat once, then ask the model."""
+        """Send the chat as masked text, or capture it once when there is no text."""
         chat = self._open_chat()
+        if self._settings.input == "text" and self._lines:
+            if self._masked is None:
+                found: tuple[str, ...] = ()
+                self._masked = self._lines
+                if self._settings.mask_sensitive_data:
+                    self._masked, found = mask_lines(self._lines)
+                logger.info("suggest input=text lines=%d masked=%d", len(self._lines), len(found))
+            request = SuggestRequest(
+                None, self._settings.suggestion_count, lines=self._masked
+            )
+            return self._ask("suggest", request, on_preview)
+        self._fell_back = self._settings.input == "text"
         if self._image is None:
+            logger.info("suggest input=screenshot fell_back=%s", self._fell_back)
             if self._recheck:
                 self._check_chat_again(chat)
             self._recheck = True  # until a capture succeeds
@@ -116,8 +140,17 @@ class Session:
         instruction: str,
         on_preview: PreviewCallback | None = None,
     ) -> SuggestionReply:
-        """Ask again with the image and the reply already in memory. The screen is not read."""
+        """Ask again with what is already in memory. The screen is not read."""
         self._open_chat()
+        if self._masked is not None:
+            request = SuggestRequest(
+                None,
+                self._settings.suggestion_count,
+                selected_ids=tuple(selected_ids),
+                instruction=instruction,
+                lines=self._masked,
+            )
+            return self._ask("regenerate", request, on_preview)
         if self._image is None or self._reply is None:
             raise RuntimeError("nothing to regenerate from")
         request = SuggestRequest(
@@ -141,7 +174,8 @@ class Session:
             # Read again: the window may be gone or showing another chat by now.
             current = None
             if self._ports.window_info(captured.hwnd) is not None:
-                chat = self._ports.read_open_chat(captured.hwnd)
+                view = self._ports.read_chat_view(captured.hwnd)
+                chat = view.chat if view is not None else None
                 if chat is not None:
                     current = ChatRef(captured.hwnd, chat.title)
             decision = check_before_paste(captured, current, self._settings.insert_mode)
@@ -162,6 +196,8 @@ class Session:
         self._image = None
         self._reply = None
         self._choices = None
+        self._lines = ()
+        self._masked = None
         self._chat = None
         self._bounds = None
 
@@ -169,7 +205,8 @@ class Session:
         """Before a retried capture: same window, same chat, still allowed, new bounds."""
         chat = None
         if self._ports.window_info(captured.hwnd) is not None:
-            chat = self._ports.read_open_chat(captured.hwnd)
+            view = self._ports.read_chat_view(captured.hwnd)
+            chat = view.chat if view is not None else None
         current = ChatRef(captured.hwnd, chat.title) if chat is not None else None
         same = check_before_paste(captured, current, "paste") is PasteDecision.PASTE
         allowed = check_before_send(chat, self._settings.private_contacts)

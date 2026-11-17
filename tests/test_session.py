@@ -5,7 +5,7 @@ import pytest
 
 from respondoia.capture import CaptureError
 from respondoia.config import Settings
-from respondoia.domain import ChatRef, OpenChat, Rect, WindowInfo
+from respondoia.domain import ChatLine, ChatRef, ChatView, OpenChat, Rect, WindowInfo
 from respondoia.llm import (
     ChatMessage,
     LlmError,
@@ -40,6 +40,7 @@ class FakePorts:
         self.window = WindowInfo(HWND, "WhatsApp", exe, Rect(0, 0, 1600, 900), False)
         self.window_alive = True
         self.chat = OpenChat(title, BOUNDS) if title is not None else None
+        self.lines = []  # no lines read: the session falls back to the screenshot
         self.reply = make_reply()
         self.suggest_error = None
         self.capture_error = None
@@ -60,9 +61,9 @@ class FakePorts:
         self.calls.append(("window_info", hwnd))
         return self.window if self.window_alive else None
 
-    def read_open_chat(self, hwnd):
-        self.calls.append(("read_open_chat", hwnd))
-        return self.chat
+    def read_chat_view(self, hwnd):
+        self.calls.append(("read_chat_view", hwnd))
+        return ChatView(self.chat, tuple(self.lines)) if self.chat is not None else None
 
     def capture_chat(self, hwnd, bounds):
         self.calls.append(("capture_chat", hwnd, bounds))
@@ -90,7 +91,7 @@ class FakePorts:
         return Ports(
             foreground_window=self.foreground_window,
             window_info=self.window_info,
-            read_open_chat=self.read_open_chat,
+            read_chat_view=self.read_chat_view,
             capture_chat=self.capture_chat,
             suggest=self.suggest,
             insert_text=self.insert_text,
@@ -179,7 +180,7 @@ def test_regenerate_does_not_read_the_screen_again():
     first = session.suggest()
     fake.reply = make_reply(text="outra leitura")
     assert session.regenerate((2,), "pedir prazo") is fake.reply
-    assert fake.count("capture_chat") == 1 and fake.count("read_open_chat") == 1
+    assert fake.count("capture_chat") == 1 and fake.count("read_chat_view") == 1
     request = fake.calls[-1][1]
     assert request.previous is first
     assert request.selected_ids == (2,) and request.instruction == "pedir prazo"
@@ -379,3 +380,99 @@ def test_a_choice_during_a_failed_regenerate_never_pastes_an_old_option():
     with pytest.raises(LlmError):
         session.choose(0)
     assert fake.count("insert_text") == 0 and fake.count("copy_text") == 0
+
+
+LINES = [
+    ChatLine("contact", "", "09:10", "text", "Oi! cpf 529.982.247-25", ""),
+    ChatLine("user", "", "09:12", "text", "oi", ""),
+    ChatLine("contact", "", "09:13", "text", "Manda o arquivo?", ""),
+]
+
+
+def text_fake():
+    fake = FakePorts()
+    fake.lines = list(LINES)
+    return fake
+
+
+def test_text_input_never_captures():
+    fake = text_fake()
+    session = started(fake)
+    session.suggest()
+    request = fake.calls[-1][1]
+    assert fake.count("capture_chat") == 0
+    assert request.image_png is None and len(request.lines) == 3
+    assert session.fell_back is False
+
+
+def test_lines_are_masked_before_the_request():
+    fake = text_fake()
+    session = started(fake)
+    session.suggest()
+    assert fake.calls[-1][1].lines[0].text == "Oi! cpf [CPF]"
+
+
+def test_masking_can_be_turned_off():
+    fake = text_fake()
+    session = started(fake, Settings(mask_sensitive_data=False))
+    session.suggest()
+    assert fake.calls[-1][1].lines[0].text == "Oi! cpf 529.982.247-25"
+
+
+def test_no_lines_falls_back_to_screenshot_with_notice():
+    fake = FakePorts()
+    session = started(fake)
+    session.suggest()
+    request = fake.calls[-1][1]
+    assert fake.count("capture_chat") == 1 and request.image_png == b"png-bytes"
+    assert request.lines == () and session.fell_back is True
+
+
+def test_screenshot_input_always_captures():
+    fake = text_fake()
+    session = started(fake, Settings(input="screenshot"))
+    session.suggest()
+    assert fake.count("capture_chat") == 1 and fake.calls[-1][1].lines == ()
+    assert session.fell_back is False
+
+
+def test_private_contact_blocks_both_inputs():
+    for settings in (Settings(), Settings(input="screenshot")):
+        fake = text_fake()
+        session = Session(fake.ports(), replace(settings, private_contacts=("Marina Duarte",)))
+        assert session.start().status is StartStatus.PRIVATE
+        with pytest.raises(RuntimeError):
+            session.suggest()
+        assert fake.count("capture_chat") == 0 and fake.count("suggest") == 0
+
+
+def test_regenerate_in_text_mode_reuses_the_masked_lines():
+    fake = text_fake()
+    session = started(fake)
+    session.suggest()
+    first = fake.calls[-1][1]
+    session.regenerate((3,), "pedir prazo")
+    again = fake.calls[-1][1]
+    assert again.lines == first.lines and again.image_png is None
+    assert (again.selected_ids, again.instruction) == ((3,), "pedir prazo")
+    assert fake.count("read_chat_view") == 1 and fake.count("capture_chat") == 0
+
+
+def test_text_mode_choice_still_checks_the_chat():
+    fake = text_fake()
+    session = started(fake)
+    session.suggest()
+    fake.chat = OpenChat("Caio Lima", BOUNDS)
+    assert session.choose(0) is ChooseResult.COPIED_CHAT_CHANGED
+
+
+def test_logs_carry_no_content_in_text_mode(caplog):
+    fake = FakePorts(title="ZZ-SECRET-TITLE")
+    fake.lines = [ChatLine("contact", "ZZ-SECRET-SENDER", "09:10", "text", "ZZ-SECRET-TEXT", "")]
+    with caplog.at_level(logging.DEBUG, logger="respondoia"):
+        session = started(fake)
+        session.suggest()
+        session.regenerate((1,), "ZZ-SECRET-INSTRUCTION")
+        session.choose(0)
+    assert "ZZ-SECRET" not in caplog.text
+    assert "input=text" in caplog.text

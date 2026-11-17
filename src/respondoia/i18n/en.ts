@@ -311,5 +311,9 @@
         <source>panel.settings</source>
         <translation>Settings</translation>
     </message>
+    <message>
+        <source>notice.screenshot_fallback</source>
+        <translation>Could not read the chat as text. A screenshot was sent instead.</translation>
+    </message>
 </context>
 </TS>

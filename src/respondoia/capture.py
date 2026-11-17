@@ -119,7 +119,9 @@ def foreground_window() -> WindowInfo | None:
 def grab_window(hwnd: int) -> Image.Image:
     """Render the window's own content to an in-memory image. Nothing touches the disk."""
     import ctypes
+    from contextlib import suppress
 
+    import pywintypes
     import win32gui
     import win32ui
 
@@ -127,24 +129,39 @@ def grab_window(hwnd: int) -> Image.Image:
     if info is None or info.minimized or info.rect.width <= 0 or info.rect.height <= 0:
         raise CaptureError("window is gone, minimized or empty")
     width, height = info.rect.width, info.rect.height
-    window_dc = win32gui.GetWindowDC(hwnd)
-    source = win32ui.CreateDCFromHandle(window_dc)
-    memory = source.CreateCompatibleDC()
-    bitmap = win32ui.CreateBitmap()
+    window_dc = source = memory = bitmap = None
     try:
+        window_dc = win32gui.GetWindowDC(hwnd)
+        source = win32ui.CreateDCFromHandle(window_dc)
+        memory = source.CreateCompatibleDC()
+        bitmap = win32ui.CreateBitmap()
         bitmap.CreateCompatibleBitmap(source, width, height)
         memory.SelectObject(bitmap)
         # PrintWindow asks the window to draw itself, so windows on top of it are left out.
         drawn = ctypes.windll.user32.PrintWindow(hwnd, memory.GetSafeHdc(), PW_RENDERFULLCONTENT)
         bits = bitmap.GetBitmapBits(True)
+    except (win32ui.error, pywintypes.error) as exc:  # the window went away, or GDI failed
+        raise CaptureError("could not capture the window") from exc
     finally:
-        win32gui.DeleteObject(bitmap.GetHandle())
-        memory.DeleteDC()
-        source.DeleteDC()
-        win32gui.ReleaseDC(hwnd, window_dc)
+        # Release only what was created, whatever failed.
+        with suppress(Exception):
+            if bitmap is not None:
+                win32gui.DeleteObject(bitmap.GetHandle())
+        with suppress(Exception):
+            if memory is not None:
+                memory.DeleteDC()
+        with suppress(Exception):
+            if source is not None:
+                source.DeleteDC()
+        with suppress(Exception):
+            if window_dc is not None:
+                win32gui.ReleaseDC(hwnd, window_dc)
     if not drawn:
         raise CaptureError("PrintWindow failed")
-    image = Image.frombuffer("RGB", (width, height), bits, "raw", "BGRX", 0, 1)
+    try:
+        image = Image.frombuffer("RGB", (width, height), bits, "raw", "BGRX", 0, 1)
+    except ValueError as exc:  # a display mode other than 32 bits per pixel
+        raise CaptureError("unexpected bitmap format") from exc
     if is_blank(image):
         raise CaptureError("capture came back blank")
     return image

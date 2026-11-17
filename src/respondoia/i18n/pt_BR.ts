@@ -311,5 +311,9 @@
         <source>panel.settings</source>
         <translation>Configurações</translation>
     </message>
+    <message>
+        <source>notice.screenshot_fallback</source>
+        <translation>Não foi possível ler a conversa como texto. Foi enviado um print.</translation>
+    </message>
 </context>
 </TS>
