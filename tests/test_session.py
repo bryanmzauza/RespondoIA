@@ -617,3 +617,22 @@ def test_logs_carry_no_content_with_style(caplog):
         session, _ = styled(fake, style)
         session.suggest()
     assert "ZZ-" not in caplog.text and "start ok style=1 knowledge=1 label=0" in caplog.text
+
+
+def test_masked_lines_stay_unset_when_masking_fails(monkeypatch):
+    from respondoia import session as session_module
+
+    fake = FakePorts()
+    fake.lines = [ChatLine("contact", "", "09:10", "text", "cpf 529.982.247-25", "")]
+    session = started(fake)
+
+    def broken(lines):
+        raise ValueError("masking failed")
+
+    monkeypatch.setattr(session_module, "mask_lines", broken)
+    with pytest.raises(ValueError):
+        session.suggest()
+    monkeypatch.undo()
+    with pytest.raises(RuntimeError):
+        session.regenerate((1,), "")
+    assert fake.count("suggest") == 0

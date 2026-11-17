@@ -177,9 +177,11 @@ class Session:
         if self._settings.input == "text" and has_text:
             if self._masked is None:
                 found: tuple[str, ...] = ()
-                self._masked = self._lines
+                masked = self._lines
                 if self._settings.mask_sensitive_data:
-                    self._masked, found = mask_lines(self._lines)
+                    masked, found = mask_lines(self._lines)
+                # Set only once masking worked: a later regenerate reuses it as it is.
+                self._masked = masked
                 logger.info("suggest input=text lines=%d masked=%d", len(self._lines), len(found))
             request = SuggestRequest(
                 None, self._settings.suggestion_count, lines=self._masked, context=self._context

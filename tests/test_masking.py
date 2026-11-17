@@ -78,3 +78,15 @@ def test_phone_rules_keep_their_neighbours():
     assert mask_text("total 1234567890").text == "total 1234567890"
     assert mask_text("11 91234-5678").text == "[PHONE]"
     assert mask_text("11912345678").text == "[PHONE]"
+
+
+def test_email_rule_is_fast_on_long_runs():
+    import time
+
+    started = time.perf_counter()
+    mask_text("a" * 20_000 + "@" + "b" * 20_000)
+    assert time.perf_counter() - started < 0.2
+
+
+def test_email_inside_text_is_still_masked():
+    assert mask_text("manda pra ana.souza+loja@exemplo.com.br ok?").text == "manda pra [EMAIL] ok?"

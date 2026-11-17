@@ -12,7 +12,7 @@ from respondoia.app import Controller, Worker
 from respondoia.capture import CaptureError
 from respondoia.config import Settings
 from respondoia.domain import OpenChat, Rect
-from respondoia.hotkey import HotkeyRegistrationError
+from respondoia.hotkey import HotkeyRegistrationError, parse_hotkey
 from respondoia.llm import LlmError
 from respondoia.session import ChooseResult, StartResult, StartStatus
 
@@ -964,3 +964,44 @@ def test_open_knowledge_creates_the_file_once(rig, tmp_path, monkeypatch):
     path.write_text("mine", encoding="utf-8")
     rig.controller.open_knowledge()
     assert path.read_text(encoding="utf-8") == "mine" and opened == [str(path), str(path)]
+
+
+def test_api_key_is_stored_only_after_a_successful_apply(rig, monkeypatch, qtbot):
+
+    stored = []
+    monkeypatch.setattr(app_module.config, "set_api_key", stored.append)
+    rig.controller.open_settings()
+    window = rig.controller._settings_window
+    qtbot.addWidget(window)
+    rig.hotkey.taken = True
+    window.api_key_edit.setText("sk-new-key")
+    window.hotkey_edit.value = "ctrl+alt+r"
+    window.save_button.click()
+    assert stored == []
+    rig.hotkey.taken = False
+    window.save_button.click()
+    assert stored == ["sk-new-key"]
+
+
+def test_write_error_shows_a_notice_and_keeps_the_hotkey(rig, monkeypatch):
+    from dataclasses import replace
+
+    def broken(path, settings):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(app_module.config, "save_settings", broken)
+    assert rig.controller.apply_settings(replace(Settings(), hotkey="ctrl+alt+r")) is False
+    assert rig.tray.calls[-1] == ("notify", "error.save_failed", {})
+    assert rig.hotkey.calls[-1] == ("replace", parse_hotkey(Settings().hotkey))
+    assert "set_settings" not in rig.worker.names()
+
+
+def test_autostart_error_is_reported_after_saving(rig, monkeypatch):
+    from dataclasses import replace
+
+    def broken(enabled):
+        raise OSError("registry")
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", broken)
+    assert rig.controller.apply_settings(replace(Settings(), start_with_windows=True)) is True
+    assert ("notify", "error.save_failed", {}) in rig.tray.calls

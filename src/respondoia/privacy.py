@@ -156,7 +156,12 @@ _RULES = [
         ),
         lambda m: m.group(1) + m.group(2) + _marker("PASSWORD"),
     ),
-    (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), lambda m: _marker("EMAIL")),
+    # Bounded parts and a start that cannot sit inside a run of word characters keep
+    # this linear on long text without spaces.
+    (
+        re.compile(r"(?<![\w.+-])[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63})+"),
+        lambda m: _marker("EMAIL"),
+    ),
     (
         re.compile(
             r"(?i)(?<![0-9a-f])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"

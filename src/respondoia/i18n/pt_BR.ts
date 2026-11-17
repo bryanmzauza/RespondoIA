@@ -562,5 +562,9 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
 
 </translation>
     </message>
+    <message>
+        <source>error.save_failed</source>
+        <translation>Não foi possível salvar as configurações.</translation>
+    </message>
 </context>
 </TS>

@@ -562,5 +562,9 @@ Suggestions may quote anything written here. Only include what you would tell an
 
 </translation>
     </message>
+    <message>
+        <source>error.save_failed</source>
+        <translation>Could not save the settings.</translation>
+    </message>
 </context>
 </TS>

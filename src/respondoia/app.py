@@ -306,6 +306,7 @@ class Controller(QObject):
         self._fallback_shown = False
         self._paused = False
         self._settings_window: SettingsWindow | None = None
+        self._pending_key: str | None = None  # API key typed in the settings window
         self._window_base = settings  # what the open settings window started from
         self._generation = 0
         self._active = False
@@ -581,10 +582,14 @@ class Controller(QObject):
         window = SettingsWindow(self._settings, bool(config.get_api_key()))
         self._window_base = self._settings
         window.saved.connect(self._on_window_saved)
-        window.api_key_entered.connect(config.set_api_key)
+        self._pending_key = None
+        window.api_key_entered.connect(self._on_key_entered)
         window.knowledge_requested.connect(self.open_knowledge)
         self._settings_window = window
         window.show()
+
+    def _on_key_entered(self, key: str) -> None:
+        self._pending_key = key
 
     def _on_window_saved(self, new: Settings) -> None:
         # A contact marked private while the window was open is not in the window's
@@ -610,23 +615,33 @@ class Controller(QObject):
                 return False
         try:
             config.save_settings(self._config_file or config.config_path(), new)
-        except ConfigError as exc:
+        except (ConfigError, OSError) as exc:
             if hotkey_changed:
                 try:
                     self._hotkey.replace(parse_hotkey(old.hotkey))
                 except HotkeyRegistrationError:
                     self._hotkey.unregister()
-            self._settings_error("error.config", key=exc.key)
+            if isinstance(exc, ConfigError):
+                self._settings_error("error.config", key=exc.key)
+            else:
+                self._settings_error("error.save_failed")
             return False
         self._settings = new
         self.request_settings.emit(new)
+        if self._pending_key:
+            # Stored only now: a key typed in a window whose save failed is not kept.
+            config.set_api_key(self._pending_key)
+            self._pending_key = None
         if new.language != old.language:
             language = i18n.pick_language(new.language, i18n.system_locale())
             i18n.install(QCoreApplication.instance(), language)
             self._tray.retranslate()
         self._apply_to_panel(new)
         if new.start_with_windows != old.start_with_windows:
-            autostart.set_enabled(new.start_with_windows)
+            try:
+                autostart.set_enabled(new.start_with_windows)
+            except OSError:
+                self._tray.notify("error.save_failed")
         if self._settings_window is not None:
             self._settings_window.close()
         self._tray.notify("settings.saved")
