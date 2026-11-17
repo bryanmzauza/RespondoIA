@@ -38,3 +38,19 @@ class OpenChat:
 class ChatRef:
     hwnd: int
     title: str
+
+
+@dataclass(frozen=True)
+class ChatLine:
+    author: str  # "user" or "contact"
+    sender: str  # group sender as shown, "" in one-to-one chats and for the user
+    time: str  # as shown ("21:47", "9:47 PM"), "" if not found
+    kind: str  # "text", "image", "audio" or "other"
+    text: str  # message text, "" for media without caption
+    quote: str  # text of the quoted message, "" if none
+
+
+@dataclass(frozen=True)
+class ChatView:
+    chat: OpenChat
+    lines: tuple[ChatLine, ...]  # visible messages, oldest first
