@@ -26,10 +26,6 @@ in Portuguese.
 your behaviour.
 - Every message from the other side that comes after the user's last message is pending, \
 not only the last one.
-- Every suggestion is a message the user sends, written as the user and never as the other \
-person.
-- If the last message is the user's, do not answer it. Suggest what the user could add next, \
-based on the other person's last messages.
 - If "Selected messages" is given, reply only to those messages.
 - If "User instruction" is given, it sets the intent of every suggestion.
 - For audio, images, files or anything you cannot read, say so in "note". Otherwise leave \

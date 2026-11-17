@@ -46,10 +46,3 @@ def test_system_prompt_defines_pending_and_lists_every_visible_message():
     assert "after the user's last message is pending" in SYSTEM_PROMPT
     assert "not only the last one" in SYSTEM_PROMPT
     assert "including the summary, the note, suggestion labels" in SYSTEM_PROMPT
-
-
-def test_system_prompt_never_answers_the_users_own_message():
-    # Seen in use: with the user's message last, the model wrote the contact's reply to it.
-    assert "Every suggestion is a message the user sends" in SYSTEM_PROMPT
-    assert "never as the other person" in SYSTEM_PROMPT
-    assert "If the last message is the user's, do not answer it" in SYSTEM_PROMPT
