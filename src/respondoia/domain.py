@@ -51,6 +51,7 @@ class ChatLine:
     # One text and nothing else besides time and quote. Forwarded messages, link
     # previews and cards carry other people's text, so only plain lines are learned.
     plain: bool = True
+    day: str = ""  # ISO date from a day separator above it on this screen, "" if none
 
 
 @dataclass(frozen=True)
