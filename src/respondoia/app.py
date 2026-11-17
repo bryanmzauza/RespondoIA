@@ -192,7 +192,9 @@ class Controller(QObject):
         self._settings = settings
         self._config_file = config_file
         self._fallback_shown = False
+        self._paused = False
         self._settings_window: SettingsWindow | None = None
+        self._window_base = settings  # what the open settings window started from
         self._generation = 0
         self._active = False
         self._chat: OpenChat | None = None
@@ -363,10 +365,18 @@ class Controller(QObject):
             self._settings_window.activateWindow()
             return
         window = SettingsWindow(self._settings, bool(config.get_api_key()))
-        window.saved.connect(self.apply_settings)
+        self._window_base = self._settings
+        window.saved.connect(self._on_window_saved)
         window.api_key_entered.connect(config.set_api_key)
         self._settings_window = window
         window.show()
+
+    def _on_window_saved(self, new: Settings) -> None:
+        # A contact marked private while the window was open is not in the window's
+        # list. Apply only the removals made in the window to the current list.
+        removed = set(self._window_base.private_contacts) - set(new.private_contacts)
+        kept = tuple(c for c in self._settings.private_contacts if c not in removed)
+        self.apply_settings(replace(new, private_contacts=kept))
 
     def apply_settings(self, new: Settings) -> bool:
         """Apply and save new settings. False, with the reason shown, if nothing changed."""
@@ -374,7 +384,8 @@ class Controller(QObject):
         if self._active:
             self._panel.dismiss()
             self._end_session()
-        hotkey_changed = new.hotkey != old.hotkey and self._hotkey.registered
+        # While paused nothing is registered; resume() picks up the new hotkey.
+        hotkey_changed = new.hotkey != old.hotkey and not self._paused
         if hotkey_changed:
             try:
                 self._hotkey.replace(parse_hotkey(new.hotkey))
@@ -386,7 +397,10 @@ class Controller(QObject):
             config.save_settings(self._config_file or config.config_path(), new)
         except ConfigError as exc:
             if hotkey_changed:
-                self._hotkey.replace(parse_hotkey(old.hotkey))
+                try:
+                    self._hotkey.replace(parse_hotkey(old.hotkey))
+                except HotkeyRegistrationError:
+                    self._hotkey.unregister()
             self._settings_error("error.config", key=exc.key)
             return False
         self._settings = new
@@ -416,6 +430,7 @@ class Controller(QObject):
             self._tray.notify(key, **values)
 
     def _on_pause_toggled(self, paused: bool) -> None:
+        self._paused = paused
         if not paused:
             self.resume()
             return

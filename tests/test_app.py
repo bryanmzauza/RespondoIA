@@ -660,3 +660,68 @@ def test_worker_reports_the_fallback(qapp):
     worker.start(1, time.monotonic())
     worker.suggest(1)
     assert ("fell_back", 1) in seen.events
+
+
+def test_saving_the_window_keeps_a_contact_marked_private_meanwhile(rig, monkeypatch, qtbot):
+    from PySide6.QtCore import Qt
+
+    from respondoia.config import load_settings
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    rig.controller.open_settings()
+    window = rig.controller._settings_window
+    qtbot.addWidget(window)
+    rig.open_panel()
+    rig.panel.mark_private_requested.emit()  # the window was opened before this
+    qtbot.mouseClick(window.save_button, Qt.MouseButton.LeftButton)
+    assert load_settings(rig.config_file).private_contacts == ("Marina Duarte",)
+
+
+def test_a_contact_removed_in_the_window_is_removed(tmp_path, monkeypatch, qtbot):
+    from dataclasses import replace
+
+    from PySide6.QtCore import Qt
+
+    from respondoia.config import load_settings
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    rig = Rig(tmp_path, replace(Settings(), private_contacts=("Caio Lima", "Bia Rocha")))
+    rig.controller.open_settings()
+    window = rig.controller._settings_window
+    qtbot.addWidget(window)
+    window.private_list.setCurrentRow(0)
+    qtbot.mouseClick(window.private_remove, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(window.save_button, Qt.MouseButton.LeftButton)
+    assert load_settings(rig.config_file).private_contacts == ("Bia Rocha",)
+
+
+def test_a_new_hotkey_registers_even_if_the_old_one_never_did(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    hotkey = FakeHotkey()
+    hotkey.taken = True
+    rig_settings = Settings()
+    controller = Controller(
+        FakeWorker(), FakePanel(), FakeTray(), hotkey, rig_settings, config_file=tmp_path / "c.toml"
+    )
+    assert controller.resume() is False and not hotkey.registered
+    hotkey.taken = False
+    assert controller.apply_settings(replace(rig_settings, hotkey="ctrl+alt+r")) is True
+    assert hotkey.registered
+
+
+def test_a_hotkey_changed_while_paused_registers_on_resume(rig, monkeypatch):
+    from dataclasses import replace
+
+    from respondoia.hotkey import parse_hotkey
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    rig.tray.pause_toggled.emit(True)
+    assert rig.controller.apply_settings(replace(Settings(), hotkey="ctrl+alt+r")) is True
+    assert not rig.hotkey.registered
+    rig.tray.pause_toggled.emit(False)
+    assert rig.hotkey.registered and rig.hotkey.calls[-1] == (
+        "register",
+        parse_hotkey("ctrl+alt+r"),
+    )
