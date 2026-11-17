@@ -139,6 +139,12 @@ class StyleService:
                 self._rebuild(conn, language, keep_traits=False)
 
         self._safely("forget", run, None)
+        if self._db is not None:
+            try:
+                # Out of the write-ahead log too, so no page of that chat stays on disk.
+                self._db.checkpoint()
+            except Exception as exc:  # noqa: BLE001
+                logger.info("style failed event=checkpoint type=%s", type(exc).__name__)
 
     def import_export(self, chat: ExportChat, author: str, label: str | None) -> ImportResult:
         pasted = self._safely("import", lambda conn: store.pasted_hashes(conn, self._now()), set())

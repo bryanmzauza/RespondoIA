@@ -422,6 +422,7 @@ class HistoryWorker(QObject):
             history = self._history.store_loaded(
                 title, report.lines, report.reached_start, avatar
             )
+            self._history.apply_retention()  # a long load can reach past the retention
         logger.info(
             "load stopped purpose=%s reason=%s screens=%d lines=%d ms=%d",
             purpose,
