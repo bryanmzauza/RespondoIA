@@ -95,9 +95,20 @@ def _same(a: Stored, b: Stored, fa: str, fb: str) -> bool:
     return fa == fb and not (a.sent_on and b.sent_on and a.sent_on != b.sent_on)
 
 
+def _edited(old: Stored, new: Stored) -> bool:
+    """Same message, text changed (edited or deleted): same author, time and kind."""
+    return (old.author, old.time, old.kind) == (new.author, new.time, new.kind)
+
+
 def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | None:
-    """The longest run of equal messages. A single message counts only when one side has
-    just one message; otherwise short repeated messages ("ok") would join anything."""
+    """Where the two runs line up, or None.
+
+    The longest run of equal messages proposes an alignment; it holds only if every other
+    pair that lines up with it is the same message too (or that message edited). Two equal
+    broadcast messages among different ones are not the same chat. A single equal message
+    counts only when the newer run is that one message and it is the last of the older,
+    or the older run is that one message.
+    """
     if not older or not newer:
         return None
     fo = [fingerprint(m) for m in older]
@@ -109,7 +120,7 @@ def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | 
     def same(i: int, j: int) -> bool:
         return _same(older[i], newer[j], fo[i], fn[j])
 
-    best: Overlap | None = None
+    runs: list[Overlap] = []
     for j, f in enumerate(fn):
         for i in where.get(f, ()):
             if not same(i, j) or (i > 0 and j > 0 and same(i - 1, j - 1)):
@@ -117,13 +128,26 @@ def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | 
             length = 1
             while i + length < len(fo) and j + length < len(fn) and same(i + length, j + length):
                 length += 1
-            # Longer wins; on a tie, the one closer to the end of the older run.
-            if best is None or (length, i) > (best.length, best.older_start):
-                best = Overlap(i, j, length)
-    if best is None:
-        return None
-    if best.length >= 2 or min(len(older), len(newer)) == 1:
-        return best
+            runs.append(Overlap(i, j, length))
+
+    def consistent(run: Overlap) -> bool:
+        shift = run.older_start - run.newer_start  # older index of newer[0]
+        for i in range(max(0, shift), min(len(older), len(newer) + shift)):
+            j = i - shift
+            if not same(i, j) and not _edited(older[i], newer[j]):
+                return False
+        return True
+
+    def enough(run: Overlap) -> bool:
+        if run.length >= 2:
+            return True
+        last = len(newer) == 1 and run.older_start == len(older) - 1
+        return last or len(older) == 1
+
+    # Longer first; on a tie, the one closer to the end of the older run.
+    for run in sorted(runs, key=lambda r: (r.length, r.older_start), reverse=True):
+        if enough(run) and consistent(run):
+            return run
     return None
 
 
@@ -140,7 +164,7 @@ def _combine(
             out.append(old or new)
         elif _same(old, new, fingerprint(old), fingerprint(new)):
             out.append(old if old.sent_on or not new.sent_on else new)
-        elif (old.author, old.time, old.kind) == (new.author, new.time, new.kind):
+        elif _edited(old, new):
             out.append(replace(new, sent_on=old.sent_on or new.sent_on))
             changed += 1
         else:

@@ -74,6 +74,13 @@ def test_overlap_with_two_candidates_is_ambiguous():
     assert identity.reason == "ambiguous" and identity.candidates == (1, 2)
 
 
+def test_shared_broadcast_messages_do_not_identify():
+    broadcast = A[2:4]
+    screen = run("outro assunto", 1, start=40) + broadcast + run("outro assunto", 1, start=41)
+    identity = identify([candidate(1, A, memory=True)], screen, "")
+    assert identity.reason == "ambiguous" and identity.contact_id is None
+
+
 def test_memory_without_messages_still_needs_evidence():
     identity = identify([candidate(1, memory=True)], run("x"), "")
     assert identity.reason == "ambiguous"

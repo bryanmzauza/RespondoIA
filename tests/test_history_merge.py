@@ -162,6 +162,28 @@ def test_stored_days_fill_the_screen():
     assert all(m.sent_on for m in result.result)
 
 
+def test_one_message_in_the_middle_is_not_an_overlap():
+    msgs = chat()
+    assert find_overlap(msgs[100:130], screen(msgs, 110, 111)) is None
+    assert find_overlap(msgs[100:130], screen(msgs, 129, 130)) is not None
+
+
+def test_shared_messages_among_different_ones_are_not_an_overlap():
+    # Another chat that received the same two broadcast messages at the same minute.
+    msgs = chat()
+    other = [Stored("", "07:00", "contact", "", "text", "outra conversa", "")]
+    other += screen(msgs, 110, 112)
+    other += [Stored("", "07:30", "user", "", "text", "nada a ver", "")]
+    assert find_overlap(msgs[100:130], other) is None
+    result = merge([msgs[100:130]], other)
+    assert result.gap and result.replaces == ()
+
+
+def test_a_screen_inside_the_stored_run_still_overlaps():
+    msgs = chat()
+    assert find_overlap(msgs[100:130], screen(msgs, 110, 120)) is not None
+
+
 def test_masking_happens_in_from_lines():
     line = ChatLine("contact", "", "9:15 PM", "text", "meu cpf é 529.982.247-25", "", day="2026-11-12")
     (stored,) = from_lines([line])
