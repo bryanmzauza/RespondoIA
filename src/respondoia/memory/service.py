@@ -283,6 +283,8 @@ class HistoryService:
         now = self._now()
 
         def due(conn):
+            if not self._settings().history_enabled or not _in_scope(conn, contact_id):
+                return None
             row = store.load_memory(conn, contact_id)
             if (
                 row
@@ -295,12 +297,14 @@ class HistoryService:
             if len(rows) < needed:
                 return None
             store.mark_memory_attempt(conn, contact_id, self._stamp())
-            return (row.text if row else "", bool(row and row.edited), rows)
+            # What the row holds now; any change before the save means a delete or an edit won.
+            snapshot = store.load_memory(conn, contact_id)
+            return (row.text if row else "", bool(row and row.edited), rows, snapshot)
 
         work = self._safely("memory_due", due, None)
         if work is None:
             return False
-        text, edited, rows = work
+        text, edited, rows, snapshot = work
         try:
             # The calls run outside any transaction: nothing waits on the database meanwhile.
             tokens = 0
@@ -320,11 +324,12 @@ class HistoryService:
         through = max(row_id for row_id, _ in rows)
 
         def save(conn):
-            # A contact deleted meanwhile has no row left to attach the memory to.
-            if _contact_exists(conn, contact_id):
-                store.save_memory(conn, contact_id, text, through, self._stamp(), edited)
-                return True
-            return False
+            # Deleting (one contact, all, or turning it off) removes the row; an edit by the
+            # user changes it. Either way the summary made meanwhile is dropped.
+            if store.load_memory(conn, contact_id) != snapshot:
+                return False
+            store.save_memory(conn, contact_id, text, through, self._stamp(), edited)
+            return True
 
         saved = self._safely("memory_save", save, False)
         logger.info("memory ok blocks=%d tokens_in=%d saved=%d", len(blocks), tokens, saved)
@@ -359,5 +364,6 @@ class HistoryService:
             return default
 
 
-def _contact_exists(conn, contact_id: int) -> bool:
-    return conn.execute("SELECT 1 FROM contact WHERE id = ?", (contact_id,)).fetchone() is not None
+def _in_scope(conn, contact_id: int) -> bool:
+    row = conn.execute("SELECT history FROM contact WHERE id = ?", (contact_id,)).fetchone()
+    return row is not None and row[0] != 0

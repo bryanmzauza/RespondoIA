@@ -263,6 +263,56 @@ def test_memory_is_split_in_blocks_and_masked(db):
     assert all("247-25" not in text for text in client.texts)
 
 
+class DeletingClient(FakeClient):
+    """Runs a deletion while the model call is in flight, as a click on Delete would."""
+
+    def __init__(self, delete):
+        super().__init__()
+        self.delete = delete
+
+    def extract(self, system, text, schema):
+        self.delete()
+        return super().extract(system, text, schema)
+
+
+@pytest.mark.parametrize("path", ["all", "contact", "off"])
+def test_a_deletion_during_a_memory_update_wins(db, path):
+    client = DeletingClient(lambda: None)
+    history = service(db, client=client)
+    first = observe(history, db, "Ana", lines("pedido", 25))
+    client.delete = {
+        "all": history.forget_all,
+        "contact": lambda: history.forget_contact("Ana", None),
+        "off": lambda: history.set_contact_history("Ana", None, False),
+    }[path]
+    assert not history.update_memory_if_due(first.contact_id)
+    with db.transaction() as conn:
+        assert store.load_memory(conn, first.contact_id) is None
+
+
+def test_a_user_edit_during_a_memory_update_wins(db):
+    client = DeletingClient(lambda: None)
+    history = service(db, client=client)
+    first = observe(history, db, "Ana", lines("pedido", 25))
+    client.delete = lambda: history.save_memory(first.contact_id, "Prefere áudio.")
+    history.update_memory_if_due(first.contact_id)
+    assert history.memory(first.contact_id) == "Prefere áudio."
+
+
+@pytest.mark.parametrize("settings", [Settings(), "contact_off"])
+def test_no_memory_call_when_history_is_off(db, settings):
+    client = FakeClient()
+    current = [ON]
+    history = HistoryService(db, lambda: client, lambda: current[0], Clock())
+    first = observe(history, db, "Ana", lines("pedido", 25))
+    if settings == "contact_off":
+        with db.transaction() as conn:
+            contacts.set_history(conn, first.contact_id, 0)
+    else:
+        current[0] = settings
+    assert not history.update_memory_if_due(first.contact_id) and client.texts == []
+
+
 def test_user_edit_is_kept_and_marked(db):
     client = FakeClient()
     history = service(db, client=client)
