@@ -1,0 +1,66 @@
+{
+  "id": "pt-BR/16-sensitive",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Juliana Prado",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "10:00",
+      "kind": "text",
+      "text": "Oi Juliana! Me manda os seus dados pra eu emitir a nota?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:05",
+      "kind": "text",
+      "text": "Claro! Meu CPF é 529.982.247-25",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:05",
+      "kind": "text",
+      "text": "Paguei no cartão 4111 1111 1111 1111 porque a chave Pix deu erro: 123e4567-e89b-42d3-a456-426614174000",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:06",
+      "kind": "text",
+      "text": "Se precisar, meu e-mail é juliana@exemplo.com",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:06",
+      "kind": "text",
+      "text": "Chegou tudo certo?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "sensitive": [
+      "529.982.247-25",
+      "4111 1111 1111 1111",
+      "123e4567-e89b-42d3-a456-426614174000",
+      "juliana@exemplo.com"
+    ]
+  }
+}

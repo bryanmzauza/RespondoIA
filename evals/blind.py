@@ -27,6 +27,20 @@ def only_language(pairs: list[tuple], language: str | None) -> list[tuple]:
     return [pair for pair in pairs if pair[0].startswith(language + "/")]
 
 
+def load_results(dirs: list[Path]) -> tuple[dict, list[str]]:
+    """Results keyed by (case, variant, side label), and the two labels.
+
+    One dir with two models: the sides are the models. Two dirs with one model
+    each (text and screenshot input, say): the sides are the dir names.
+    """
+    results = {}
+    for folder in dirs:
+        for row in read_rows(folder / "results.jsonl"):
+            label = folder.name if len(dirs) > 1 else row["model"]
+            results[(row["case"], row["variant"], label)] = row
+    return results, sorted({key[2] for key in results})
+
+
 def summarize_blind(rows: list[dict]) -> dict:
     models = sorted({row[side] for row in rows for side in ("a", "b")})
     base = [row for row in rows if row["variant"] == "base"]
@@ -84,17 +98,16 @@ def show_side(name: str, row: dict) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("dir", type=Path)
+    parser.add_argument("dirs", type=Path, nargs="+", help="one dir with two models, or two dirs")
     parser.add_argument("--lang", help="review only one language, for example pt-BR")
     args = parser.parse_args()
 
-    results = {(r["case"], r["variant"], r["model"]): r for r in read_rows(args.dir / "results.jsonl")}
-    models = sorted({key[2] for key in results})
+    results, models = load_results(args.dirs)
     if len(models) != 2:
-        print(f"Need results for exactly two models, found {len(models)}: {models}")
+        print(f"Need exactly two sides to compare, found {len(models)}: {models}")
         return 1
 
-    out = args.dir / "blind.jsonl"
+    out = args.dirs[0] / "blind.jsonl"
     answered = read_rows(out)
     seed = answered[0]["seed"] if answered else random.randrange(1_000_000)
     seen = {(row["case"], row["variant"]) for row in answered}

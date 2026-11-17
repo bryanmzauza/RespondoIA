@@ -1,7 +1,11 @@
 """Run the fictional chats through one or more models and check the replies.
 
 Usage:
-    uv run python evals/run.py --models <id> [<id> ...] --out <dir> [--limit N] [--dry-run]
+    uv run python evals/run.py --models <id> [<id> ...] --out <dir>
+        [--input screenshot|text] [--limit N] [--dry-run]
+
+With --input text the chat goes as masked text built from the fixture JSON, the
+way the app sends what it reads through accessibility.
 
 Every case runs the "base" variant. Cases with a regenerate block also run
 "selected" (only the selected ids) and "instruction" (only the instruction),
@@ -26,12 +30,14 @@ sys.path.insert(0, str(ROOT))
 
 from evals.checks import check_case
 from respondoia.config import get_api_key
+from respondoia.domain import ChatLine
 from respondoia.llm import (
     AnthropicClient,
     LlmError,
     SuggestionReply,
     SuggestRequest,
 )
+from respondoia.privacy import mask_lines
 
 SHOTS = ROOT / "tests" / "screenshots"
 COUNT = 3
@@ -51,6 +57,21 @@ def load_chats() -> list[dict]:
     ]
     # Scenario first, then language, so a small --limit still covers both languages.
     return sorted(chats, key=lambda chat: tuple(reversed(chat["id"].split("/"))))
+
+
+def chat_lines(chat: dict) -> tuple[ChatLine, ...]:
+    """The fixture as the reader would give it."""
+    return tuple(
+        ChatLine(
+            author="user" if m["author"] == "user" else "contact",
+            sender=m["sender"] or "",
+            time=m["time"],
+            kind=m["kind"],
+            text=m["text"],
+            quote=m["quote"] or "",
+        )
+        for m in chat["messages"]
+    )
 
 
 def plan_calls(chats: list[dict], models: list[str], limit: int | None) -> list[tuple]:
@@ -131,7 +152,8 @@ def print_summary(summary: dict) -> None:
 
 
 class Runner:
-    def __init__(self, out: Path, api_key: str) -> None:
+    def __init__(self, out: Path, api_key: str, input_mode: str = "screenshot") -> None:
+        self.input_mode = input_mode
         self.results = out / "results.jsonl"
         self.errors = out / "errors.jsonl"
         self.api_key = api_key
@@ -148,6 +170,7 @@ class Runner:
         """Base first, then the variants that reuse its message list."""
         client = AnthropicClient(self.api_key, model, timeout_s=CALL_TIMEOUT_S)
         image = (SHOTS / f"{chat['id']}.png").read_bytes()
+        lines, _ = mask_lines(chat_lines(chat))
         base: SuggestionReply | None = None
         for variant in VARIANTS if "regenerate" in chat else VARIANTS[:1]:
             key = (chat["id"], model, variant)
@@ -162,8 +185,11 @@ class Runner:
                 selected = tuple(chat["regenerate"]["selected"])
             if variant == "instruction":
                 instruction = chat["regenerate"]["instruction"]
-            previous = None if variant == "base" else base
-            request = SuggestRequest(image, COUNT, previous, selected, instruction)
+            if self.input_mode == "text":
+                request = SuggestRequest(None, COUNT, None, selected, instruction, lines)
+            else:
+                previous = None if variant == "base" else base
+                request = SuggestRequest(image, COUNT, previous, selected, instruction)
             try:
                 result = client.suggest(request)
             except LlmError as exc:  # recorded by class and code, the run goes on
@@ -178,6 +204,7 @@ class Runner:
                 "case": key[0],
                 "model": model,
                 "variant": variant,
+                "input": self.input_mode,
                 "served_model": result.model,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
@@ -196,6 +223,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--models", nargs="+", required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--input", choices=["screenshot", "text"], default="screenshot")
     parser.add_argument("--limit", type=int, help="run only the first N cases")
     parser.add_argument("--dry-run", action="store_true", help="count the calls and stop")
     args = parser.parse_args()
@@ -211,7 +239,7 @@ def main() -> int:
         print("No API key stored. Run: uv run python -m respondoia --set-api-key")
         return 1
     args.out.mkdir(parents=True, exist_ok=True)
-    runner = Runner(args.out, api_key)
+    runner = Runner(args.out, api_key, args.input)
     todo = len(set(calls) - set(runner.done))
     print(f"{len(calls)} calls planned, {todo} to make")
 

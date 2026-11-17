@@ -1,17 +1,17 @@
 import json
 
-from evals.blind import summarize_blind
-from evals.run import done_keys, load_chats, percentile, plan_calls, summarize
+from evals.blind import load_results, summarize_blind
+from evals.run import chat_lines, done_keys, load_chats, percentile, plan_calls, summarize
 
 MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5"]
 
 
-def test_full_plan_is_54_calls_per_model():
+def test_full_plan_is_56_calls_per_model():
     calls = plan_calls(load_chats(), MODELS, limit=None)
-    assert len(calls) == 108
+    assert len(calls) == 112
     variants = ("base", "selected", "instruction")
     per_variant = {v: sum(1 for c in calls if c[2] == v) for v in variants}
-    assert per_variant == {"base": 60, "selected": 24, "instruction": 24}
+    assert per_variant == {"base": 64, "selected": 24, "instruction": 24}
 
 
 def test_limit_takes_the_first_cases_in_both_languages():
@@ -82,3 +82,41 @@ def test_blind_review_can_be_limited_to_one_language():
     pairs = [("en/01-short", "base"), ("pt-BR/01-short", "base"), ("pt-BR/09-price", "selected")]
     assert only_language(pairs, "pt-BR") == pairs[1:]
     assert only_language(pairs, None) == pairs
+
+
+def chat(chat_id):
+    return next(c for c in load_chats() if c["id"] == chat_id)
+
+
+def test_chat_lines_follow_the_fixture():
+    group = chat_lines(chat("pt-BR/03-group"))
+    assert group[0].sender == "Bia Rocha" and group[0].author == "contact"
+    assert {line.sender for line in group if line.author == "user"} == {""}
+    image = chat_lines(chat("pt-BR/05-image"))
+    assert [line.kind for line in image].count("image") == 1
+    quoted = chat_lines(chat("pt-BR/07-quoted"))
+    assert quoted[-1].quote == "passo sim, posso chegar aí umas 18h"
+    assert all(line.time for line in quoted)
+
+
+def test_blind_with_two_dirs_labels_sides_by_dir(tmp_path):
+    for name, model in (("text", "claude-haiku-5-5"), ("shot", "claude-haiku-5-5")):
+        folder = tmp_path / name
+        folder.mkdir()
+        row = {"case": "pt-BR/01-short", "model": model, "variant": "base", "reply": {}}
+        (folder / "results.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    results, labels = load_results([tmp_path / "text", tmp_path / "shot"])
+    assert labels == ["shot", "text"]
+    assert set(results) == {("pt-BR/01-short", "base", "text"), ("pt-BR/01-short", "base", "shot")}
+
+
+def test_blind_with_one_dir_labels_sides_by_model(tmp_path):
+    rows = [
+        {"case": "pt-BR/01-short", "model": m, "variant": "base", "reply": {}}
+        for m in ("claude-haiku-5-5", "claude-sonnet-5-5")
+    ]
+    (tmp_path / "results.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8"
+    )
+    results, labels = load_results([tmp_path])
+    assert labels == ["claude-haiku-5-5", "claude-sonnet-5-5"] and len(results) == 2

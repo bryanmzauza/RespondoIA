@@ -1,0 +1,66 @@
+{
+  "id": "en/16-sensitive",
+  "language": "en",
+  "theme": "light",
+  "contact": "Daniel Price",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "10:00",
+      "kind": "text",
+      "text": "Hi Daniel, could you send me your details for the invoice?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:05",
+      "kind": "text",
+      "text": "Sure! I paid with the card 4111 1111 1111 1111",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:05",
+      "kind": "text",
+      "text": "For the refund, my IBAN is GB82 WEST 1234 5698 7654 32",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:06",
+      "kind": "text",
+      "text": "You can also reach me at daniel@example.com or +44 20 7946 0958",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:06",
+      "kind": "text",
+      "text": "Did it all come through?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "sensitive": [
+      "4111 1111 1111 1111",
+      "GB82 WEST 1234 5698 7654 32",
+      "daniel@example.com",
+      "+44 20 7946 0958"
+    ]
+  }
+}

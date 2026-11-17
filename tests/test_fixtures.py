@@ -24,6 +24,7 @@ SCENARIOS = [
     "13-multi-question",
     "14-nothing-pending",
     "15-decline",
+    "16-sensitive",
 ]
 WITH_REGENERATE = {
     "09-price-missing",
@@ -74,7 +75,11 @@ def test_no_phone_numbers_or_long_digit_runs():
         texts = [chat["contact"]]
         for m in chat["messages"]:
             texts += [m["text"], m["quote"] or "", m["sender"] or ""]
+        # Long digit runs are allowed only in the fictional values the masking test uses.
+        allowed = chat["expect"].get("sensitive", [])
         for text in texts:
+            for value in allowed:
+                text = text.replace(value, "")
             assert not re.search(r"\d{8,}", text), chat["id"]
 
 
@@ -96,3 +101,12 @@ def test_special_scenarios_carry_their_flags():
         assert all(m["sender"] for m in group["messages"] if m["author"] == "contact")
         assert load(lang, "14-nothing-pending")["expect"]["pending"] == []
         assert load(lang, "14-nothing-pending")["messages"][-1]["author"] == "user"
+
+
+def test_sensitive_scenario_lists_its_values():
+    for lang in LANGS:
+        chat = load(lang, "16-sensitive")
+        values = chat["expect"]["sensitive"]
+        assert len(values) >= 4
+        text = " ".join(m["text"] for m in chat["messages"])
+        assert all(value in text for value in values)
