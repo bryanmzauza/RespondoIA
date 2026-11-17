@@ -20,6 +20,12 @@ class ConfigError(ValueError):
         self.key = key  # dotted key, for example "suggestions.count"
 
 
+# Quick instructions that come with the app. Their labels come from the translations;
+# any other entry in the list is text the user wrote.
+DEFAULT_INSTRUCTIONS = ("shorter", "more_formal", "decline_politely", "ask_for_time")
+PANEL_POSITIONS = ("bottom-right", "bottom-left", "top-right", "top-left")
+
+
 @dataclass(frozen=True)
 class Settings:
     hotkey: str = "ctrl+shift+space"
@@ -30,6 +36,11 @@ class Settings:
     model: str = "claude-haiku-5-5"
     max_image_side: int = 1300
     private_contacts: tuple[str, ...] = ()
+    input: str = "text"  # "text" (screenshot as fallback) or "screenshot"
+    mask_sensitive_data: bool = True
+    panel_position: str = "bottom-right"
+    start_with_windows: bool = False
+    quick_instructions: tuple[str, ...] = DEFAULT_INSTRUCTIONS
 
 
 def app_dir() -> Path:
@@ -54,6 +65,10 @@ def _is_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def _is_bool(value: object) -> bool:
+    return isinstance(value, bool)
+
+
 # Settings field -> (table, key, validator). Other keys in the file belong to later stages.
 _KEYS = {
     "hotkey": ("general", "hotkey", _is_str),
@@ -64,6 +79,15 @@ _KEYS = {
     "model": ("ai", "model", _is_str),
     "max_image_side": ("ai", "max_image_side", lambda v: _is_int(v) and v > 0),
     "private_contacts": ("privacy", "private_contacts", _is_str_list),
+    "input": ("ai", "input", lambda v: v in ("text", "screenshot")),
+    "mask_sensitive_data": ("privacy", "mask_sensitive_data", _is_bool),
+    "panel_position": ("general", "panel_position", lambda v: v in PANEL_POSITIONS),
+    "start_with_windows": ("general", "start_with_windows", _is_bool),
+    "quick_instructions": (
+        "suggestions",
+        "quick_instructions",
+        lambda v: _is_str_list(v) and all(item.strip() for item in v),
+    ),
 }
 
 
@@ -95,6 +119,26 @@ def load_settings(path: Path) -> Settings:
     return _settings_from(_read(path))
 
 
+def _write(path: Path, data: dict) -> None:
+    # Write to a temporary file first so a crash never leaves half a config.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(tomli_w.dumps(data), encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def save_settings(path: Path, settings: Settings) -> None:
+    """Write every key this stage knows. Other keys and tables in the file are kept."""
+    data = _read(path)
+    for field, (table, key, valid) in _KEYS.items():
+        value = getattr(settings, field)
+        value = list(value) if isinstance(value, tuple) else value
+        if not valid(value):
+            raise ConfigError(f"{table}.{key}")
+        data.setdefault(table, {})[key] = value
+    _write(path, data)
+
+
 def add_private_contact(path: Path, name: str) -> Settings:
     data = _read(path)
     settings = _settings_from(data)
@@ -104,8 +148,7 @@ def add_private_contact(path: Path, name: str) -> Settings:
             *settings.private_contacts,
             name.strip(),
         ]
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(tomli_w.dumps(data), encoding="utf-8")
+        _write(path, data)
     return _settings_from(data)
 
 

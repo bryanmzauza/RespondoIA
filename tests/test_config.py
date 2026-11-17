@@ -7,11 +7,13 @@ from keyring.backend import KeyringBackend
 
 from respondoia.__main__ import main
 from respondoia.config import (
+    DEFAULT_INSTRUCTIONS,
     ConfigError,
     Settings,
     add_private_contact,
     get_api_key,
     load_settings,
+    save_settings,
     set_api_key,
 )
 
@@ -116,3 +118,103 @@ def test_a_file_that_is_not_valid_toml_is_a_config_error(tmp_path):
     with pytest.raises(ConfigError):
         add_private_contact(path, "Marina Duarte")
     assert path.read_text(encoding="utf-8") == "[general\nhotkey = "
+
+
+def test_defaults_of_this_stage():
+    s = Settings()
+    assert (s.input, s.mask_sensitive_data, s.panel_position, s.start_with_windows) == (
+        "text",
+        True,
+        "bottom-right",
+        False,
+    )
+    assert s.quick_instructions == DEFAULT_INSTRUCTIONS == (
+        "shorter",
+        "more_formal",
+        "decline_politely",
+        "ask_for_time",
+    )
+
+
+def test_reads_input_masking_and_panel_keys(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        '[general]\npanel_position = "top-left"\nstart_with_windows = true\n'
+        '[suggestions]\nquick_instructions = ["shorter", "Responder com carinho"]\n'
+        '[ai]\ninput = "screenshot"\n[privacy]\nmask_sensitive_data = false\n',
+        encoding="utf-8",
+    )
+    s = load_settings(path)
+    assert (s.input, s.mask_sensitive_data, s.panel_position, s.start_with_windows) == (
+        "screenshot",
+        False,
+        "top-left",
+        True,
+    )
+    assert s.quick_instructions == ("shorter", "Responder com carinho")
+
+
+@pytest.mark.parametrize(
+    "body,key",
+    [
+        ('[ai]\ninput = "audio"\n', "ai.input"),
+        ("[privacy]\nmask_sensitive_data = 1\n", "privacy.mask_sensitive_data"),
+        ('[general]\npanel_position = "middle"\n', "general.panel_position"),
+        ('[general]\nstart_with_windows = "yes"\n', "general.start_with_windows"),
+        ('[suggestions]\nquick_instructions = [""]\n', "suggestions.quick_instructions"),
+    ],
+)
+def test_invalid_new_values_name_the_key(tmp_path, body, key):
+    path = tmp_path / "config.toml"
+    path.write_text(body, encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_settings(path)
+    assert err.value.key == key
+
+
+def test_save_then_load_round_trips(tmp_path):
+    s = Settings(
+        hotkey="ctrl+alt+r",
+        insert_mode="copy",
+        language="pt-BR",
+        suggestion_count=2,
+        model="claude-sonnet-5-5",
+        input="screenshot",
+        mask_sensitive_data=False,
+        panel_position="top-left",
+        start_with_windows=True,
+        quick_instructions=("shorter", "Responder com carinho"),
+        private_contacts=("Marina Duarte",),
+    )
+    save_settings(tmp_path / "config.toml", s)
+    assert load_settings(tmp_path / "config.toml") == s
+
+
+def test_save_keeps_tables_of_later_stages(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        '[history]\nenabled = true\n[ai]\nmode = "hybrid"\nmodel = "claude-haiku-5-5"\n',
+        encoding="utf-8",
+    )
+    save_settings(path, Settings(suggestion_count=2))
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    assert data["history"]["enabled"] is True and data["ai"]["mode"] == "hybrid"
+    assert data["suggestions"]["count"] == 2
+
+
+def test_file_from_0_1_loads_unchanged(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        '[general]\nhotkey = "ctrl+alt+r"\n[privacy]\nprivate_contacts = ["Caio Lima"]\n',
+        encoding="utf-8",
+    )
+    assert load_settings(path) == Settings(hotkey="ctrl+alt+r", private_contacts=("Caio Lima",))
+
+
+def test_save_refuses_invalid_settings(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text("[history]\nenabled = true\n", encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        save_settings(path, Settings(suggestion_count=4))
+    assert err.value.key == "suggestions.count"
+    assert path.read_text(encoding="utf-8") == "[history]\nenabled = true\n"
