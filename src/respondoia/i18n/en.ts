@@ -570,5 +570,65 @@ Suggestions may quote anything written here. Only include what you would tell an
         <source>error.export_private</source>
         <translation>This chat is with a private contact, so nothing from it is kept.</translation>
     </message>
+    <message>
+        <source>notice.loading</source>
+        <translation>Loading the chat. Move the mouse or press any key to stop.</translation>
+    </message>
+    <message>
+        <source>notice.load_limit</source>
+        <translation>{count} messages loaded. Press the hotkey for suggestions with this context.</translation>
+    </message>
+    <message>
+        <source>notice.load_months</source>
+        <translation>{count} messages loaded. Press the hotkey for suggestions with this context.</translation>
+    </message>
+    <message>
+        <source>notice.load_start</source>
+        <translation>{count} messages loaded, back to the start of the chat. Press the hotkey for suggestions with this context.</translation>
+    </message>
+    <message>
+        <source>notice.load_joined</source>
+        <translation>{count} messages loaded and the gap is filled. Press the hotkey for suggestions with this context.</translation>
+    </message>
+    <message>
+        <source>notice.load_user</source>
+        <translation>Loading stopped. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.load_focus</source>
+        <translation>Loading stopped because WhatsApp lost focus. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.load_chat_changed</source>
+        <translation>Loading stopped because the chat changed. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.load_private</source>
+        <translation>This contact is private. Nothing was loaded.</translation>
+    </message>
+    <message>
+        <source>notice.load_lost</source>
+        <translation>Could not follow the chat while scrolling. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.load_unreadable</source>
+        <translation>Could not read the chat. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.load_ask</source>
+        <translation>The chat was read, but the app could not tell which contact with this name it is. Press the hotkey and answer in the panel, then load again.</translation>
+    </message>
+    <message>
+        <source>error.load_unavailable</source>
+        <translation>Could not watch the mouse and keyboard, so the chat was not scrolled.</translation>
+    </message>
+    <message>
+        <source>error.no_whatsapp</source>
+        <translation>Open WhatsApp first.</translation>
+    </message>
+    <message>
+        <source>tray.loading</source>
+        <translation>Loading the chat history</translation>
+    </message>
 </context>
 </TS>

@@ -86,3 +86,14 @@ def test_style_item_emits(qtbot):
     tray = Tray()
     with qtbot.waitSignal(tray.style_requested):
         tray.style_action.trigger()
+
+
+def test_loading_indicator(qapp):
+    tray = Tray()
+    idle = tray.icon().pixmap(32, 32).toImage()
+    tray.set_loading(True)
+    assert tray.toolTip() == "Carregando o histórico da conversa"
+    assert tray.icon().pixmap(32, 32).toImage() != idle
+    tray.set_loading(False)
+    assert tray.toolTip() == i18n.t("tray.tooltip")
+    assert tray.icon().pixmap(32, 32).toImage() == idle

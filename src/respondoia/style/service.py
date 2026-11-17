@@ -70,23 +70,32 @@ class StyleService:
 
     def learn(self, title: str, lines: Sequence[ChatLine], is_group: bool) -> str | None:
         """Keep the user's own lines. Returns the language of the chat, if known."""
+        return self._learn("learn", title, lines, is_group)[0]
+
+    def learn_loaded(self, title: str, lines: Sequence[ChatLine]) -> int:
+        """The user's own lines from a chat the loader scrolled. Returns how many were kept."""
+        if not lines:
+            return 0
+        return self._learn("learn_loaded", title, lines, any(line.sender for line in lines))[1]
+
+    def _learn(self, event, title, lines, is_group) -> tuple[str | None, int]:
         language = chat_language([line.text for line in lines if line.text])
 
         def run(conn):
             stamp = self._stamp()
             contact = contacts.see(conn, title, is_group, language, stamp)
             if contact is None:  # the name is ambiguous
-                return language
+                return language, 0
             chat_lang = language or contact.language
             pasted = store.pasted_hashes(conn, self._now())
             own = from_screen(lines, f"contact:{contact.id}", chat_lang, pasted)
             added = store.add_samples(conn, own, contact.id, stamp)
             for lang in {m.language for m in own}:
                 self._rebuild(conn, lang)
-            logger.info("learn added=%d language=%s", added, chat_lang or "none")
-            return chat_lang
+            logger.info("%s added=%d language=%s", event, added, chat_lang or "none")
+            return chat_lang, added
 
-        return self._safely("learn", run, language)
+        return self._safely(event, run, (language, 0))
 
     def context(self, title: str, language: str | None, is_group: bool) -> UserContext:
         try:

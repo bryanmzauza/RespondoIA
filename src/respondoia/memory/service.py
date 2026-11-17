@@ -19,7 +19,7 @@ from respondoia.domain import ChatLine
 from respondoia.llm import LlmError, ModelClient
 from respondoia.memory import store
 from respondoia.memory.identity import Candidate, identify
-from respondoia.memory.merge import fingerprint, from_lines, merge
+from respondoia.memory.merge import find_overlap, fingerprint, from_lines, merge
 from respondoia.memory.recall import (
     MEMORY_SYSTEM,
     ContactMemory,
@@ -200,6 +200,19 @@ class HistoryService:
                 )
             )
         return pick_snippets(groups)
+
+    def reaches_older(self, contact_id: int | None, lines: Sequence[ChatLine]) -> bool:
+        """True once what the loader read overlaps a stored segment before the newest one:
+        the gap is filled."""
+        if contact_id is None:
+            return False
+        block = from_lines(lines)
+
+        def run(conn):
+            older = store.segments(conn, contact_id)[:-1]
+            return any(find_overlap(segment.messages, block) for segment in older)
+
+        return self._safely("reaches_older", run, False)
 
     # Settings, deletion and retention.
 

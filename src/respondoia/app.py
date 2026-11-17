@@ -2,10 +2,12 @@
 
 import logging
 import os
+import random
 import subprocess
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import replace
+from dataclasses import dataclass, replace
+from datetime import date
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -32,10 +34,15 @@ from respondoia.llm import (
     SuggestRequest,
     SuggestResult,
 )
-from respondoia.privacy import is_private
+from respondoia.memory import scroll
+from respondoia.memory.loader import LoaderPorts, LoadLimits, load
+from respondoia.memory.service import HistoryContext, HistoryService
+from respondoia.privacy import is_private, normalize_name
 from respondoia.session import (
+    NO_HISTORY,
     NO_STYLE,
     ChooseResult,
+    HistoryPort,
     Ports,
     Session,
     StartResult,
@@ -77,6 +84,8 @@ class Worker(QObject):
     crashed = Signal(int)  # generation
     fell_back = Signal(int)  # generation: the screenshot was sent instead of text
     learned = Signal(str)  # language of a chat the style just learned from
+    history_changed = Signal(int, object)  # generation, HistoryContext after an answer
+    history_grew = Signal(int)  # contact id whose stored history grew
 
     def __init__(self, ports: Ports, settings: Settings) -> None:
         super().__init__()
@@ -109,6 +118,7 @@ class Worker(QObject):
             self.started.emit(generation, result)
             if result.context is not None and result.context.language:
                 self.learned.emit(result.context.language)
+            self._report_growth(result.history)
 
         self._guard(generation, begin)
 
@@ -145,6 +155,23 @@ class Worker(QObject):
                 self.chosen.emit(generation, result)
 
         self._guard(generation, choose)
+
+    @Slot(int, object)
+    def confirm_identity(self, generation: int, contact_id) -> None:
+        session = self._session
+        if session is None:
+            return
+
+        def confirm():
+            history = session.confirm_identity(contact_id)
+            self.history_changed.emit(generation, history)
+            self._report_growth(history)
+
+        self._guard(generation, confirm)
+
+    def _report_growth(self, history: HistoryContext | None) -> None:
+        if history is not None and history.state == "ready" and history.added > 0:
+            self.history_grew.emit(history.contact_id)
 
     @Slot(str)
     def forget(self, title: str) -> None:
@@ -269,6 +296,169 @@ class StyleWorker(QObject):
         self.load()
 
 
+@dataclass(frozen=True)
+class LoadOutcome:
+    purpose: str  # "quick", "full", "gap" or "style"
+    reason: str  # why the loader stopped, see LoadReport
+    read: int  # lines read
+    history: HistoryContext | None  # None for the style screen
+    style_added: int  # the user's own messages added to the style
+
+
+class Desktop:
+    """What the loader does to the desktop besides scrolling."""
+
+    def focus(self, hwnd: int) -> bool:
+        return paste.focus_window(hwnd)
+
+    def cursor_pos(self) -> tuple[int, int]:
+        return scroll.cursor_pos()
+
+    def put_cursor(self, x: int, y: int) -> None:
+        scroll.put_cursor(x, y)
+
+
+def real_loader_ports(guard) -> Callable[[int], LoaderPorts]:
+    def make(hwnd: int) -> LoaderPorts:
+        return LoaderPorts(
+            read=lambda: reader.read_chat_view(hwnd),
+            scroll=scroll.wheel,
+            foreground=scroll.foreground_window,
+            stopped=guard.stopped,
+            sleep=time.sleep,
+            random=random.uniform,
+            today=date.today,
+        )
+
+    return make
+
+
+def _limits(purpose: str, settings: Settings) -> LoadLimits:
+    if purpose == "quick":
+        return LoadLimits(settings.quick_load_screens, settings.max_load_months)
+    gap = purpose == "gap"
+    return LoadLimits(settings.max_load_screens, settings.max_load_months, stop_on_join=gap)
+
+
+class HistoryWorker(QObject):
+    """Runs the loader and the memory updates off the hotkey's thread."""
+
+    loaded = Signal(object)  # LoadOutcome
+    memory_updated = Signal(int)  # contact id
+    memory_ready = Signal(int, str)  # contact id, memory text
+
+    def __init__(
+        self,
+        history: HistoryService,
+        style: StyleService,
+        settings: Callable[[], Settings],
+        loader_ports: Callable[[int], LoaderPorts],
+        desktop: Desktop | None = None,
+        avatar: Callable[[int, object], str] = lambda hwnd, rect: "",
+    ) -> None:
+        super().__init__()
+        self._history = history
+        self._style = style
+        self._settings = settings
+        self._loader_ports = loader_ports
+        self._desktop = desktop or Desktop()
+        self._avatar = avatar
+
+    @Slot(str, int, str, object)
+    def load(self, purpose: str, hwnd: int, title: str, contact_id) -> None:
+        try:
+            outcome = self._load(purpose, hwnd, title, contact_id)
+        except Exception as exc:  # noqa: BLE001 - a failed load must not end the app
+            logger.error("load error type=%s", type(exc).__name__)
+            outcome = LoadOutcome(purpose, "unreadable", 0, None, 0)
+        self.loaded.emit(outcome)
+
+    def _load(self, purpose: str, hwnd: int, title: str, contact_id) -> LoadOutcome:
+        settings = self._settings()
+        ports = self._loader_ports(hwnd)
+        view = ports.read()
+        if view is None:
+            return LoadOutcome(purpose, "unreadable", 0, None, 0)
+        title = title or view.chat.title
+        private = settings.private_contacts
+        if is_private(view.chat.title, private) or is_private(title, private):
+            return LoadOutcome(purpose, "private", 0, None, 0)
+        if normalize_name(view.chat.title) != normalize_name(title):
+            return LoadOutcome(purpose, "chat_changed", 0, None, 0)
+        old_cursor = self._desktop.cursor_pos()
+        if not self._desktop.focus(hwnd):
+            return LoadOutcome(purpose, "focus", 0, None, 0)
+        bounds = view.chat.bounds
+        self._desktop.put_cursor(
+            (bounds.left + bounds.right) // 2, (bounds.top + bounds.bottom) // 2
+        )
+
+        def joins(block) -> bool:
+            return purpose == "gap" and self._history.reaches_older(contact_id, block)
+
+        report = load(
+            hwnd,
+            title,
+            _limits(purpose, settings),
+            ports,
+            joins,
+            private=lambda name: is_private(name, private),
+        )
+        if report.reason != "user":
+            self._desktop.put_cursor(*old_cursor)
+        style_added = self._style.learn_loaded(title, report.lines)
+        history = None
+        if purpose != "style":
+            try:
+                avatar = self._avatar(hwnd, view.chat.avatar)
+            except Exception:  # noqa: BLE001 - no photo only weakens the identity
+                avatar = ""
+            history = self._history.store_loaded(
+                title, report.lines, report.reached_start, avatar
+            )
+        logger.info(
+            "load stopped purpose=%s reason=%s screens=%d lines=%d ms=%d",
+            purpose,
+            report.reason,
+            report.screens,
+            len(report.lines),
+            report.ms,
+        )
+        return LoadOutcome(purpose, report.reason, len(report.lines), history, style_added)
+
+    @Slot(int)
+    def update_memory(self, contact_id: int) -> None:
+        if self._history.update_memory_if_due(contact_id):
+            self.memory_updated.emit(contact_id)
+
+    @Slot(object)
+    def startup(self, private_contacts) -> None:
+        """Nothing stays from a contact made private, even by hand in the config file."""
+        for name in private_contacts:
+            self._style.forget(name)
+        self._history.apply_retention()
+
+    @Slot(str, object)
+    def forget_contact(self, title: str, contact_id) -> None:
+        self._history.forget_contact(title, contact_id)
+
+    @Slot()
+    def forget_all(self) -> None:
+        self._history.forget_all()
+
+    @Slot(str, object, bool)
+    def set_contact_history(self, title: str, contact_id, on: bool) -> None:
+        self._history.set_contact_history(title, contact_id, on)
+
+    @Slot(int)
+    def load_memory(self, contact_id: int) -> None:
+        self.memory_ready.emit(contact_id, self._history.memory(contact_id))
+
+    @Slot(int, str)
+    def save_memory(self, contact_id: int, text: str) -> None:
+        self._history.save_memory(contact_id, text)
+
+
 class Controller(QObject):
     """Interface-thread logic: one session at a time, from the hotkey to the notice."""
 
@@ -289,6 +479,15 @@ class Controller(QObject):
     request_save_manual = Signal(str, str)
     request_exclude_example = Signal(str, str)
     request_style_reset = Signal()
+    request_history_load = Signal(str, int, str, object)  # purpose, hwnd, title, contact id
+    request_memory_update = Signal(int)
+    request_history_startup = Signal(object)
+    request_confirm = Signal(int, object)  # generation, contact id or None
+    request_forget_contact_history = Signal(str, object)
+    request_forget_all_history = Signal()
+    request_contact_history = Signal(str, object, bool)
+    request_load_memory = Signal(int)
+    request_save_memory = Signal(int, str)
 
     def __init__(
         self,
@@ -300,9 +499,16 @@ class Controller(QObject):
         config_file: Path | None = None,
         config_error: str | None = None,
         style_worker=None,
+        history_worker=None,
+        guard=None,
     ):
         super().__init__()
         self._style_worker = style_worker
+        self._history_worker = history_worker
+        self._guard_input = guard  # InputGuard: stops the loader on real input
+        self._hwnd = 0
+        self._history: HistoryContext | None = None
+        self._loading = False
         # With an invalid config.toml the private list is unknown, so nothing is read.
         self._config_error = config_error
         self._last_request: tuple = ("suggest",)
@@ -350,6 +556,19 @@ class Controller(QObject):
             style_worker.imported.connect(self._on_imported)
             style_worker.refreshed.connect(self._on_refreshed)
             style_worker.failed.connect(self._on_style_failed)
+        if history_worker is not None:
+            self.request_history_load.connect(history_worker.load)
+            self.request_memory_update.connect(history_worker.update_memory)
+            self.request_history_startup.connect(history_worker.startup)
+            self.request_forget_contact_history.connect(history_worker.forget_contact)
+            self.request_forget_all_history.connect(history_worker.forget_all)
+            self.request_contact_history.connect(history_worker.set_contact_history)
+            self.request_load_memory.connect(history_worker.load_memory)
+            self.request_save_memory.connect(history_worker.save_memory)
+            self.request_confirm.connect(worker.confirm_identity)
+            history_worker.loaded.connect(self._on_loaded)
+            worker.history_changed.connect(self._on_history_changed)
+            worker.history_grew.connect(self.request_memory_update)
         worker.started.connect(self._on_started)
         worker.previewed.connect(self._on_previewed)
         worker.replied.connect(self._on_replied)
@@ -414,6 +633,8 @@ class Controller(QObject):
             return
         self._chat = result.chat
         self._context = result.context
+        self._hwnd = result.hwnd
+        self._history = result.history
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         if result.context is not None:
@@ -681,10 +902,69 @@ class Controller(QObject):
         if not paused:
             self.resume()
             return
+        if self._loading and self._guard_input is not None:
+            self._guard_input.stop()
         self._hotkey.unregister()
         if self._active:
             self._panel.dismiss()
             self._end_session()
+
+    # History.
+
+    def start_history(self) -> None:
+        """Once at start: forget private contacts, drop messages past the retention."""
+        if self._history_worker is not None:
+            self.request_history_startup.emit(tuple(self._settings.private_contacts))
+
+    def request_load(self, purpose: str) -> None:
+        """Scroll the open chat and read it. The panel closes: WhatsApp needs the focus."""
+        if self._history_worker is None or self._guard_input is None or self._loading:
+            return
+        if purpose == "style":
+            window = capture.find_whatsapp_window(self._settings.allowed_windows)
+            if window is None:
+                self._tray.notify("error.no_whatsapp")
+                return
+            hwnd, title, contact_id = window.hwnd, "", None
+        else:
+            if not self._active or self._chat is None or not self._hwnd:
+                return
+            hwnd, title = self._hwnd, self._chat.title
+            contact_id = self._history.contact_id if self._history else None
+        # The delay lets the click that asked for the load settle before listening.
+        if not self._guard_input.arm(delay_s=0.6):
+            self._tray.notify("error.load_unavailable")
+            return
+        if purpose != "style":
+            self._panel.dismiss()
+            self._end_session()
+        self._loading = True
+        self._tray.set_loading(True)
+        self._tray.notify("notice.loading")
+        self.request_history_load.emit(purpose, hwnd, title, contact_id)
+
+    def _on_loaded(self, outcome) -> None:
+        self._guard_input.disarm()
+        self._loading = False
+        self._tray.set_loading(False)
+        history = outcome.history
+        if history is not None and history.state == "ask":
+            self._tray.notify("notice.load_ask")
+        else:
+            self._tray.notify(f"notice.load_{outcome.reason}", count=outcome.read)
+        if history is not None and history.state == "ready" and history.added > 0:
+            self.request_memory_update.emit(history.contact_id)
+        if outcome.purpose == "style" and self._style_worker is not None:
+            self.request_style_load.emit()
+
+    def answer_identity(self, contact_id) -> None:
+        """The user said which stored contact this is, or None for another person."""
+        if self._active:
+            self.request_confirm.emit(self._generation, contact_id)
+
+    def _on_history_changed(self, generation: int, history) -> None:
+        if generation == self._generation and self._active:
+            self._history = history
 
     def _end_session(self) -> None:
         """Leave the current session. Answers still on their way will be dropped."""
@@ -711,7 +991,9 @@ def model_client(current: Callable[[], Settings]) -> AnthropicClient | None:
     return AnthropicClient(key, current().model) if key else None
 
 
-def build_ports(current: Callable[[], Settings], style: StylePort = NO_STYLE) -> Ports:
+def build_ports(
+    current: Callable[[], Settings], style: StylePort = NO_STYLE, history: HistoryPort = NO_HISTORY
+) -> Ports:
     """current() gives the settings in force, so a change in the window applies at once."""
 
     def suggest(request: SuggestRequest, on_preview: PreviewCallback | None) -> SuggestResult:
@@ -731,6 +1013,7 @@ def build_ports(current: Callable[[], Settings], style: StylePort = NO_STYLE) ->
         insert_text=paste.insert_text,
         copy_text=lambda text: paste.copy_text(paste.prepare_text(text)),
         style=style,
+        history=history,
     )
 
 
@@ -767,15 +1050,25 @@ def run(argv: Sequence[str]) -> int:
     db = open_database(tray)
     # One service for both threads: the database serializes its own access.
     style = StyleService(db, lambda: model_client(lambda: worker.settings), knowledge_path())
+    history = HistoryService(
+        db, lambda: model_client(lambda: worker.settings), lambda: worker.settings
+    )
+    guard = scroll.InputGuard(app)
     thread = QThread()
     # The ports read the worker's settings, which the controller updates on every save.
-    worker = Worker(build_ports(lambda: worker.settings, style), settings)
+    worker = Worker(build_ports(lambda: worker.settings, style, history), settings)
     worker.moveToThread(thread)
     thread.start()
     style_thread = QThread()
     style_worker = StyleWorker(style, lambda: worker.settings.private_contacts)
     style_worker.moveToThread(style_thread)
     style_thread.start()
+    history_thread = QThread()
+    history_worker = HistoryWorker(
+        history, style, lambda: worker.settings, real_loader_ports(guard)
+    )
+    history_worker.moveToThread(history_thread)
+    history_thread.start()
     controller = Controller(
         worker,
         panel,
@@ -784,6 +1077,8 @@ def run(argv: Sequence[str]) -> int:
         settings,
         config_error=config_error,
         style_worker=style_worker,
+        history_worker=history_worker,
+        guard=guard,
     )
     tray.quit_requested.connect(app.quit)
 
@@ -791,11 +1086,14 @@ def run(argv: Sequence[str]) -> int:
         tray.notify("error.config", key=bad_key)
     if controller.resume():
         tray.notify("notice.started", hotkey=display_hotkey(settings.hotkey))
+    if config_error is None:
+        controller.start_history()
     logger.info("app started")
 
     code = app.exec()
     hotkey.unregister()
-    for running in (thread, style_thread):
+    guard.disarm()
+    for running in (thread, style_thread, history_thread):
         running.quit()
         if not running.wait(3000):
             # A model call is still running. Stop the thread instead of destroying it

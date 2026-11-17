@@ -116,6 +116,23 @@ def foreground_window() -> WindowInfo | None:
     return window_info(win32gui.GetForegroundWindow())
 
 
+def find_whatsapp_window(allowed: Sequence[str]) -> WindowInfo | None:
+    """The first visible top-level window that passes the allowed list, or None."""
+    import win32gui
+
+    found: list[WindowInfo] = []
+
+    def visit(hwnd, _):
+        if not found and win32gui.IsWindowVisible(hwnd):
+            info = window_info(hwnd)
+            if info is not None and info.title and is_allowed_window(info, allowed):
+                found.append(info)
+        return True
+
+    win32gui.EnumWindows(visit, None)
+    return found[0] if found else None
+
+
 def grab_window(hwnd: int) -> Image.Image:
     """Render the window's own content to an in-memory image. Nothing touches the disk."""
     import ctypes

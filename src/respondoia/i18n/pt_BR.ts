@@ -570,5 +570,65 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <source>error.export_private</source>
         <translation>Esta conversa é com um contato privado, então nada dela é guardado.</translation>
     </message>
+    <message>
+        <source>notice.loading</source>
+        <translation>Carregando a conversa. Mexa o mouse ou aperte qualquer tecla para parar.</translation>
+    </message>
+    <message>
+        <source>notice.load_limit</source>
+        <translation>{count} mensagens carregadas. Aperte o atalho para sugestões com esse contexto.</translation>
+    </message>
+    <message>
+        <source>notice.load_months</source>
+        <translation>{count} mensagens carregadas. Aperte o atalho para sugestões com esse contexto.</translation>
+    </message>
+    <message>
+        <source>notice.load_start</source>
+        <translation>{count} mensagens carregadas, até o início da conversa. Aperte o atalho para sugestões com esse contexto.</translation>
+    </message>
+    <message>
+        <source>notice.load_joined</source>
+        <translation>{count} mensagens carregadas e a lacuna foi preenchida. Aperte o atalho para sugestões com esse contexto.</translation>
+    </message>
+    <message>
+        <source>notice.load_user</source>
+        <translation>Carregamento interrompido. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.load_focus</source>
+        <translation>O carregamento parou porque o WhatsApp perdeu o foco. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.load_chat_changed</source>
+        <translation>O carregamento parou porque a conversa mudou. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.load_private</source>
+        <translation>Este contato é privado. Nada foi carregado.</translation>
+    </message>
+    <message>
+        <source>notice.load_lost</source>
+        <translation>Não foi possível acompanhar a conversa enquanto rolava. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.load_unreadable</source>
+        <translation>Não foi possível ler a conversa. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.load_ask</source>
+        <translation>A conversa foi lida, mas o app não soube qual contato com este nome é. Aperte o atalho e responda no painel, depois carregue de novo.</translation>
+    </message>
+    <message>
+        <source>error.load_unavailable</source>
+        <translation>Não foi possível acompanhar o mouse e o teclado, então a conversa não foi rolada.</translation>
+    </message>
+    <message>
+        <source>error.no_whatsapp</source>
+        <translation>Abra o WhatsApp antes.</translation>
+    </message>
+    <message>
+        <source>tray.loading</source>
+        <translation>Carregando o histórico da conversa</translation>
+    </message>
 </context>
 </TS>

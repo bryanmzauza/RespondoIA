@@ -141,6 +141,7 @@ class StartResult:
     chat: OpenChat | None = None
     context: UserContext | None = None
     history: HistoryContext | None = None
+    hwnd: int = 0  # the WhatsApp window, for the history loader
 
 
 class ChooseResult(Enum):
@@ -209,7 +210,7 @@ class Session:
             bool(self._context.knowledge),
             bool(self._context.label),
         )
-        return StartResult(StartStatus.STARTED, chat, self._context, self._history)
+        return StartResult(StartStatus.STARTED, chat, self._context, self._history, window.hwnd)
 
     def confirm_identity(self, contact_id: int | None) -> HistoryContext:
         """The user's answer to "same person?". The next request uses the result."""
