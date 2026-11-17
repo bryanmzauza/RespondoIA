@@ -91,7 +91,7 @@ MIGRATIONS: tuple[str, ...] = (
         data TEXT NOT NULL,
         manual TEXT NOT NULL DEFAULT '',
         extracted_at TEXT,
-        samples_at_extraction INTEGER NOT NULL DEFAULT 0
+        last_sample_id INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE pasted (
         text_hash TEXT PRIMARY KEY,
