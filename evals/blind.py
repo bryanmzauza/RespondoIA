@@ -1,7 +1,7 @@
 """Blind review of two models' suggestions for the same fictional chats.
 
 Usage:
-    uv run python evals/blind.py <dir>
+    uv run python evals/blind.py <dir> [--lang pt-BR]
 
 Reads <dir>/results.jsonl written by evals/run.py. For each case the two sets
 of suggestions are shown as A and B in random order. Answers go to
@@ -19,6 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from evals.run import SHOTS, read_rows
+
+
+def only_language(pairs: list[tuple], language: str | None) -> list[tuple]:
+    if language is None:
+        return pairs
+    return [pair for pair in pairs if pair[0].startswith(language + "/")]
 
 
 def summarize_blind(rows: list[dict]) -> dict:
@@ -79,6 +85,7 @@ def show_side(name: str, row: dict) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("dir", type=Path)
+    parser.add_argument("--lang", help="review only one language, for example pt-BR")
     args = parser.parse_args()
 
     results = {(r["case"], r["variant"], r["model"]): r for r in read_rows(args.dir / "results.jsonl")}
@@ -93,6 +100,7 @@ def main() -> int:
     seen = {(row["case"], row["variant"]) for row in answered}
     cases = sorted({(key[0], key[1]) for key in results})
     pairs = [c for c in cases if all((c[0], c[1], m) in results for m in models)]
+    pairs = only_language(pairs, args.lang)
 
     for number, (case, variant) in enumerate(pairs, 1):
         if (case, variant) in seen:

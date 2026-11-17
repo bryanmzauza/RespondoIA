@@ -74,3 +74,11 @@ def test_blind_summary_names_the_models_behind_a_and_b():
     assert summary["preferred"] == {"h": 1, "s": 1} and summary["ties"] == 1
     assert summary["broke_alone"] == {"h": 0, "s": 1}
     assert summary["complied"] == {"h": 1, "s": 0} and summary["variant_cases"] == 1
+
+
+def test_blind_review_can_be_limited_to_one_language():
+    from evals.blind import only_language
+
+    pairs = [("en/01-short", "base"), ("pt-BR/01-short", "base"), ("pt-BR/09-price", "selected")]
+    assert only_language(pairs, "pt-BR") == pairs[1:]
+    assert only_language(pairs, None) == pairs
