@@ -103,6 +103,19 @@ def foreground_window() -> int:
     return ctypes.windll.user32.GetForegroundWindow() or 0
 
 
+def window_under_cursor(hwnd: int) -> bool:
+    """True when the window under the cursor belongs to hwnd, so the wheel reaches it."""
+    x, y = cursor_pos()
+    user32 = ctypes.windll.user32
+    user32.WindowFromPoint.restype = wt.HWND
+    user32.WindowFromPoint.argtypes = [wt.POINT]
+    user32.GetAncestor.restype = wt.HWND
+    user32.GetAncestor.argtypes = [wt.HWND, wt.UINT]
+    found = user32.WindowFromPoint(wt.POINT(x, y))
+    root = user32.GetAncestor(found, 2) if found else None  # GA_ROOT
+    return bool(root) and int(root) == int(hwnd)
+
+
 def raw_device(lparam: int) -> int | None:
     """Device handle of a WM_INPUT message: 0 for SendInput, None if it cannot be read."""
     header = _RawInputHeader()

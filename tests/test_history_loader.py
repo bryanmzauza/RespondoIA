@@ -186,6 +186,15 @@ def test_pace_stays_human():
     assert sum(1 for s in sleeps if s >= 0.7) == report.screens - 1
 
 
+def test_a_window_over_the_chat_stops_before_any_scroll():
+    # Wheel events go to the window under the cursor, whatever is in front.
+    chat = FakeChat()
+    ports = chat.ports()
+    covered = LoaderPorts(**{**ports.__dict__, "under_cursor": lambda: False})
+    report = load(HWND, "Ana", LoadLimits(screens=80, months=0), covered)
+    assert report.reason == "covered" and chat.scrolled() == 0
+
+
 def test_months_before():
     assert months_before(date(2026, 11, 17), 6) == "2026-05-17"
     assert months_before(date(2026, 3, 31), 1) == "2026-02-28"

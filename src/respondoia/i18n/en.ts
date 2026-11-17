@@ -762,5 +762,9 @@ Suggestions may quote anything written here. Only include what you would tell an
         <source>error.history_unavailable</source>
         <translation>Could not open the history. Suggestions keep working without it.</translation>
     </message>
+    <message>
+        <source>notice.load_covered</source>
+        <translation>Loading stopped because another window covers the chat. {count} messages kept.</translation>
+    </message>
 </context>
 </TS>

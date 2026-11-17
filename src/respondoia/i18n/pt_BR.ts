@@ -762,5 +762,9 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <source>error.history_unavailable</source>
         <translation>Não foi possível abrir o histórico. As sugestões continuam, sem ele.</translation>
     </message>
+    <message>
+        <source>notice.load_covered</source>
+        <translation>O carregamento parou porque outra janela cobre a conversa. {count} mensagens guardadas.</translation>
+    </message>
 </context>
 </TS>

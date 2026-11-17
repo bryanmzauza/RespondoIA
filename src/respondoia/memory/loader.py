@@ -36,12 +36,14 @@ class LoaderPorts:
     sleep: Callable[[float], None]
     random: Callable[[float, float], float]
     today: Callable[[], date]
+    # Wheel events go to the window under the cursor: it must be the chat's own window.
+    under_cursor: Callable[[], bool] = lambda: True
 
 
 @dataclass(frozen=True)
 class LoadReport:
-    # "limit", "months", "start", "joined", "user", "focus", "chat_changed", "private",
-    # "lost" or "unreadable"
+    # "limit", "months", "start", "joined", "user", "focus", "covered", "chat_changed",
+    # "private", "lost" or "unreadable"
     reason: str
     screens: int
     lines: tuple[ChatLine, ...]  # everything read, stitched, oldest first; never another chat
@@ -96,6 +98,8 @@ def load(
             raise _Stop("user")
         if ports.foreground() != hwnd:
             raise _Stop("focus")
+        if not ports.under_cursor():
+            raise _Stop("covered")
 
     def read() -> ChatView:
         view = ports.read()

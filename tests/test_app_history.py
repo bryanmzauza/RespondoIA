@@ -24,6 +24,7 @@ LOAD_REASONS = (
     "joined",
     "user",
     "focus",
+    "covered",
     "chat_changed",
     "private",
     "lost",

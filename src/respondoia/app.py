@@ -334,6 +334,7 @@ def real_loader_ports(guard) -> Callable[[int], LoaderPorts]:
             sleep=time.sleep,
             random=random.uniform,
             today=date.today,
+            under_cursor=lambda: scroll.window_under_cursor(hwnd),
         )
 
     return make
