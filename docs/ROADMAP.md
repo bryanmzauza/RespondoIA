@@ -34,7 +34,7 @@ Hotkey to pasted reply, using a screenshot of the chat as model input.
 - [x] `reader`: contact name and chat bounds through accessibility
 - [x] `config`: minimal settings file and API key in the Credential Manager
 - [x] `evals`: scripts for the model comparison and the blind review
-- [ ] Model comparison on 30 fictional chats to pick the default model
+- [x] Model comparison on 30 fictional chats to pick the default model
 
 Exit criteria:
 

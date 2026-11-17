@@ -8,9 +8,9 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.1 is implemented and under test: hotkey,
-suggestion panel and paste, with a screenshot of the chat as model input. It
-needs your own API key. The plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** early development. Stage 0.1 works: hotkey, suggestion panel and
+paste, with a screenshot of the chat as model input. It needs your own API
+key. The plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
 
