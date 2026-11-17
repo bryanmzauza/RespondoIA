@@ -54,3 +54,19 @@ class ChatLine:
 class ChatView:
     chat: OpenChat
     lines: tuple[ChatLine, ...]  # visible messages, oldest first
+
+
+# Contact labels. Their names on screen come from the translations.
+LABELS = ("client", "supplier", "friend", "family")
+
+
+@dataclass(frozen=True)
+class UserContext:
+    """What the app knows about the user and the contact, added to each request."""
+
+    language: str | None
+    label: str | None  # label in use; None without a unique contact or a label
+    label_from_user: bool  # False for a model guess
+    ask_label: bool  # no label yet, not a group: the model may guess one
+    style: str  # rendered "Style" section, "" without a profile
+    knowledge: str  # knowledge.md text, "" without one

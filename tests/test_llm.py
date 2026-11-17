@@ -3,9 +3,10 @@ from types import SimpleNamespace
 import anthropic
 import httpx2
 import pytest
+from pydantic import BaseModel
 
 from respondoia.context import SYSTEM_PROMPT
-from respondoia.domain import ChatLine
+from respondoia.domain import ChatLine, UserContext
 from respondoia.llm import (
     AnthropicClient,
     ChatMessage,
@@ -293,3 +294,75 @@ def test_unmapped_sdk_errors_are_server_errors(monkeypatch):
     with pytest.raises(LlmError) as err:
         client.suggest(SuggestRequest(b"png", 3))
     assert err.value.code == "server"
+
+
+CTX = UserContext("pt", None, False, True, "Typical length: 30 characters", "Pão: R$ 18")
+
+
+class Traits(BaseModel):
+    formality: str
+
+
+def test_request_with_context_reaches_the_params():
+    params = build_params(SuggestRequest(None, 3, lines=LINES, context=CTX), "claude-haiku-5-5")
+    text = params["messages"][0]["content"][0]["text"]
+    assert "Typical length: 30 characters" in text and "Contact label: unknown" in text
+
+
+def test_label_outside_the_list_is_dropped(monkeypatch):
+    for label, kept in (("boss", None), ("client", "client")):
+        short = TextReply(
+            summary="s",
+            suggestions=[Suggestion(label="a", text=f"t{n}") for n in (1, 2, 3)],
+            contact_label=label,
+        )
+        client = client_returning(monkeypatch, fake_response(text=short.model_dump_json()))
+        reply = client.suggest(SuggestRequest(None, 3, lines=LINES, context=CTX)).reply
+        assert reply.contact_label == kept
+
+
+def extracting(monkeypatch, outcome, seen):
+    client = AnthropicClient("sk-test-not-a-real-key", "claude-haiku-5-5")
+
+    def create(**params):
+        seen.update(params)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(client._client.messages, "create", create)
+    return client
+
+
+def test_extract_sends_the_schema_and_parses(monkeypatch):
+    seen = {}
+    client = extracting(monkeypatch, fake_response(text='{"formality": "informal"}'), seen)
+    result = client.extract("system text", "the messages", Traits)
+    assert isinstance(result.value, Traits) and result.value.formality == "informal"
+    assert (result.input_tokens, result.output_tokens) == (2100, 640)
+    assert seen["system"] == "system text"
+    assert seen["messages"] == [{"role": "user", "content": "the messages"}]
+    assert seen["output_config"]["effort"] == "low"
+    assert seen["output_config"]["format"]["type"] == "json_schema"
+    assert "stream" not in seen
+
+
+def test_extract_disables_thinking_on_haiku(monkeypatch):
+    seen = {}
+    client = extracting(monkeypatch, fake_response(text='{"formality": "x"}'), seen)
+    client.extract("s", "t", Traits)
+    assert seen["thinking"] == {"type": "disabled"}
+
+
+def test_extract_maps_errors_like_suggest(monkeypatch):
+    cases = [
+        (status_error(anthropic.RateLimitError, 429), "rate_limit"),
+        (status_error(anthropic.AuthenticationError, 401), "auth"),
+        (fake_response(text="not json"), "invalid_reply"),
+        (fake_response(stop_reason="max_tokens", text="{"), "truncated"),
+    ]
+    for outcome, code in cases:
+        client = extracting(monkeypatch, outcome, {})
+        with pytest.raises(LlmError) as err:
+            client.extract("s", "t", Traits)
+        assert err.value.code == code

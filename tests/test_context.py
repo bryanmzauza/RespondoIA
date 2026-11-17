@@ -1,7 +1,7 @@
 import base64
 
-from respondoia.context import SYSTEM_PROMPT, build_user_content, number_lines
-from respondoia.domain import ChatLine
+from respondoia.context import SYSTEM_PROMPT, build_user_content, context_rows, number_lines
+from respondoia.domain import ChatLine, UserContext
 
 
 def test_image_comes_before_the_text():
@@ -110,3 +110,56 @@ def test_text_turn_names_the_lines_that_cannot_be_read():
     text = build_user_content(None, 3, lines=LINES)[0]["text"]
     assert "Not readable as text (audio, image or other media): [4]" in text
     assert "Not readable" not in build_user_content(None, 3, lines=LINES[:3])[0]["text"]
+
+
+CTX = UserContext("pt", None, False, True, "Typical length: 30 characters", "Pão: R$ 18")
+
+
+def test_sections_come_before_the_chat():
+    text = build_user_content(None, 3, lines=LINES, context=CTX)[0]["text"]
+    order = [
+        text.index(s)
+        for s in ("Style (", "Knowledge base (", "Contact label: unknown", "Chat (JSON)")
+    ]
+    assert order == sorted(order)
+    assert "Typical length: 30 characters" in text and "Pão: R$ 18" in text
+
+
+def test_screenshot_turn_carries_the_context_too():
+    text = build_user_content(b"png", 3, context=CTX)[1]["text"]
+    assert text.index("Style (") < text.index("Number of suggestions")
+    assert "Pão: R$ 18" in text
+
+
+def test_without_context_the_turn_is_unchanged():
+    empty = UserContext(None, None, False, False, "", "")
+    for context in (None, empty):
+        assert build_user_content(None, 3, lines=LINES, context=context) == build_user_content(
+            None, 3, lines=LINES
+        )
+
+
+def test_known_label_is_stated_and_not_asked():
+    known = UserContext("pt", "friend", True, False, "", "")
+    text = build_user_content(None, 3, lines=LINES, context=known)[0]["text"]
+    assert "Contact label: friend" in text and "unknown" not in text
+
+
+def test_group_or_unmatched_contact_has_no_label_row():
+    text = context_rows(UserContext("pt", None, False, False, "x", ""))
+    assert not any(row.startswith("Contact label") for row in text)
+
+
+def test_system_prompt_rules():
+    for phrase in (
+        'Follow "Style" when it is given',
+        'or in "Knowledge base"',
+        "never their content, names or facts",
+        'Leave "contact_label" null',
+    ):
+        assert phrase in SYSTEM_PROMPT
+
+
+def test_user_last_line_is_explicit():
+    text = build_user_content(None, 3, lines=LINES[:2])[0]["text"]
+    assert "never the other person's reply" in text

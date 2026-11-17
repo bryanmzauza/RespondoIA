@@ -4,7 +4,7 @@ import base64
 import json
 from collections.abc import Mapping, Sequence
 
-from respondoia.domain import ChatLine
+from respondoia.domain import LABELS, ChatLine, UserContext
 
 SYSTEM_PROMPT = """\
 You help the user reply to messages on WhatsApp.
@@ -23,10 +23,13 @@ you can read.
 Rules:
 - Write everything in the language of the conversation, including the summary, the note, \
 suggestion labels and any marker you insert.
-- Write the way the user writes in the visible messages: length, punctuation, capitalisation, \
-abbreviations and emoji. If none of the user's messages are visible, keep it short and neutral.
-- Use only facts present in the conversation.
+- Write the way the user writes. Follow "Style" when it is given, and use the user's visible \
+messages in this chat for the tone with this person. If there is neither, keep it short and \
+neutral.
+- Use only facts present in the conversation or in "Knowledge base".
 - Never mention other people, other customers or other conversations.
+- The examples in "Style" are messages the user sent to other people. Copy how they are \
+written, never their content, names or facts.
 - Never invent a price, date, deadline, address or any other fact. If something is missing, \
 write [confirm: ...] in the language of the conversation, for example [confirmar: ...] \
 in Portuguese.
@@ -43,6 +46,7 @@ approach.
 - In "messages", use "user" as the author of the user's messages and "contact" for the other \
 person. In a group, use the sender's name as shown.
 - Number messages from 1, oldest first.
+- Leave "contact_label" null unless "Contact label: unknown" asks for it.
 """
 
 
@@ -64,17 +68,42 @@ def number_lines(lines: Sequence[ChatLine]) -> list[dict]:
     ]
 
 
+def context_rows(context: UserContext | None) -> list[str]:
+    """Style, knowledge base and contact label, each only when there is something to say."""
+    if context is None:
+        return []
+    rows = []
+    if context.style:
+        rows += ["Style (how the user writes):", context.style]
+    if context.knowledge:
+        rows += ["Knowledge base (facts the user wants used in replies):", context.knowledge]
+    if context.label:
+        rows.append(f"Contact label: {context.label}")
+    elif context.ask_label:
+        rows.append(
+            'Contact label: unknown. If the chat makes it clear, set "contact_label" to '
+            f"{', '.join(LABELS[:-1])} or {LABELS[-1]}. Otherwise leave it null."
+        )
+    return rows
+
+
 def _text_content(
-    count: int, selected_ids: Sequence[int], instruction: str, chat: Sequence[ChatLine]
+    count: int,
+    selected_ids: Sequence[int],
+    instruction: str,
+    chat: Sequence[ChatLine],
+    context: UserContext | None,
 ) -> list[dict]:
     rows = [
+        *context_rows(context),
         "Chat (JSON): " + json.dumps(number_lines(chat), ensure_ascii=False),
         f"Number of suggestions: {count}",
     ]
     if chat[-1].author == "user":
         # Known locally, so the model does not have to work it out from the layout.
         rows.append(
-            "The last message is the user's: suggest what the user could add, not a reply to it."
+            "The last message is the user's. Every suggestion is a message the user sends next, "
+            "adding to it, never the other person's reply."
         )
     unreadable = [i + 1 for i, line in enumerate(chat) if line.kind != "text"]
     if unreadable:
@@ -97,12 +126,13 @@ def build_user_content(
     selected_ids: Sequence[int] = (),
     instruction: str = "",
     lines: Sequence[ChatLine] = (),
+    context: UserContext | None = None,
 ) -> list[dict]:
     if lines:
-        return _text_content(count, selected_ids, instruction, lines)
+        return _text_content(count, selected_ids, instruction, lines, context)
     if image_png is None:
         raise ValueError("a request needs a screenshot or the chat lines")
-    lines = [f"Number of suggestions: {count}"]
+    lines = [*context_rows(context), f"Number of suggestions: {count}"]
     if listed_messages is not None:
         listed = json.dumps([dict(m) for m in listed_messages], ensure_ascii=False)
         lines.append(f"Messages already listed (JSON): {listed}")

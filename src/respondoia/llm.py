@@ -1,17 +1,18 @@
 """Model client. Sends the chat and parses the JSON reply."""
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
 
 import anthropic
 import pydantic
 import pydantic_core
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from respondoia.context import SYSTEM_PROMPT, build_user_content, number_lines
-from respondoia.domain import ChatLine
+from respondoia.domain import LABELS, ChatLine, UserContext
 
 
 class ChatMessage(BaseModel):
@@ -26,6 +27,10 @@ class Suggestion(BaseModel):
     text: str
 
 
+def _known_label(value: str | None) -> str | None:
+    return value if value in LABELS else None
+
+
 class SuggestionReply(BaseModel):
     # Field order is the order the model writes them in. Summary and suggestions come
     # first so the panel can show them while the message list is still streaming.
@@ -34,6 +39,9 @@ class SuggestionReply(BaseModel):
     note: str | None = None
     contact: str
     messages: list[ChatMessage]
+    contact_label: str | None = None  # only when the request asked for a guess
+
+    _label = field_validator("contact_label")(_known_label)
 
 
 class TextReply(BaseModel):
@@ -42,6 +50,9 @@ class TextReply(BaseModel):
     summary: str
     suggestions: list[Suggestion]
     note: str | None = None
+    contact_label: str | None = None
+
+    _label = field_validator("contact_label")(_known_label)
 
 
 class SuggestionPreview(BaseModel):
@@ -59,6 +70,7 @@ class SuggestRequest:
     selected_ids: tuple[int, ...] = ()
     instruction: str = ""
     lines: tuple[ChatLine, ...] = ()  # text input; when set, image_png is None
+    context: UserContext | None = None  # style, knowledge base and contact label
 
 
 @dataclass(frozen=True)
@@ -69,6 +81,15 @@ class SuggestResult:
     output_tokens: int
     latency_ms: int
     preview_ms: int | None = None  # until summary and suggestions were complete
+
+
+@dataclass(frozen=True)
+class ExtractResult[T: BaseModel]:
+    value: T
+    model: str
+    input_tokens: int
+    output_tokens: int
+    latency_ms: int
 
 
 class LlmError(Exception):
@@ -87,6 +108,10 @@ class ModelClient(Protocol):
         self, request: SuggestRequest, on_preview: PreviewCallback | None = None
     ) -> SuggestResult: ...
 
+    def extract[T: BaseModel](
+        self, system: str, text: str, schema: type[T]
+    ) -> ExtractResult[T]: ...
+
 
 def build_params(request: SuggestRequest, model: str) -> dict:
     listed = None
@@ -99,6 +124,7 @@ def build_params(request: SuggestRequest, model: str) -> dict:
         request.selected_ids,
         request.instruction,
         request.lines,
+        request.context,
     )
     # No sampling keys: current models reject non-default values for them.
     params = {
@@ -157,7 +183,34 @@ def _with_local_messages(short: TextReply, lines: tuple[ChatLine, ...]) -> Sugge
         note=short.note,
         contact="",
         messages=messages,
+        contact_label=short.contact_label,
     )
+
+
+@contextmanager
+def _sdk_errors() -> Iterator[None]:
+    """Map what the SDK raises to the codes the app knows."""
+    try:
+        yield
+    except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
+        raise LlmError("auth") from exc
+    except anthropic.RateLimitError as exc:
+        raise LlmError("rate_limit") from exc
+    except anthropic.APIConnectionError as exc:  # includes timeouts
+        raise LlmError("network") from exc
+    except anthropic.APIError as exc:  # status errors and anything else the SDK raises
+        raise LlmError("server") from exc
+
+
+def _check_stop(stop_reason: str | None) -> None:
+    if stop_reason == "refusal":
+        raise LlmError("refused")
+    if stop_reason == "max_tokens":
+        raise LlmError("truncated")
+
+
+def _schema_format(schema: type[BaseModel]) -> dict:
+    return {"type": "json_schema", "schema": anthropic.transform_schema(schema)}
 
 
 class AnthropicClient:
@@ -171,40 +224,25 @@ class AnthropicClient:
         params = build_params(request, self._model)
         # The schema goes in output_config and the reply is validated here, not by
         # messages.parse: that helper parses the text before the stop reason can be read.
-        schema = anthropic.transform_schema(params.pop("output_format"))
         params["output_config"] = {
             **params["output_config"],
-            "format": {"type": "json_schema", "schema": schema},
+            "format": _schema_format(params.pop("output_format")),
         }
         started = time.perf_counter()
         preview_ms = None
-        try:
-            with self._client.messages.stream(**params) as stream:
-                text = ""
-                for delta in stream.text_stream:
-                    text += delta
-                    if preview_ms is None:
-                        preview = read_preview(text, request.count)
-                        if preview is not None:
-                            preview_ms = round((time.perf_counter() - started) * 1000)
-                            if on_preview is not None:
-                                on_preview(preview)
-                response = stream.get_final_message()
-        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
-            raise LlmError("auth") from exc
-        except anthropic.RateLimitError as exc:
-            raise LlmError("rate_limit") from exc
-        except anthropic.APIConnectionError as exc:  # includes timeouts
-            raise LlmError("network") from exc
-        except anthropic.APIStatusError as exc:
-            raise LlmError("server") from exc
-        except anthropic.APIError as exc:  # anything else the SDK raises
-            raise LlmError("server") from exc
+        with _sdk_errors(), self._client.messages.stream(**params) as stream:
+            text = ""
+            for delta in stream.text_stream:
+                text += delta
+                if preview_ms is None:
+                    preview = read_preview(text, request.count)
+                    if preview is not None:
+                        preview_ms = round((time.perf_counter() - started) * 1000)
+                        if on_preview is not None:
+                            on_preview(preview)
+            response = stream.get_final_message()
         latency_ms = round((time.perf_counter() - started) * 1000)
-        if response.stop_reason == "refusal":
-            raise LlmError("refused")
-        if response.stop_reason == "max_tokens":
-            raise LlmError("truncated")
+        _check_stop(response.stop_reason)
         text = next((block.text for block in response.content if block.type == "text"), None)
         try:
             if request.lines:
@@ -222,4 +260,35 @@ class AnthropicClient:
             output_tokens=response.usage.output_tokens,
             latency_ms=latency_ms,
             preview_ms=preview_ms,
+        )
+
+    def extract[T: BaseModel](
+        self, system: str, text: str, schema: type[T]
+    ) -> ExtractResult[T]:
+        """One structured answer, not streamed: background work nobody watches."""
+        params = {
+            "model": self._model,
+            "max_tokens": 4000,
+            "system": system,
+            "messages": [{"role": "user", "content": text}],
+            "output_config": {"effort": "low", "format": _schema_format(schema)},
+        }
+        if self._model.startswith("claude-haiku"):
+            params["thinking"] = {"type": "disabled"}
+        started = time.perf_counter()
+        with _sdk_errors():
+            response = self._client.messages.create(**params, timeout=60.0)
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        _check_stop(response.stop_reason)
+        answer = next((block.text for block in response.content if block.type == "text"), None)
+        try:
+            value = schema.model_validate_json(answer or "")
+        except pydantic.ValidationError as exc:
+            raise LlmError("invalid_reply") from exc
+        return ExtractResult(
+            value=value,
+            model=response.model,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            latency_ms=latency_ms,
         )
