@@ -9,10 +9,20 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import Enum
+from typing import Protocol
 
 from respondoia.capture import CaptureError, is_allowed_window
 from respondoia.config import Settings
-from respondoia.domain import ChatLine, ChatRef, ChatView, OpenChat, Rect, WindowInfo
+from respondoia.domain import (
+    LABELS,
+    ChatLine,
+    ChatRef,
+    ChatView,
+    OpenChat,
+    Rect,
+    UserContext,
+    WindowInfo,
+)
 from respondoia.llm import (
     LlmError,
     PreviewCallback,
@@ -36,6 +46,42 @@ from respondoia.privacy import (
 logger = logging.getLogger("respondoia")
 
 
+class StylePort(Protocol):
+    """The style service as the session sees it. It never raises."""
+
+    def learn(self, title: str, lines: Sequence[ChatLine], is_group: bool) -> str | None: ...
+    def context(self, title: str, language: str | None, is_group: bool) -> UserContext: ...
+    def guess_label(self, title: str, label: str) -> None: ...
+    def set_label(self, title: str, label: str | None) -> None: ...
+    def remember_pasted(self, text: str) -> None: ...
+    def forget(self, title: str) -> None: ...
+
+
+class NoStyle:
+    """Style off: nothing learned, nothing added to the request."""
+
+    def learn(self, title, lines, is_group):
+        return None
+
+    def context(self, title, language, is_group):
+        return UserContext(language, None, False, False, "", "")
+
+    def guess_label(self, title, label):
+        pass
+
+    def set_label(self, title, label):
+        pass
+
+    def remember_pasted(self, text):
+        pass
+
+    def forget(self, title):
+        pass
+
+
+NO_STYLE = NoStyle()
+
+
 @dataclass(frozen=True)
 class Ports:
     foreground_window: Callable[[], WindowInfo | None]
@@ -45,6 +91,7 @@ class Ports:
     suggest: Callable[[SuggestRequest, PreviewCallback | None], SuggestResult]
     insert_text: Callable[[int, str], bool]
     copy_text: Callable[[str], None]
+    style: StylePort = NO_STYLE
 
 
 class StartStatus(Enum):
@@ -59,6 +106,7 @@ class StartStatus(Enum):
 class StartResult:
     status: StartStatus
     chat: OpenChat | None = None
+    context: UserContext | None = None
 
 
 class ChooseResult(Enum):
@@ -82,6 +130,8 @@ class Session:
         self._lines: tuple[ChatLine, ...] = ()  # read at start, never again
         self._masked: tuple[ChatLine, ...] | None = None  # what is sent in text mode
         self._fell_back = False
+        self._context: UserContext | None = None
+        self._label_guessed = False
 
     @property
     def chat(self) -> ChatRef | None:
@@ -100,14 +150,25 @@ class Session:
         view = self._ports.read_chat_view(window.hwnd)
         chat = view.chat if view is not None else None
         decision = check_before_send(chat, self._settings.private_contacts)
+        if decision is SendDecision.PRIVATE:
+            # Anything kept from before the contact was made private goes now.
+            self._ports.style.forget(chat.title)
         if decision is not SendDecision.ALLOW:
             logger.info("start refused reason=%s", decision.value)
             return StartResult(StartStatus(decision.value))
         self._chat = ChatRef(window.hwnd, chat.title)
         self._bounds = chat.bounds
         self._lines = view.lines
-        logger.info("start ok")
-        return StartResult(StartStatus.STARTED, chat)
+        is_group = any(line.sender for line in view.lines)
+        language = self._ports.style.learn(chat.title, view.lines, is_group)
+        self._context = self._ports.style.context(chat.title, language, is_group)
+        logger.info(
+            "start ok style=%d knowledge=%d label=%d",
+            bool(self._context.style),
+            bool(self._context.knowledge),
+            bool(self._context.label),
+        )
+        return StartResult(StartStatus.STARTED, chat, self._context)
 
     def suggest(self, on_preview: PreviewCallback | None = None) -> SuggestionReply:
         """Send the chat as masked text, or capture it once when there is no text."""
@@ -121,7 +182,7 @@ class Session:
                     self._masked, found = mask_lines(self._lines)
                 logger.info("suggest input=text lines=%d masked=%d", len(self._lines), len(found))
             request = SuggestRequest(
-                None, self._settings.suggestion_count, lines=self._masked
+                None, self._settings.suggestion_count, lines=self._masked, context=self._context
             )
             return self._ask("suggest", request, on_preview)
         self._fell_back = self._settings.input == "text"
@@ -132,7 +193,9 @@ class Session:
             self._recheck = True  # until a capture succeeds
             self._image = self._ports.capture_chat(chat.hwnd, self._bounds)
             self._recheck = False
-        request = SuggestRequest(self._image, self._settings.suggestion_count)
+        request = SuggestRequest(
+            self._image, self._settings.suggestion_count, context=self._context
+        )
         return self._ask("suggest", request, on_preview)
 
     def regenerate(
@@ -150,6 +213,7 @@ class Session:
                 selected_ids=tuple(selected_ids),
                 instruction=instruction,
                 lines=self._masked,
+                context=self._context,
             )
             return self._ask("regenerate", request, on_preview)
         if self._image is None or self._reply is None:
@@ -160,6 +224,7 @@ class Session:
             previous=self._reply,
             selected_ids=tuple(selected_ids),
             instruction=instruction,
+            context=self._context,
         )
         return self._ask("regenerate", request, on_preview)
 
@@ -187,6 +252,8 @@ class Session:
                 self._ports.copy_text(text)
                 copy_mode = self._settings.insert_mode == "copy"
                 result = ChooseResult.COPIED if copy_mode else ChooseResult.COPIED_CHAT_CHANGED
+            # What the app wrote must not come back as the user's own style.
+            self._ports.style.remember_pasted(text)
         finally:
             self.close()
         logger.info("choose result=%s", result.value)
@@ -201,6 +268,7 @@ class Session:
         self._masked = None
         self._chat = None
         self._bounds = None
+        self._context = None
 
     def _check_chat_again(self, captured: ChatRef) -> None:
         """Before a retried capture: same window, same chat, still allowed, new bounds."""
@@ -215,6 +283,17 @@ class Session:
             logger.info("retry refused reason=chat_changed")
             raise CaptureError("the open chat changed")
         self._bounds = chat.bounds
+
+    def _save_label_guess(self, reply: SuggestionReply) -> None:
+        context = self._context
+        if (
+            context is not None
+            and context.ask_label
+            and not self._label_guessed
+            and reply.contact_label in LABELS
+        ):
+            self._label_guessed = True
+            self._ports.style.guess_label(self._chat.title, reply.contact_label)
 
     def _open_chat(self) -> ChatRef:
         if self._chat is None:
@@ -246,6 +325,7 @@ class Session:
             raise
         self._reply = reply
         self._choices = reply.suggestions
+        self._save_label_guess(reply)
         logger.info(
             "%s ok ms=%d preview_ms=%s model=%s tokens_in=%d tokens_out=%d",
             event,

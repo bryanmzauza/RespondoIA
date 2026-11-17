@@ -315,5 +315,9 @@
         <source>notice.screenshot_fallback</source>
         <translation>Could not read the chat as text. A screenshot was sent instead.</translation>
     </message>
+    <message>
+        <source>error.style_unavailable</source>
+        <translation>Could not open the style data. Suggestions keep working without your style.</translation>
+    </message>
 </context>
 </TS>

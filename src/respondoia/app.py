@@ -10,9 +10,10 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
-from respondoia import autostart, capture, config, i18n, paste, reader
+from respondoia import autostart, capture, config, database, i18n, paste, reader
 from respondoia.capture import CaptureError
 from respondoia.config import ConfigError, Settings
+from respondoia.database import Database, DatabaseError
 from respondoia.domain import OpenChat
 from respondoia.hotkey import (
     GlobalHotkey,
@@ -21,6 +22,7 @@ from respondoia.hotkey import (
     display_hotkey,
     parse_hotkey,
 )
+from respondoia.knowledge import knowledge_path
 from respondoia.llm import (
     AnthropicClient,
     LlmError,
@@ -28,7 +30,17 @@ from respondoia.llm import (
     SuggestRequest,
     SuggestResult,
 )
-from respondoia.session import ChooseResult, Ports, Session, StartResult, StartStatus
+from respondoia.session import (
+    NO_STYLE,
+    ChooseResult,
+    Ports,
+    Session,
+    StartResult,
+    StartStatus,
+    StylePort,
+)
+from respondoia.style.parser import ExportChat, ExportError, parse_export
+from respondoia.style.service import StyleService
 from respondoia.ui.panel import SuggestionPanel
 from respondoia.ui.settings import SettingsWindow
 from respondoia.ui.tray import Tray
@@ -60,6 +72,7 @@ class Worker(QObject):
     choose_failed = Signal(int, str)  # generation, error code
     crashed = Signal(int)  # generation
     fell_back = Signal(int)  # generation: the screenshot was sent instead of text
+    learned = Signal(str)  # language of a chat the style just learned from
 
     def __init__(self, ports: Ports, settings: Settings) -> None:
         super().__init__()
@@ -90,6 +103,8 @@ class Worker(QObject):
             if result.status is StartStatus.STARTED:
                 self._session = session
             self.started.emit(generation, result)
+            if result.context is not None and result.context.language:
+                self.learned.emit(result.context.language)
 
         self._guard(generation, begin)
 
@@ -127,6 +142,14 @@ class Worker(QObject):
 
         self._guard(generation, choose)
 
+    @Slot(str)
+    def forget(self, title: str) -> None:
+        self._ports.style.forget(title)
+
+    @Slot(str, object)
+    def set_label(self, title: str, label: str | None) -> None:
+        self._ports.style.set_label(title, label)
+
     @Slot()
     def close(self) -> None:
         if self._session is not None:
@@ -160,6 +183,80 @@ class Worker(QObject):
             self.crashed.emit(generation)
 
 
+class StyleWorker(QObject):
+    """Runs the slow style work (reading an export, asking the model) off the hotkey's thread."""
+
+    overview_ready = Signal(object)  # StyleOverview
+    authors_found = Signal(object)  # ((author, count), ...)
+    imported = Signal(object)  # ImportResult
+    refreshed = Signal(str)  # language
+    failed = Signal(str)  # error code, e.g. "export_format" or "rate_limit"
+
+    def __init__(self, service: StyleService) -> None:
+        super().__init__()
+        self._service = service
+        self._export: ExportChat | None = None  # read and waiting for the user's name
+
+    @Slot()
+    def load(self) -> None:
+        self.overview_ready.emit(self._service.overview())
+
+    @Slot(str)
+    def import_file(self, path: str) -> None:
+        self._export = None
+        try:
+            self._export = parse_export(Path(path).read_bytes(), Path(path).name)
+        except ExportError as exc:
+            self.failed.emit("export_" + exc.code)
+            return
+        except OSError:
+            self.failed.emit("export_format")
+            return
+        self.authors_found.emit(self._export.authors)
+
+    @Slot(str, object)
+    def import_chosen(self, author: str, label: str | None) -> None:
+        chat, self._export = self._export, None
+        if chat is None:
+            return
+        self.imported.emit(self._service.import_export(chat, author, label))
+        self.load()
+
+    @Slot()
+    def cancel_import(self) -> None:
+        self._export = None
+
+    @Slot(str)
+    def refresh(self, language: str) -> None:
+        try:
+            self._service.refresh(language)
+        except LlmError as exc:
+            self.failed.emit(exc.code)
+            return
+        self.refreshed.emit(language)
+        self.load()
+
+    @Slot(str)
+    def refresh_if_due(self, language: str) -> None:
+        if self._service.refresh_if_due(language):
+            self.refreshed.emit(language)
+
+    @Slot(str, str)
+    def save_manual(self, language: str, text: str) -> None:
+        self._service.save_manual(language, text)
+        self.load()
+
+    @Slot(str, str)
+    def exclude_example(self, language: str, text: str) -> None:
+        self._service.exclude_example(language, text)
+        self.load()
+
+    @Slot()
+    def reset(self) -> None:
+        self._service.reset()
+        self.load()
+
+
 class Controller(QObject):
     """Interface-thread logic: one session at a time, from the hotkey to the notice."""
 
@@ -169,6 +266,8 @@ class Controller(QObject):
     request_choose = Signal(int, int)
     request_close = Signal()
     request_settings = Signal(object)
+    request_forget = Signal(str)
+    request_refresh_due = Signal(str)
 
     def __init__(
         self,
@@ -179,8 +278,10 @@ class Controller(QObject):
         settings,
         config_file: Path | None = None,
         config_error: str | None = None,
+        style_worker=None,
     ):
         super().__init__()
+        self._style_worker = style_worker
         # With an invalid config.toml the private list is unknown, so nothing is read.
         self._config_error = config_error
         self._last_request: tuple = ("suggest",)
@@ -207,6 +308,10 @@ class Controller(QObject):
         self.request_choose.connect(worker.choose)
         self.request_close.connect(worker.close)
         self.request_settings.connect(worker.set_settings)
+        self.request_forget.connect(worker.forget)
+        if style_worker is not None:
+            self.request_refresh_due.connect(style_worker.refresh_if_due)
+            worker.learned.connect(self._on_learned)
         worker.started.connect(self._on_started)
         worker.previewed.connect(self._on_previewed)
         worker.replied.connect(self._on_replied)
@@ -310,6 +415,11 @@ class Controller(QObject):
             self._fallback_shown = True
             self._tray.notify("notice.screenshot_fallback")
 
+    def _on_learned(self, language: str) -> None:
+        # Costs a model call at most once a day per language, and only with a key.
+        if config.get_api_key():
+            self.request_refresh_due.emit(language)
+
     def _on_crashed(self, generation: int) -> None:
         if generation != self._generation:
             return
@@ -351,6 +461,7 @@ class Controller(QObject):
             self._tray.notify("error.config", key=exc.key)
             return
         self.request_settings.emit(self._settings)
+        self.request_forget.emit(self._chat.title)
         self._panel.dismiss()
         self._end_session()
         self._tray.notify("notice.private_added")
@@ -448,7 +559,22 @@ class Controller(QObject):
         self.request_close.emit()
 
 
-def build_ports(current: Callable[[], Settings]) -> Ports:
+def open_database(tray) -> Database | None:
+    """The encrypted database, or None with one notice: suggestions work without it."""
+    try:
+        return database.open_default()
+    except DatabaseError as exc:
+        logger.info("database unavailable code=%s", exc.code)
+        tray.notify("error.style_unavailable")
+        return None
+
+
+def model_client(current: Callable[[], Settings]) -> AnthropicClient | None:
+    key = config.get_api_key()
+    return AnthropicClient(key, current().model) if key else None
+
+
+def build_ports(current: Callable[[], Settings], style: StylePort = NO_STYLE) -> Ports:
     """current() gives the settings in force, so a change in the window applies at once."""
 
     def suggest(request: SuggestRequest, on_preview: PreviewCallback | None) -> SuggestResult:
@@ -467,6 +593,7 @@ def build_ports(current: Callable[[], Settings]) -> Ports:
         suggest=suggest,
         insert_text=paste.insert_text,
         copy_text=lambda text: paste.copy_text(paste.prepare_text(text)),
+        style=style,
     )
 
 
@@ -500,12 +627,27 @@ def run(argv: Sequence[str]) -> int:
     tray.show()
     panel = SuggestionPanel()
     hotkey = GlobalHotkey(app)
+    db = open_database(tray)
+    # One service for both threads: the database serializes its own access.
+    style = StyleService(db, lambda: model_client(lambda: worker.settings), knowledge_path())
     thread = QThread()
     # The ports read the worker's settings, which the controller updates on every save.
-    worker = Worker(build_ports(lambda: worker.settings), settings)
+    worker = Worker(build_ports(lambda: worker.settings, style), settings)
     worker.moveToThread(thread)
     thread.start()
-    controller = Controller(worker, panel, tray, hotkey, settings, config_error=config_error)
+    style_thread = QThread()
+    style_worker = StyleWorker(style)
+    style_worker.moveToThread(style_thread)
+    style_thread.start()
+    controller = Controller(
+        worker,
+        panel,
+        tray,
+        hotkey,
+        settings,
+        config_error=config_error,
+        style_worker=style_worker,
+    )
     tray.quit_requested.connect(app.quit)
 
     if bad_key:
@@ -516,11 +658,14 @@ def run(argv: Sequence[str]) -> int:
 
     code = app.exec()
     hotkey.unregister()
-    thread.quit()
-    if not thread.wait(3000):
-        # A model call is still running. Stop the thread instead of destroying it
-        # while it runs, which would abort the process.
-        thread.terminate()
-        thread.wait(1000)
+    for running in (thread, style_thread):
+        running.quit()
+        if not running.wait(3000):
+            # A model call is still running. Stop the thread instead of destroying it
+            # while it runs, which would abort the process.
+            running.terminate()
+            running.wait(1000)
+    if db is not None:
+        db.close()
     logger.info("app stopped")
     return code

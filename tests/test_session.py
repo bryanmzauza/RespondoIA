@@ -491,3 +491,129 @@ def test_lines_without_any_text_fall_back_to_the_screenshot():
     session.suggest()
     assert fake.count("capture_chat") == 1 and fake.calls[-1][1].lines == ()
     assert session.fell_back is True
+
+
+# Style and context (stage 0.3).
+
+from respondoia.domain import UserContext
+
+
+class FakeStyle:
+    """Records what the session asks of the style service."""
+
+    def __init__(self, context=None, language="pt"):
+        self.calls = []
+        self.language = language
+        self.ctx = context or UserContext("pt", None, False, True, "ZZ-STYLE", "ZZ-KNOWLEDGE")
+
+    def names(self):
+        return [call[0] for call in self.calls]
+
+    def learn(self, title, lines, is_group):
+        self.calls.append(("learn", title, tuple(lines), is_group))
+        return self.language
+
+    def context(self, title, language, is_group):
+        self.calls.append(("context", title, language, is_group))
+        return self.ctx
+
+    def guess_label(self, title, label):
+        self.calls.append(("guess_label", title, label))
+
+    def set_label(self, title, label):
+        self.calls.append(("set_label", title, label))
+
+    def remember_pasted(self, text):
+        self.calls.append(("remember_pasted", text))
+
+    def forget(self, title):
+        self.calls.append(("forget", title))
+
+
+def styled(fake, style, settings=None):
+    session = Session(replace(fake.ports(), style=style), settings or Settings())
+    return session, session.start()
+
+
+TEXT_LINES = [
+    ChatLine("contact", "", "09:10", "text", "Oi! Consegue entregar até sexta?", ""),
+]
+
+
+def test_private_start_forgets_and_learns_nothing():
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    _, result = styled(fake, style, Settings(private_contacts=("Marina Duarte",)))
+    assert result.status is StartStatus.PRIVATE
+    assert style.calls == [("forget", "Marina Duarte")]
+
+
+def test_start_learns_then_builds_the_context():
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    _, result = styled(fake, style)
+    assert style.names() == ["learn", "context"]
+    assert style.calls[0] == ("learn", "Marina Duarte", tuple(TEXT_LINES), False)
+    assert style.calls[1] == ("context", "Marina Duarte", "pt", False)
+    assert result.context is style.ctx
+
+
+def test_a_chat_with_senders_is_a_group():
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = [ChatLine("contact", "Bia Rocha", "09:10", "text", "Quem leva a bola?", "")]
+    styled(fake, style)
+    assert style.calls[0][3] is True and style.calls[1][3] is True
+
+
+@pytest.mark.parametrize("input_mode", ["text", "screenshot"])
+def test_request_carries_the_context_in_both_inputs(input_mode):
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    session, _ = styled(fake, style, Settings(input=input_mode))
+    session.suggest()
+    session.regenerate((1,), "pedir prazo")
+    requests = [call[1] for call in fake.calls if call[0] == "suggest"]
+    assert [r.context for r in requests] == [style.ctx, style.ctx]
+
+
+def test_label_guess_is_passed_on_once():
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    fake.reply = make_reply().model_copy(update={"contact_label": "client"})
+    session, _ = styled(fake, style)
+    session.suggest()
+    session.regenerate((1,), "")
+    assert [c for c in style.calls if c[0] == "guess_label"] == [
+        ("guess_label", "Marina Duarte", "client")
+    ]
+
+
+def test_label_guess_is_ignored_when_not_asked():
+    fake = FakePorts()
+    style = FakeStyle(UserContext("pt", "friend", True, False, "", ""))
+    fake.lines = TEXT_LINES
+    fake.reply = make_reply().model_copy(update={"contact_label": "client"})
+    session, _ = styled(fake, style)
+    session.suggest()
+    assert "guess_label" not in style.names()
+
+
+@pytest.mark.parametrize("window_alive", [True, False])
+def test_choose_remembers_what_was_pasted_or_copied(window_alive):
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    session, _ = styled(fake, style)
+    session.suggest()
+    fake.window_alive = window_alive
+    result = session.choose(1)
+    assert result in (ChooseResult.PASTED, ChooseResult.COPIED_CHAT_CHANGED)
+    assert style.calls[-1] == ("remember_pasted", "sugestão 2")
+
+
+def test_logs_carry_no_content_with_style(caplog):
+    fake, style = FakePorts(), FakeStyle()
+    fake.lines = TEXT_LINES
+    with caplog.at_level(logging.INFO, logger="respondoia"):
+        session, _ = styled(fake, style)
+        session.suggest()
+    assert "ZZ-" not in caplog.text and "start ok style=1 knowledge=1 label=0" in caplog.text

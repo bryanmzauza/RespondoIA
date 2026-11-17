@@ -315,5 +315,9 @@
         <source>notice.screenshot_fallback</source>
         <translation>Não foi possível ler a conversa como texto. Foi enviado um print.</translation>
     </message>
+    <message>
+        <source>error.style_unavailable</source>
+        <translation>Não foi possível abrir os dados de estilo. As sugestões continuam, sem o seu estilo.</translation>
+    </message>
 </context>
 </TS>

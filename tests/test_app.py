@@ -41,6 +41,7 @@ class FakeWorker(Recorder):
     previewed = Signal(int, object)
     crashed = Signal(int)
     fell_back = Signal(int)
+    learned = Signal(str)
 
     def start(self, generation, requested_at):
         self.requested_at = requested_at
@@ -60,6 +61,9 @@ class FakeWorker(Recorder):
 
     def set_settings(self, settings):
         self.record("set_settings", settings)
+
+    def forget(self, title):
+        self.record("forget", title)
 
 
 class FakePanel(Recorder):
@@ -326,8 +330,9 @@ def test_mark_private_saves_the_contact_and_closes(rig):
     saved = tomllib.loads(rig.config_file.read_text(encoding="utf-8"))
     assert saved["privacy"]["private_contacts"] == ["Marina Duarte"]
     assert rig.panel.calls[-1] == ("dismiss",)
-    assert rig.worker.calls[-2][0] == "set_settings"
-    assert rig.worker.calls[-2][1].private_contacts == ("Marina Duarte",)
+    assert rig.worker.calls[-3][0] == "set_settings"
+    assert rig.worker.calls[-3][1].private_contacts == ("Marina Duarte",)
+    assert rig.worker.calls[-2] == ("forget", "Marina Duarte")
     assert rig.worker.calls[-1] == ("close",)
     assert rig.tray.notices() == ["notice.private_added"]
 
@@ -725,3 +730,78 @@ def test_a_hotkey_changed_while_paused_registers_on_resume(rig, monkeypatch):
         "register",
         parse_hotkey("ctrl+alt+r"),
     )
+
+
+# Style and context (stage 0.3).
+
+
+class FakeStyleWorker(Recorder):
+    def refresh_if_due(self, language):
+        self.record("refresh_if_due", language)
+
+
+def test_open_database_failure_notifies_once_and_returns_none(monkeypatch):
+    from respondoia.database import DatabaseError
+
+    def broken():
+        raise DatabaseError("key")
+
+    monkeypatch.setattr(app_module.database, "open_default", broken)
+    tray = FakeTray()
+    assert app_module.open_database(tray) is None
+    assert tray.notices() == ["error.style_unavailable"]
+
+
+def test_without_database_suggestions_still_run(qapp, tmp_path):
+    from dataclasses import replace
+
+    from respondoia.style.service import StyleService
+
+    fake = FakePorts()
+    style = StyleService(None, lambda: None, tmp_path / "knowledge.md")
+    worker = Worker(replace(fake.ports(), style=style), Settings(input="screenshot"))
+    seen = Catcher(worker)
+    worker.start(1, time.monotonic())
+    worker.suggest(1)
+    assert [event[0] for event in seen.events] == ["started", "previewed", "replied"]
+
+
+def test_mark_private_forgets_the_contact(rig):
+    rig.open_panel()
+    rig.panel.mark_private_requested.emit()
+    assert ("forget", "Marina Duarte") in rig.worker.calls
+
+
+def test_worker_reports_the_learned_language(qapp):
+    from dataclasses import replace
+
+    from test_session import FakeStyle
+
+    fake = FakePorts()
+    worker = Worker(replace(fake.ports(), style=FakeStyle(language="pt")), Settings())
+    languages = []
+    worker.learned.connect(languages.append)
+    worker.start(1, time.monotonic())
+    assert languages == ["pt"]
+
+
+def test_learned_language_asks_for_a_due_refresh(tmp_path):
+    style_worker = FakeStyleWorker()
+    worker = FakeWorker()
+    Controller(
+        worker, FakePanel(), FakeTray(), FakeHotkey(), Settings(), style_worker=style_worker
+    )
+    worker.learned.emit("pt")
+    assert style_worker.calls == [("refresh_if_due", "pt")]
+
+
+def test_worker_forgets_on_request(qapp):
+    from dataclasses import replace
+
+    from test_session import FakeStyle
+
+    style = FakeStyle()
+    worker = Worker(replace(FakePorts().ports(), style=style), Settings())
+    worker.forget("Marina Duarte")
+    worker.set_label("Marina Duarte", "client")
+    assert style.calls == [("forget", "Marina Duarte"), ("set_label", "Marina Duarte", "client")]
