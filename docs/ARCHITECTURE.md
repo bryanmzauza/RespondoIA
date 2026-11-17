@@ -18,13 +18,16 @@
 | `capture` | Identify the foreground window and capture its content | `pywin32`, Windows Graphics Capture or `PrintWindow` |
 | `reader` | Read contact name, messages and chat bounds | UI Automation |
 | `privacy` | Masking, private contacts, pre-send and pre-paste checks | |
-| `context` | Assemble the prompt | local database, `knowledge.md` |
+| `context` | Assemble the prompt: chat, style, knowledge base, contact label | |
 | `llm` | Call the model and parse the JSON reply | provider SDK behind a thin layer, `pydantic` |
 | `local_llm` | Optional local model | llama.cpp or Ollama |
 | `ui` | Panel, settings, style screen, tray | PySide6 |
 | `paste` | Return focus and insert the text | clipboard + `SendInput` |
-| `style` | Learn the user's writing style | own parser + `llm` |
-| `memory` | Per-contact history, gaps, memory, snippet search | encrypted SQLite, FTS5 |
+| `style` | Learn the user's writing style from their own messages | own parser + `llm` |
+| `memory` | Per-contact history, gaps, memory, snippet search | `database`, FTS5 |
+| `database` | Encrypted local database, key protected by DPAPI, migrations | SQLCipher |
+| `contacts` | Contact records: label and last language, found by a unique name match | `database` |
+| `knowledge` | The knowledge base file the user edits | |
 | `config` | Settings and API key | `tomllib`, `tomli-w`, `keyring` |
 | `autostart` | Start with Windows | `HKCU` Run key |
 | `auth` | Product account or own key | HTTPS, Credential Manager |
@@ -41,6 +44,24 @@ are pending are worked out locally, from the position of each bubble, so the
 model only writes the summary and the suggestions. The screenshot is sent when
 no message could be read, and the user is told.
 
+## Style
+
+The style profile is built from the user's own messages only: the lines the app
+reads on screen at each hotkey press, and exported chats the user imports. Lines
+from other people, quotes, forwarded messages and link previews are dropped
+locally, and what is kept is masked before it is stored. Text the app pasted is
+recognised by a hash and not learned back.
+
+Counts (length, capitalisation, punctuation, emoji, abbreviations) and examples
+are worked out locally. The model only describes what cannot be counted, from a
+sample of the user's messages, at most once a day per language. There is one
+profile per language, with a variation per contact label (client, supplier,
+friend, family). The user's own notes about their style take precedence.
+
+Profiles, contact records and the user's messages live in an encrypted database
+under `%LOCALAPPDATA%`, with the key protected by DPAPI. If it cannot be opened,
+suggestions keep working without the style.
+
 ## Model output
 
 ```json
@@ -55,7 +76,8 @@ no message could be read, and the user is told.
     { "label": "Direta", "text": "..." },
     { "label": "Cordial", "text": "..." }
   ],
-  "note": "optional: what could not be read or needs confirmation"
+  "note": "optional: what could not be read or needs confirmation",
+  "contact_label": "client, supplier, friend or family; only when asked, else null"
 }
 ```
 
@@ -77,6 +99,7 @@ These hold in every stage.
 - Logs hold time, latency and errors. No message content, anywhere.
 - Mask recognisable sensitive data before text leaves the machine.
 - Message content is data, not instructions, in every prompt.
+- No message from another person is stored or sent when learning the style.
 - The history loader sends scroll events only and stops on any user input or
   focus loss.
 - API keys live in the Credential Manager. No shared key in the executable.

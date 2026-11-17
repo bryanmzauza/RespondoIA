@@ -68,14 +68,18 @@ Exit criteria:
 
 ## 0.3 Style and context
 
-- [ ] `style/parser`: both export formats, multi-line messages, names with
-      emoji, omitted media, other date formats
-- [ ] `style/sampler`: keep only the user's messages, sample across chats and
+- [x] `database`: encrypted SQLite under `%LOCALAPPDATA%`, key protected by
+      DPAPI, schema migrations
+- [x] `style/parser`: both export formats, multi-line messages, names with
+      emoji, omitted media, other date formats, `.zip` exports read in memory
+- [x] `style/sampler`: keep only the user's messages, sample across chats and
       periods
-- [ ] `style/profile`: extract, store and update the profile, one per language
-- [ ] Passive learning from the user's own messages seen on screen
-- [ ] `ui/style_view`: load from screen, import export file, review profile
-- [ ] `context`: `knowledge.md`, contact labels, style variation per label
+- [x] `style/profile`: extract, store and update the profile, one per language
+- [x] Passive learning from the user's own messages seen on screen
+- [x] `ui/style_view`: import export file, review profile, own notes, restore
+      default
+- [x] `context`: `knowledge.md`, contact labels, style variation per label
+- [x] Style button in the panel and the tray, contact label in the panel
 
 Exit criteria:
 
@@ -85,10 +89,10 @@ Exit criteria:
 
 ## 0.4 History
 
-- [ ] `memory/store`: encrypted SQLite under `%LOCALAPPDATA%`, key protected
-      by DPAPI, retention period, delete per contact and delete all
+- [ ] `memory/store`: history tables in the encrypted database, retention
+      period, delete per contact and delete all
 - [ ] `memory/loader`: one-click load by scrolling and reading, stops on user
-      input or focus loss
+      input or focus loss. Also loads chats for the style screen
 - [ ] `memory/merge`: overlap stitching, no duplicates, gap detection
 - [ ] `memory/recall`: contact memory summary, snippet search (FTS5)
 - [ ] Follow mode for contacts already in scope, with tray indicator

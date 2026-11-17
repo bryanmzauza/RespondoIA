@@ -8,9 +8,10 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.2 works: the chat is read as text and
-masked before it is sent, with a screenshot as the fallback, and there is a
-settings window. It needs your own API key. The plan is in
+**Status:** early development. Stage 0.3 works: suggestions follow a style
+learned from your own messages, as you use the hotkey or from an exported chat
+you import, and can use a knowledge base you write. The chat is read as text and
+masked before it is sent. It needs your own API key. The plan is in
 [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
@@ -55,12 +56,17 @@ in the tray; right-click the icon and choose Settings to change the hotkey,
 the model, the key and the rest. Set a monthly spend limit on the provider
 account before use.
 
+The style screen is in the tray menu (Learn my style) and in the panel.
+Settings has a button that opens the knowledge base, `knowledge.md`, in
+`%LOCALAPPDATA%\RespondoIA`. The style profile and contact labels are kept in
+an encrypted database in the same folder.
+
 `config.example.toml` lists every setting. Module responsibilities and the
 rules the code must follow are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 Test fixtures must be fictional. Do not commit screenshots or exports of real
-conversations, a real `config.toml`, a real `context/knowledge.md` or any
-database file.
+conversations, a real `config.toml`, a real `knowledge.md` or any database
+or key file.
 
 ## Repository layout
 
