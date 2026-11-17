@@ -12,8 +12,9 @@ PANEL_ID = "main"
 HEADER_BAND = 90
 # The time under each message. A data format, not a translated label.
 TIME_RE = re.compile(r"^\d{1,2}:\d{2}(\s?[AaPp]\.?\s?[Mm]\.?)?$")
-# A bubble is narrower than this share of its row; the row spans the whole chat.
-_BUBBLE_SHARE = 0.75
+# A bubble is narrower than its row, which spans the whole chat. Long messages in a
+# narrow window come close to the full width.
+_BUBBLE_SHARE = 0.97
 # A group sender's name sits this close to the top of the bubble.
 _SENDER_BAND = 30
 # Smaller pictures inside a bubble are avatars, not photos.
@@ -99,13 +100,38 @@ def _message_area(panel: UiNode) -> tuple[int, int]:
     return top, bottom
 
 
+def _has_content(node: UiNode) -> bool:
+    return any(
+        (n.control_type == "Text" and n.name.strip())
+        or n.control_type in ("Slider", "ProgressBar")
+        or (n.control_type == "Image" and min(n.rect.width, n.rect.height) >= _PHOTO_SIDE)
+        for n in _walk(node)
+    )
+
+
+def _bubble(row: UiNode) -> UiNode | None:
+    """The outermost group narrower than the row that holds the message."""
+    level, best = [row], None
+    while level and best is None:
+        level = [c for n in level for c in n.children]
+        candidates = [
+            n
+            for n in level
+            if n.control_type == "Group"
+            and 0 < n.rect.width < _BUBBLE_SHARE * row.rect.width
+            and _has_content(n)
+        ]
+        if candidates:
+            best = max(candidates, key=lambda g: g.rect.width * g.rect.height)
+    return best
+
+
 def _read_row(row: UiNode) -> ChatLine | None:
-    groups = [n for n in _walk(row) if n is not row and n.control_type == "Group"]
-    narrow = [g for g in groups if 0 < g.rect.width < _BUBBLE_SHARE * row.rect.width]
-    if not narrow:
+    bubble = _bubble(row)
+    if bubble is None:
         return None  # a placeholder row the list has not drawn yet
-    bubble = max(narrow, key=lambda g: g.rect.width * g.rect.height)
-    is_user = (bubble.rect.left + bubble.rect.right) / 2 > (row.rect.left + row.rect.right) / 2
+    # The side with the smaller margin is where the bubble sits, however wide it is.
+    is_user = row.rect.right - bubble.rect.right < bubble.rect.left - row.rect.left
     nodes = [n for n in _walk(bubble) if n is not bubble]
 
     def texts_in(node: UiNode) -> list[UiNode]:
@@ -123,7 +149,10 @@ def _read_row(row: UiNode) -> ChatLine | None:
         first_text_top = min((n.rect.top for n in body), default=bubble.rect.bottom)
         for n in nodes:
             near_top = n.rect.top - bubble.rect.top <= _SENDER_BAND
-            if n.control_type == "Button" and n is not quote and n.name.strip() and near_top:
+            # A name is a wide, short button; a play button is square.
+            wide = n.rect.width >= 1.5 * n.rect.height
+            is_name = n.control_type == "Button" and n is not quote and n.name.strip()
+            if is_name and near_top and wide:
                 if n.rect.top < first_text_top:
                     sender = n.name.strip()
                 break
@@ -131,8 +160,7 @@ def _read_row(row: UiNode) -> ChatLine | None:
     if any(n.control_type in ("Slider", "ProgressBar") for n in nodes):
         kind = "audio"
     elif any(
-        n.control_type == "Image" and min(n.rect.width, n.rect.height) >= _PHOTO_SIDE
-        for n in nodes
+        n.control_type == "Image" and min(n.rect.width, n.rect.height) >= _PHOTO_SIDE for n in nodes
     ):
         kind = "image"
     elif body:

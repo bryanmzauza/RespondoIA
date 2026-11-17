@@ -90,3 +90,35 @@ def test_time_pattern():
         assert TIME_RE.match(text), text
     for text in ("18h", "21:47:00", "R$ 21,47", "Oi"):
         assert not TIME_RE.match(text), text
+
+
+def widened(name, share):
+    """The fixture with its first bubble stretched to a share of the row width."""
+    data = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+    rows = [n for n in walk_dicts(data) if n.get("aria_role") == "row"]
+    row = rows[0]
+    left, right = row["rect"][0], row["rect"][2]
+    bubble_left = left + 62
+    new_right = bubble_left + int(share * (right - left))
+    for node in walk_dicts(row):
+        if node["control_type"] == "Group" and node["rect"][0] == bubble_left:
+            node["rect"][2] = new_right
+    return node_from_dict(data)
+
+
+def walk_dicts(node):
+    yield node
+    for child in node.get("children", []):
+        yield from walk_dicts(child)
+
+
+def test_a_wide_bubble_keeps_its_side_and_text():
+    root = widened("msgs-pt.json", 0.85)
+    panel = next(n for n in walk(root) if n.automation_id == "main")
+    first = read_lines(panel)[0]
+    assert (first.author, first.text, first.time) == ("contact", "Oi! Tudo bem?", "09:10")
+
+
+def test_the_play_button_is_not_a_sender():
+    audio = read_lines(panel_of("msgs-media.json"))[1]
+    assert audio.kind == "audio" and audio.sender == ""
