@@ -6,6 +6,7 @@ from respondoia.domain import Rect
 from respondoia.llm import ChatMessage, Suggestion, SuggestionReply
 from respondoia.ui.panel import (
     COMPOSER_CLEARANCE,
+    HEADER_CLEARANCE,
     MARGIN,
     SuggestionPanel,
     panel_position,
@@ -273,3 +274,63 @@ def test_error_after_a_preview_disables_the_options(qtbot, reply3):
     panel.show_error("refused")
     with qtbot.assertNotEmitted(panel.suggestion_chosen):
         qtbot.keyClick(panel, "1")
+
+
+def test_corners():
+    chat, screen = Rect(400, 0, 1600, 900), Rect(0, 0, 1920, 1080)
+    size = (420, 300)
+    assert panel_position(chat, size, screen, "top-left") == (400 + MARGIN, HEADER_CLEARANCE)
+    assert panel_position(chat, size, screen, "bottom-left") == (
+        400 + MARGIN,
+        900 - COMPOSER_CLEARANCE - 300,
+    )
+    assert panel_position(chat, size, screen, "top-right") == (
+        1600 - 420 - MARGIN,
+        HEADER_CLEARANCE,
+    )
+    assert panel_position(chat, size, screen) == panel_position(chat, size, screen, "bottom-right")
+
+
+def test_quick_instruction_regenerates_with_checked_ids(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    panel.set_quick_instructions([("Pedir prazo", "Pedir prazo"), ("Mais curto", "Mais curto")])
+    qtbot.keyClick(panel, Qt.Key.Key_Tab)
+    assert [b.text() for b in panel.instruction_buttons] == ["Pedir prazo", "Mais curto"]
+    with qtbot.waitSignal(panel.regenerate_requested) as sig:
+        qtbot.mouseClick(panel.instruction_buttons[0], Qt.MouseButton.LeftButton)
+    assert sig.args == [(2, 3), "Pedir prazo"]
+
+
+def test_quick_instructions_can_be_replaced(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    panel.set_quick_instructions([("A", "A"), ("B", "B")])
+    panel.set_quick_instructions([("C & D", "C & D")])
+    assert [b.text() for b in panel.instruction_buttons] == ["C && D"]
+
+
+def test_model_text_is_plain(qtbot):
+    reply = make_reply(3)
+    reply = reply.model_copy(update={"summary": "<b>quer</b> prazo & valor", "note": "<i>x</i>"})
+    reply.suggestions[0] = reply.suggestions[0].model_copy(update={"text": "Tom & Jerry"})
+    panel = make_panel(qtbot, reply)
+    assert panel.summary_label.textFormat() == Qt.TextFormat.PlainText
+    assert panel.note_label.textFormat() == Qt.TextFormat.PlainText
+    assert "<b>quer</b> prazo & valor" in panel.summary_label.text()
+    assert "Tom && Jerry" in panel.option_buttons[0].text()
+    assert panel.option_buttons[0].toolTip() == "Tom & Jerry"
+
+
+def test_settings_button_emits(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    assert panel.settings_button.text() == "Configurações"
+    with qtbot.waitSignal(panel.settings_requested):
+        qtbot.mouseClick(panel.settings_button, Qt.MouseButton.LeftButton)
+
+
+def test_corner_is_used_when_placing(qtbot, reply3):
+    panel = SuggestionPanel()
+    qtbot.addWidget(panel)
+    panel.set_corner("top-left")
+    panel.show_loading("Marina Duarte", CHAT)
+    screen = panel.screen().geometry()
+    assert panel.x() <= CHAT.left + MARGIN + screen.x() + 1

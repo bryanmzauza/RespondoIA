@@ -307,5 +307,9 @@
         <source>instruction.ask_for_time</source>
         <translation>Ask for more time</translation>
     </message>
+    <message>
+        <source>panel.settings</source>
+        <translation>Settings</translation>
+    </message>
 </context>
 </TS>

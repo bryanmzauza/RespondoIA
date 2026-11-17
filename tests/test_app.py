@@ -67,6 +67,7 @@ class FakePanel(Recorder):
     mark_private_requested = Signal()
     retry_requested = Signal()
     closed = Signal()
+    settings_requested = Signal()
 
     def show_loading(self, title, bounds):
         self.record("show_loading", title, bounds)
@@ -85,6 +86,12 @@ class FakePanel(Recorder):
 
     def bring_to_front(self):
         self.record("bring_to_front")
+
+    def set_corner(self, corner):
+        self.record("set_corner", corner)
+
+    def set_quick_instructions(self, items):
+        self.record("set_quick_instructions", list(items))
 
 
 class FakeTray(Recorder):
@@ -146,6 +153,9 @@ class Rig:
             config_error=config_error,
         )
         self.controller.resume()
+        # What the controller set up on the panel at start, kept apart from the session calls.
+        self.panel_setup = list(self.panel.calls)
+        self.panel.calls.clear()
 
     def press(self):
         self.hotkey.triggered.emit()
@@ -336,8 +346,15 @@ def test_a_worker_crash_notifies_and_frees_the_hotkey(rig):
 class Catcher:
     def __init__(self, worker):
         self.events = []
-        for name in ("started", "previewed", "replied", "failed", "chosen", "choose_failed",
-                     "crashed"):
+        for name in (
+            "started",
+            "previewed",
+            "replied",
+            "failed",
+            "chosen",
+            "choose_failed",
+            "crashed",
+        ):
             getattr(worker, name).connect(lambda *args, n=name: self.events.append((n, *args)))
 
 
@@ -350,7 +367,12 @@ def test_worker_runs_a_session_from_start_to_paste(qapp):
     worker.regenerate(1, (2,), "pedir prazo")
     worker.choose(1, 0)
     assert [event[0] for event in seen.events] == [
-        "started", "previewed", "replied", "previewed", "replied", "chosen"
+        "started",
+        "previewed",
+        "replied",
+        "previewed",
+        "replied",
+        "chosen",
     ]
     assert seen.events[0][2].chat == OpenChat("Marina Duarte", BOUNDS)
     assert seen.events[-1] == ("chosen", 1, ChooseResult.PASTED)
@@ -428,7 +450,9 @@ def test_session_work_happens_on_the_worker_thread(qtbot, tmp_path):
     worker.moveToThread(thread)
     thread.start()
     panel, tray, hotkey = FakePanel(), FakeTray(), FakeHotkey()
-    controller = Controller(worker, panel, tray, hotkey, Settings(), config_file=tmp_path / "c.toml")
+    controller = Controller(
+        worker, panel, tray, hotkey, Settings(), config_file=tmp_path / "c.toml"
+    )
     try:
         controller.resume()
         hotkey.triggered.emit()
@@ -575,4 +599,43 @@ def test_settings_from_the_tray_open_the_window(rig, monkeypatch):
     opened = []
     monkeypatch.setattr(rig.controller, "open_settings", lambda: opened.append(True))
     rig.tray.settings_requested.emit()
+    assert opened == [True]
+
+
+def test_panel_gets_corner_and_translated_instructions(tmp_path):
+    from dataclasses import replace
+
+    rig = Rig(
+        tmp_path,
+        replace(
+            Settings(),
+            panel_position="top-left",
+            quick_instructions=("ask_for_time", "Responder com carinho"),
+        ),
+    )
+    assert ("set_corner", "top-left") in rig.panel_setup
+    assert (
+        "set_quick_instructions",
+        [
+            ("Ask for more time", "Ask for more time"),
+            ("Responder com carinho", "Responder com carinho"),
+        ],
+    ) in rig.panel_setup
+
+
+def test_apply_settings_updates_the_panel(rig, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    rig.controller.apply_settings(replace(Settings(), panel_position="bottom-left"))
+    assert (
+        rig.panel.calls[-2:][0] == ("set_corner", "bottom-left")
+        or ("set_corner", "bottom-left") in rig.panel.calls
+    )
+
+
+def test_settings_from_the_panel_open_the_window(rig, monkeypatch):
+    opened = []
+    monkeypatch.setattr(rig.controller, "open_settings", lambda: opened.append(True))
+    rig.panel.settings_requested.emit()
     assert opened == [True]

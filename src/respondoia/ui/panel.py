@@ -1,9 +1,12 @@
 """Suggestion panel."""
 
+from collections.abc import Sequence
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -17,6 +20,7 @@ from respondoia.i18n import t
 from respondoia.llm import Suggestion, SuggestionPreview, SuggestionReply
 
 COMPOSER_CLEARANCE = 72  # logical pixels kept free above the bottom of the chat area
+HEADER_CLEARANCE = 72  # logical pixels kept free below the top of the chat area
 MARGIN = 12
 WIDTH = 420
 MAX_OPTIONS = 3
@@ -35,11 +39,19 @@ def to_logical(rect: Rect, device_pixel_ratio: float) -> Rect:
     )
 
 
-def panel_position(chat: Rect, panel_size: tuple[int, int], screen: Rect) -> tuple[int, int]:
-    """Bottom right of the chat area, clear of the message box, never off the screen."""
+def panel_position(
+    chat: Rect, panel_size: tuple[int, int], screen: Rect, corner: str = "bottom-right"
+) -> tuple[int, int]:
+    """A corner of the chat area, clear of the header and the message box, on screen."""
     width, height = panel_size
-    x = chat.right - width - MARGIN
-    y = chat.bottom - COMPOSER_CLEARANCE - height
+    if corner.endswith("left"):
+        x = chat.left + MARGIN
+    else:
+        x = chat.right - width - MARGIN
+    if corner.startswith("top"):
+        y = chat.top + HEADER_CLEARANCE
+    else:
+        y = chat.bottom - COMPOSER_CLEARANCE - height
     x = max(screen.left, min(x, screen.right - width))
     y = max(screen.top, min(y, screen.bottom - height))
     return x, y
@@ -49,12 +61,18 @@ def _one_line(text: str) -> str:
     return " ".join(text.split())
 
 
+def _no_mnemonic(text: str) -> str:
+    # Buttons and check boxes read "&x" as a keyboard shortcut and hide the "&".
+    return text.replace("&", "&&")
+
+
 class SuggestionPanel(QWidget):
     suggestion_chosen = Signal(int)  # 0-based index
     regenerate_requested = Signal(tuple, str)  # selected message ids, instruction
     mark_private_requested = Signal()
     retry_requested = Signal()
     closed = Signal()
+    settings_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -72,24 +90,35 @@ class SuggestionPanel(QWidget):
         self._choices: list[Suggestion] | None = None  # the options on screen
         self._anchor: tuple[Rect, Rect] | None = None  # chat area and screen, logical pixels
         self._message_ids: list[int] = []
+        self._corner = "bottom-right"
 
         self.title_label = QLabel()
         title_font = self.title_label.font()
         title_font.setBold(True)
         self.title_label.setFont(title_font)
+        self.title_label.setTextFormat(Qt.TextFormat.PlainText)
         self.esc_label = QLabel()
+        self.settings_button = QPushButton()
+        self.settings_button.setFlat(True)
+        self.settings_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.settings_button.clicked.connect(self.settings_requested)
         header = QHBoxLayout()
         header.addWidget(self.title_label, 1)
+        header.addWidget(self.settings_button)
         header.addWidget(self.esc_label)
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
+        self.status_label.setTextFormat(Qt.TextFormat.PlainText)
         self.retry_button = QPushButton()
         self.retry_button.clicked.connect(self.retry_requested)
+        # Chat and model text is shown as written, never as rich text.
         self.summary_label = QLabel()
         self.summary_label.setWordWrap(True)
+        self.summary_label.setTextFormat(Qt.TextFormat.PlainText)
         self.note_label = QLabel()
         self.note_label.setWordWrap(True)
+        self.note_label.setTextFormat(Qt.TextFormat.PlainText)
 
         self.option_buttons: list[QPushButton] = []
         for index in range(MAX_OPTIONS):
@@ -121,6 +150,10 @@ class SuggestionPanel(QWidget):
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addWidget(self.messages_label)
         details_layout.addLayout(self._boxes_layout)
+        self.instruction_buttons: list[QPushButton] = []
+        self._instructions_layout = QGridLayout()
+        self._instructions_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.addLayout(self._instructions_layout)
         details_layout.addLayout(instruction_row)
         details_layout.addWidget(self.private_button)
 
@@ -191,7 +224,7 @@ class SuggestionPanel(QWidget):
             suggestion = suggestions[index]
             line = f"{index + 1}  {suggestion.label}  {_one_line(suggestion.text)}"
             elided = button.fontMetrics().elidedText(line, Qt.TextElideMode.ElideRight, available)
-            button.setText(elided)
+            button.setText(_no_mnemonic(elided))
             button.setToolTip(suggestion.text)
             button.show()
 
@@ -210,6 +243,25 @@ class SuggestionPanel(QWidget):
     def show_notice(self, key: str) -> None:
         self._set_status(t(key))
         self._place()
+
+    def set_corner(self, corner: str) -> None:
+        self._corner = corner
+        self._place()
+
+    def set_quick_instructions(self, items: Sequence[tuple[str, str]]) -> None:
+        """Buttons in the adjust view: (label, instruction sent to the model)."""
+        for button in self.instruction_buttons:
+            self._instructions_layout.removeWidget(button)
+            button.deleteLater()
+        self.instruction_buttons = []
+        for index, (label, instruction) in enumerate(items):
+            button = QPushButton(_no_mnemonic(label))
+            button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            button.clicked.connect(
+                lambda _=False, text=instruction: self._request_regenerate(text)
+            )
+            self._instructions_layout.addWidget(button, index // 2, index % 2)
+            self.instruction_buttons.append(button)
 
     def bring_to_front(self) -> None:
         """Raise and focus the panel if it is open. A hidden panel stays hidden."""
@@ -243,6 +295,7 @@ class SuggestionPanel(QWidget):
 
     def _retranslate(self) -> None:
         self.esc_label.setText(t("panel.esc"))
+        self.settings_button.setText(t("panel.settings"))
         self.retry_button.setText(t("panel.retry"))
         self.adjust_button.setText(t("panel.adjust"))
         self.messages_label.setText(t("panel.messages"))
@@ -277,13 +330,13 @@ class SuggestionPanel(QWidget):
         self._message_ids = []
         for message in reply.messages:
             box = QCheckBox()
-            box.setText(_one_line(message.text))
+            box.setText(_no_mnemonic(_one_line(message.text)))
             box.setChecked(message.pending)
             self._boxes_layout.addWidget(box)
             self.message_boxes.append(box)
             self._message_ids.append(message.id)
 
-    def _request_regenerate(self) -> None:
+    def _request_regenerate(self, instruction: str | None = None) -> None:
         if self._reply is None:
             return
         selected = tuple(
@@ -291,7 +344,9 @@ class SuggestionPanel(QWidget):
             for message_id, box in zip(self._message_ids, self.message_boxes)
             if box.isChecked()
         )
-        self.regenerate_requested.emit(selected, self.instruction.text().strip())
+        if instruction is None:
+            instruction = self.instruction.text().strip()
+        self.regenerate_requested.emit(selected, instruction)
 
     def _logical_anchor(self, bounds: Rect) -> tuple[Rect, Rect]:
         """Chat bounds in screen pixels -> chat area and its screen in Qt's logical pixels."""
@@ -331,4 +386,4 @@ class SuggestionPanel(QWidget):
             return
         self.adjustSize()
         chat, screen = self._anchor
-        self.move(*panel_position(chat, (self.width(), self.height()), screen))
+        self.move(*panel_position(chat, (self.width(), self.height()), screen, self._corner))

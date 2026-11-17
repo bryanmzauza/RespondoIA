@@ -212,6 +212,8 @@ class Controller(QObject):
         panel.closed.connect(self._end_session)
         tray.pause_toggled.connect(self._on_pause_toggled)
         tray.settings_requested.connect(lambda: self.open_settings())
+        panel.settings_requested.connect(lambda: self.open_settings())
+        self._apply_to_panel(settings)
 
     def on_hotkey(self) -> None:
         if self._config_error:
@@ -377,12 +379,19 @@ class Controller(QObject):
             language = i18n.pick_language(new.language, i18n.system_locale())
             i18n.install(QCoreApplication.instance(), language)
             self._tray.retranslate()
+        self._apply_to_panel(new)
         if new.start_with_windows != old.start_with_windows:
             autostart.set_enabled(new.start_with_windows)
         if self._settings_window is not None:
             self._settings_window.close()
         self._tray.notify("settings.saved")
         return True
+
+    def _apply_to_panel(self, settings: Settings) -> None:
+        self._panel.set_corner(settings.panel_position)
+        # The instruction sent to the model is the label in the interface language.
+        labels = [i18n.instruction_label(entry) for entry in settings.quick_instructions]
+        self._panel.set_quick_instructions([(label, label) for label in labels])
 
     def _settings_error(self, key: str, **values: object) -> None:
         if self._settings_window is not None and self._settings_window.isVisible():

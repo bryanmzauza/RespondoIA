@@ -307,5 +307,9 @@
         <source>instruction.ask_for_time</source>
         <translation>Pedir prazo</translation>
     </message>
+    <message>
+        <source>panel.settings</source>
+        <translation>Configurações</translation>
+    </message>
 </context>
 </TS>
