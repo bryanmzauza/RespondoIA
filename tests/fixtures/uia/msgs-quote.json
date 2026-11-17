@@ -1,0 +1,880 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  900
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    900
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      0,
+      1600,
+      900
+     ],
+     "children": []
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Button",
+       "name": "Dados do perfil",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": []
+      },
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        491,
+        11,
+        1375,
+        33
+       ],
+       "children": [
+        {
+         "control_type": "Text",
+         "name": "Paula Mendes",
+         "automation_id": "",
+         "aria_role": "description",
+         "rect": [
+          491,
+          12,
+          640,
+          32
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "control_type": "Button",
+       "name": "Pesquisar",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        1488,
+        12,
+        1528,
+        53
+       ],
+       "children": []
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      64,
+      1600,
+      836
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        64,
+        1600,
+        836
+       ],
+       "children": [
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          900,
+          70,
+          1100,
+          92
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "HOJE",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            900,
+            72,
+            1100,
+            90
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          420,
+          -400,
+          1590,
+          836
+         ],
+         "children": [
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            365,
+            1590,
+            425
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              365,
+              1590,
+              425
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                365,
+                862,
+                423
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  365,
+                  862,
+                  423
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    371,
+                    822,
+                    392
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "Você passa aqui hoje pra pegar as caixas?",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      372,
+                      802,
+                      390
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    822,
+                    407,
+                    853,
+                    423
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "16:40",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      822,
+                      408,
+                      853,
+                      422
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    857,
+                    372,
+                    862,
+                    423
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                420,
+                1590,
+                425
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            425,
+            1590,
+            485
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              425,
+              1590,
+              485
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1198,
+                425,
+                1528,
+                483
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  1198,
+                  425,
+                  1528,
+                  483
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1207,
+                    431,
+                    1488,
+                    452
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "passo sim, posso chegar aí umas 18h",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1207,
+                      432,
+                      1468,
+                      450
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1488,
+                    467,
+                    1519,
+                    483
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "16:42",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1488,
+                      468,
+                      1519,
+                      482
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1523,
+                    432,
+                    1528,
+                    483
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                480,
+                1590,
+                485
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            485,
+            1590,
+            595
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              485,
+              1590,
+              595
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                485,
+                862,
+                593
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  485,
+                  862,
+                  593
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Button",
+                   "name": "Mensagem citada",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    485,
+                    491,
+                    858,
+                    546
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "Você",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      500,
+                      497,
+                      682,
+                      513
+                     ],
+                     "children": []
+                    },
+                    {
+                     "control_type": "Text",
+                     "name": "passo sim, posso chegar aí umas 18h",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      500,
+                      515,
+                      682,
+                      531
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    549,
+                    822,
+                    570
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "Pode ser 19h? Vou me atrasar no trabalho",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      550,
+                      802,
+                      568
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    822,
+                    577,
+                    853,
+                    593
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "17:05",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      822,
+                      578,
+                      853,
+                      592
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    857,
+                    492,
+                    862,
+                    593
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                590,
+                1590,
+                595
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            595,
+            1590,
+            705
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              595,
+              1590,
+              705
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                595,
+                782,
+                703
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  595,
+                  782,
+                  703
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Button",
+                   "name": "Mensagem citada",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    485,
+                    601,
+                    778,
+                    656
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "Paula Mendes",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      500,
+                      607,
+                      682,
+                      623
+                     ],
+                     "children": []
+                    },
+                    {
+                     "control_type": "Text",
+                     "name": "0:12",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      500,
+                      625,
+                      682,
+                      641
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    659,
+                    742,
+                    680
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "ouve esse",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      660,
+                      722,
+                      678
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    742,
+                    687,
+                    773,
+                    703
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "17:06",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      742,
+                      688,
+                      773,
+                      702
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    777,
+                    602,
+                    782,
+                    703
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                700,
+                1590,
+                705
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      836,
+      1600,
+      900
+     ],
+     "children": [
+      {
+       "control_type": "Edit",
+       "name": "Digite uma mensagem",
+       "automation_id": "",
+       "aria_role": "textbox",
+       "rect": [
+        524,
+        850,
+        1537,
+        874
+       ],
+       "children": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

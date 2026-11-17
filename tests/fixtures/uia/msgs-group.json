@@ -1,0 +1,866 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  900
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    900
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      0,
+      1600,
+      900
+     ],
+     "children": []
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Button",
+       "name": "Dados do perfil",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": []
+      },
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        491,
+        11,
+        1375,
+        33
+       ],
+       "children": [
+        {
+         "control_type": "Text",
+         "name": "Turma do Vôlei",
+         "automation_id": "",
+         "aria_role": "description",
+         "rect": [
+          491,
+          12,
+          640,
+          32
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "control_type": "Button",
+       "name": "Pesquisar",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        1488,
+        12,
+        1528,
+        53
+       ],
+       "children": []
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      64,
+      1600,
+      836
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        64,
+        1600,
+        836
+       ],
+       "children": [
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          900,
+          70,
+          1100,
+          92
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "HOJE",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            900,
+            72,
+            1100,
+            90
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          420,
+          -400,
+          1590,
+          836
+         ],
+         "children": [
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            265,
+            1590,
+            335
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              265,
+              1590,
+              335
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                265,
+                702,
+                333
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  265,
+                  702,
+                  333
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Button",
+                   "name": "Bia Rocha",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    488,
+                    271,
+                    602,
+                    294
+                   ],
+                   "children": []
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    298,
+                    662,
+                    319
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "Quem leva a bola?",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      299,
+                      642,
+                      317
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    662,
+                    317,
+                    693,
+                    333
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "20:07",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      662,
+                      318,
+                      693,
+                      332
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    697,
+                    272,
+                    702,
+                    333
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                330,
+                1590,
+                335
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            335,
+            1590,
+            405
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              335,
+              1590,
+              405
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                335,
+                702,
+                403
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  335,
+                  702,
+                  403
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    488,
+                    341,
+                    694,
+                    367
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Button",
+                     "name": "Leandro Pires",
+                     "automation_id": "",
+                     "aria_role": "button",
+                     "rect": [
+                      488,
+                      341,
+                      602,
+                      364
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    368,
+                    662,
+                    389
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "A minha furou",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      369,
+                      642,
+                      387
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    662,
+                    387,
+                    693,
+                    403
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "20:08",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      662,
+                      388,
+                      693,
+                      402
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    697,
+                    342,
+                    702,
+                    403
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                400,
+                1590,
+                405
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            405,
+            1590,
+            465
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              405,
+              1590,
+              465
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1408,
+                405,
+                1528,
+                463
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  1408,
+                  405,
+                  1528,
+                  463
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1417,
+                    411,
+                    1488,
+                    432
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "eu levo",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1417,
+                      412,
+                      1468,
+                      430
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1488,
+                    447,
+                    1519,
+                    463
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "20:10",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1488,
+                      448,
+                      1519,
+                      462
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1523,
+                    412,
+                    1528,
+                    463
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                460,
+                1590,
+                465
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            465,
+            1590,
+            557
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              465,
+              1590,
+              557
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                465,
+                742,
+                555
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  465,
+                  742,
+                  555
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Button",
+                   "name": "Bia Rocha",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    488,
+                    471,
+                    602,
+                    494
+                   ],
+                   "children": []
+                  },
+                  {
+                   "control_type": "Button",
+                   "name": "+55 11 91234-5678",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    490,
+                    498,
+                    734,
+                    515
+                   ],
+                   "children": []
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    518,
+                    702,
+                    539
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "E a rede?",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      519,
+                      682,
+                      537
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    702,
+                    539,
+                    733,
+                    555
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "20:11",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      702,
+                      540,
+                      733,
+                      554
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    737,
+                    472,
+                    742,
+                    555
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                552,
+                1590,
+                557
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      836,
+      1600,
+      900
+     ],
+     "children": [
+      {
+       "control_type": "Edit",
+       "name": "Digite uma mensagem",
+       "automation_id": "",
+       "aria_role": "textbox",
+       "rect": [
+        524,
+        850,
+        1537,
+        874
+       ],
+       "children": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

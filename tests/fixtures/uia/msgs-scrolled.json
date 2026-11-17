@@ -1,0 +1,854 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  900
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    900
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      0,
+      1600,
+      900
+     ],
+     "children": []
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Button",
+       "name": "Dados do perfil",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": []
+      },
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        491,
+        11,
+        1375,
+        33
+       ],
+       "children": [
+        {
+         "control_type": "Text",
+         "name": "Caio Lima",
+         "automation_id": "",
+         "aria_role": "description",
+         "rect": [
+          491,
+          12,
+          640,
+          32
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "control_type": "Button",
+       "name": "Pesquisar",
+       "automation_id": "",
+       "aria_role": "button",
+       "rect": [
+        1488,
+        12,
+        1528,
+        53
+       ],
+       "children": []
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      64,
+      1600,
+      836
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        64,
+        1600,
+        836
+       ],
+       "children": [
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          900,
+          70,
+          1100,
+          92
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "HOJE",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            900,
+            72,
+            1100,
+            90
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          420,
+          -400,
+          1590,
+          836
+         ],
+         "children": [
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            -400,
+            1590,
+            -280
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              -400,
+              1590,
+              -280
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            -280,
+            1590,
+            -220
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              -280,
+              1590,
+              -220
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                -280,
+                722,
+                -222
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  -280,
+                  722,
+                  -222
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    -274,
+                    682,
+                    -253
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "mensagem lá de cima",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      -273,
+                      662,
+                      -255
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    682,
+                    -238,
+                    713,
+                    -222
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "08:01",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      682,
+                      -237,
+                      713,
+                      -223
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    717,
+                    -273,
+                    722,
+                    -222
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                -225,
+                1590,
+                -220
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            -220,
+            1590,
+            -120
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              -220,
+              1590,
+              -120
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            -120,
+            1590,
+            145
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              -120,
+              1590,
+              145
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                -120,
+                722,
+                143
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  -120,
+                  722,
+                  143
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    -114,
+                    682,
+                    -93
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "metade escondida",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      -113,
+                      662,
+                      -95
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    682,
+                    127,
+                    713,
+                    143
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "08:30",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      682,
+                      128,
+                      713,
+                      142
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    717,
+                    -113,
+                    722,
+                    143
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                140,
+                1590,
+                145
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            145,
+            1590,
+            205
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              145,
+              1590,
+              205
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                145,
+                722,
+                203
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  482,
+                  145,
+                  722,
+                  203
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    491,
+                    151,
+                    682,
+                    172
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "primeira inteira",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      491,
+                      152,
+                      662,
+                      170
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    682,
+                    187,
+                    713,
+                    203
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "08:40",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      682,
+                      188,
+                      713,
+                      202
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    717,
+                    152,
+                    722,
+                    203
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                200,
+                1590,
+                205
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "control_type": "DataItem",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "row",
+           "rect": [
+            420,
+            205,
+            1590,
+            265
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              420,
+              205,
+              1590,
+              265
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1288,
+                205,
+                1528,
+                263
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  1288,
+                  205,
+                  1528,
+                  263
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1297,
+                    211,
+                    1488,
+                    232
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "segunda inteira",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1297,
+                      212,
+                      1468,
+                      230
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1488,
+                    247,
+                    1519,
+                    263
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Text",
+                     "name": "08:41",
+                     "automation_id": "",
+                     "aria_role": "description",
+                     "rect": [
+                      1488,
+                      248,
+                      1519,
+                      262
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1523,
+                    212,
+                    1528,
+                    263
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  0,
+                  0,
+                  0,
+                  0
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                260,
+                1590,
+                265
+               ],
+               "children": []
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      836,
+      1600,
+      900
+     ],
+     "children": [
+      {
+       "control_type": "Edit",
+       "name": "Digite uma mensagem",
+       "automation_id": "",
+       "aria_role": "textbox",
+       "rect": [
+        524,
+        850,
+        1537,
+        874
+       ],
+       "children": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
