@@ -239,3 +239,68 @@ def test_logs_carry_no_content(service, caplog):
     service.learn("ZZ-TITLE", (user("ZZ-TEXT vc vem hoje? tô aqui"),), False)
     service.context("ZZ-TITLE", "pt", False)
     assert "ZZ-" not in caplog.text and "learn added=1" in caplog.text
+
+
+def test_a_failed_extraction_waits_a_day_too(db, tmp_path):
+    client = FakeClient("invalid_reply")
+    clock = Clock()
+    service = StyleService(db, lambda: client, tmp_path / "k.md", clock)
+    service.learn("Marina", [user(f"vc vem hoje? tô aqui {w} {v}", f"{w}{v}") for w in WORDS for v in "abcd"], False)
+    assert service.refresh_if_due("pt") is False and len(client.texts) == 1
+    assert service.refresh_if_due("pt") is False and len(client.texts) == 1
+    clock.value = NOW + timedelta(hours=25)
+    service.refresh_if_due("pt")
+    assert len(client.texts) == 2
+
+
+def test_import_keeps_at_most_the_pool_limit(service, monkeypatch):
+    from respondoia.style import store
+
+    monkeypatch.setattr(store, "POOL_LIMIT", 5)
+    chat = ExportChat(
+        tuple(
+            ExportMessage("2026-11-16", f"09:{n:02d}", "Rafa", f"tudo sim e vc? to aqui {w}", "text")
+            for n, w in enumerate(WORDS)
+        ),
+        (("Rafa", 12),),
+    )
+    result = service.import_export(chat, "Rafa", None)
+    assert result.added == 5
+    assert service.overview().languages[0].messages == 5
+
+
+def test_unexpected_errors_never_leave_the_service(service, monkeypatch, tmp_path):
+    from respondoia.style import service as service_module
+    from respondoia.style import store
+
+    service.learn("Marina Duarte", PT, False)
+
+    def broken(*args):
+        raise ValueError("schema changed")
+
+    monkeypatch.setattr(store, "load_profile", broken)
+    assert service.context("Marina Duarte", "pt", False).style == ""
+
+    def unreadable(path):
+        raise PermissionError("locked")
+
+    monkeypatch.setattr(service_module, "read_knowledge", unreadable)
+    assert service.context("Marina Duarte", "pt", False).knowledge == ""
+
+
+def test_forget_also_drops_imports_from_that_person_and_the_traits(service, db):
+    chat = ExportChat(
+        tuple(
+            ExportMessage("2026-11-16", f"09:{n:02d}", author, text, "text")
+            for n, (author, text) in enumerate(
+                [("Marina Duarte", "oi, tudo bem com vc?"), ("Rafa", "ZZ-IMPORTED tudo sim e vc? to aqui")]
+            )
+        ),
+        (("Marina Duarte", 1), ("Rafa", 1)),
+    )
+    service.import_export(chat, "Rafa", None)
+    service.learn("Bia", PT, False)
+    service.refresh("pt")
+    service.forget("Marina Duarte")
+    assert "ZZ-IMPORTED" not in db_dump(db)
+    assert service.overview().languages[0].profile.traits is None

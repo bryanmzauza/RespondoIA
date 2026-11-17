@@ -1,3 +1,4 @@
+import sqlite3
 import threading
 
 import pytest
@@ -125,3 +126,54 @@ def test_deleting_a_contact_deletes_its_samples(tmp_path):
         conn.execute("DELETE FROM contact WHERE id = 1")
         assert conn.execute("SELECT count(*) FROM style_sample").fetchone()[0] == 0
     db.close()
+
+
+class FailingCommit:
+    """Wraps the connection and fails the first COMMIT, as a full disk would."""
+
+    def __init__(self, conn):
+        self._conn = conn
+        self.failed = False
+
+    def execute(self, sql, *args):
+        if sql == "COMMIT" and not self.failed:
+            self.failed = True
+            raise sqlite3.OperationalError("disk I/O error")
+        return self._conn.execute(sql, *args)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
+def test_a_failed_commit_does_not_block_later_transactions(tmp_path):
+    db = Database.open(tmp_path / "db", KEY)
+    real = db._conn
+    db._conn = FailingCommit(real)
+    with pytest.raises(sqlite3.OperationalError), db.transaction() as conn:
+        conn.execute("INSERT INTO pasted (text_hash, at) VALUES ('a', '')")
+    with db.transaction() as conn:
+        conn.execute("INSERT INTO pasted (text_hash, at) VALUES ('b', '')")
+        assert [r[0] for r in conn.execute("SELECT text_hash FROM pasted")] == ["b"]
+    db._conn = real
+    db.close()
+
+
+def test_close_does_not_hang_while_another_thread_holds_the_database(tmp_path):
+    import time
+
+    db = Database.open(tmp_path / "db", KEY)
+    holding, release = threading.Event(), threading.Event()
+
+    def hold():
+        with db.transaction():
+            holding.set()
+            release.wait(10)
+
+    thread = threading.Thread(target=hold)
+    thread.start()
+    holding.wait(5)
+    started = time.perf_counter()
+    db.close()
+    assert time.perf_counter() - started < 4
+    release.set()
+    thread.join()

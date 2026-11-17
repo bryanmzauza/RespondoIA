@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from respondoia import contacts
-from respondoia.database import Database, DatabaseError, SqlError
+from respondoia.database import Database
 from respondoia.domain import LABELS, ChatLine, UserContext
 from respondoia.knowledge import read_knowledge
 from respondoia.llm import LlmError, ModelClient
@@ -89,7 +89,11 @@ class StyleService:
         return self._safely("learn", run, language)
 
     def context(self, title: str, language: str | None, is_group: bool) -> UserContext:
-        knowledge = read_knowledge(self._knowledge_file)
+        try:
+            knowledge = read_knowledge(self._knowledge_file)
+        except OSError as exc:
+            logger.info("knowledge failed type=%s", type(exc).__name__)
+            knowledge = ""
         neutral = UserContext(language, None, False, False, "", knowledge)
 
         def run(conn):
@@ -118,24 +122,30 @@ class StyleService:
         """Drop the contact and its messages, and take them out of the profiles too."""
 
         def run(conn):
-            languages = contacts.sample_languages(conn, title)
+            languages = set(contacts.sample_languages(conn, title))
+            languages |= set(store.forget_import(conn, title))
             contacts.forget(conn, title)
+            # What the model wrote may echo that chat, so it goes too until the next update.
             for language in languages:
-                self._rebuild(conn, language)
+                self._rebuild(conn, language, keep_traits=False)
 
         self._safely("forget", run, None)
 
     def import_export(self, chat: ExportChat, author: str, label: str | None) -> ImportResult:
+        pasted = self._safely("import", lambda conn: store.pasted_hashes(conn, self._now()), set())
+        # The file is read outside any transaction, so the hotkey never waits on it.
+        everything = from_export(chat, author, label, set())
+        kept = from_export(chat, author, label, pasted)
+        own = store.newest(kept)
+        skipped = len(everything) - len(kept)
+
         def run(conn):
-            pasted = store.pasted_hashes(conn, self._now())
-            everything = from_export(chat, author, label, set())
-            own = from_export(chat, author, label, pasted)
             added = store.add_samples(conn, own, None, self._stamp())
             for lang in {m.language for m in own}:
                 self._rebuild(conn, lang)
             counts = Counter(m.language for m in own).most_common(1)
             logger.info("import added=%d", added)
-            return ImportResult(added, len(everything) - len(own), counts[0][0] if counts else None)
+            return ImportResult(added, skipped, counts[0][0] if counts else None)
 
         return self._safely("import", run, ImportResult(0, 0, None))
 
@@ -172,6 +182,7 @@ class StyleService:
         )
         if not due:
             return False
+        self._safely("attempt", lambda conn: store.mark_attempt(conn, language, self._now()), None)
         try:
             return self.refresh(language) is not None
         except LlmError as exc:
@@ -210,14 +221,14 @@ class StyleService:
 
         self._safely("label", run, None)
 
-    def _rebuild(self, conn, language: str) -> None:
+    def _rebuild(self, conn, language: str, keep_traits: bool = True) -> None:
         """Recount the local part of the profile, keeping what the model wrote."""
         messages = store.samples(conn, language)
         loaded = store.load_profile(conn, language)
         # An existing profile is always recounted, so removed messages leave its examples.
         if len(messages) < LOCAL_MIN and loaded is None:
             return
-        traits = loaded[0].traits if loaded else None
+        traits = loaded[0].traits if loaded and keep_traits else None
         store.save_profile(conn, build_local(language, messages, traits, self._stamp()), False)
 
     def _stamp(self) -> str:
@@ -229,6 +240,7 @@ class StyleService:
         try:
             with self._db.transaction() as conn:
                 return run(conn)
-        except (SqlError, DatabaseError) as exc:
+        except Exception as exc:  # noqa: BLE001 - style must never stop a suggestion
+            # Only the type: a message can quote stored text.
             logger.info("style failed event=%s type=%s", event, type(exc).__name__)
             return default

@@ -4,20 +4,19 @@ the user wrote, and hashes of what the app pasted.
 Every function takes an open connection from Database.transaction().
 """
 
+from collections import Counter
 from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from respondoia.style.profile import EXTRACT_MIN, StyleProfile
-from respondoia.style.sampler import OwnMessage, text_hash
+from respondoia.style.sampler import OwnMessage, import_key, text_hash
 
 POOL_LIMIT = 500  # per language
-PASTED_DAYS = 30
+PASTED_DAYS = 365
 EXTRACT_EVERY = timedelta(hours=24)
 
 
-def add_samples(
-    conn, messages: Sequence[OwnMessage], contact_id: int | None, now: str
-) -> int:
+def add_samples(conn, messages: Sequence[OwnMessage], contact_id: int | None, now: str) -> int:
     """Store new messages; duplicates are ignored. Returns how many were added."""
     if not messages:
         return 0
@@ -50,6 +49,29 @@ def add_samples(
             (language, language, POOL_LIMIT),
         )
     return added
+
+
+def newest(messages: Sequence[OwnMessage]) -> list[OwnMessage]:
+    """At most POOL_LIMIT messages per language, the latest ones: the rest would be trimmed."""
+    kept, seen = [], Counter()
+    for message in reversed(messages):
+        if seen[message.language] < POOL_LIMIT:
+            seen[message.language] += 1
+            kept.append(message)
+    return kept[::-1]
+
+
+def forget_import(conn, other_author: str) -> list[str]:
+    """Delete what was imported from a chat with this person. Returns the languages touched."""
+    key = import_key([other_author])
+    languages = [
+        r[0]
+        for r in conn.execute(
+            "SELECT DISTINCT language FROM style_sample WHERE chat_key = ?", (key,)
+        ).fetchall()
+    ]
+    conn.execute("DELETE FROM style_sample WHERE chat_key = ?", (key,))
+    return languages
 
 
 def samples(conn, language: str) -> list[OwnMessage]:
@@ -106,15 +128,14 @@ def load_profile(conn, language: str) -> tuple[StyleProfile, str] | None:
 
 
 def save_manual(conn, language: str, text: str) -> None:
-    conn.execute(
-        "UPDATE style_profile SET manual = ? WHERE language = ?", (text.strip(), language)
-    )
+    conn.execute("UPDATE style_profile SET manual = ? WHERE language = ?", (text.strip(), language))
 
 
 def extraction_due(conn, language: str, now: datetime) -> bool:
     """EXTRACT_MIN new messages since the last extraction, and that one a day old."""
     row = conn.execute(
-        "SELECT extracted_at, last_sample_id FROM style_profile WHERE language = ?",
+        "SELECT COALESCE(attempted_at, extracted_at), last_sample_id FROM style_profile"
+        " WHERE language = ?",
         (language,),
     ).fetchone()
     extracted_at, last_id = row if row else (None, 0)
@@ -125,6 +146,14 @@ def extraction_due(conn, language: str, now: datetime) -> bool:
     if new < EXTRACT_MIN:
         return False
     return extracted_at is None or now - datetime.fromisoformat(extracted_at) >= EXTRACT_EVERY
+
+
+def mark_attempt(conn, language: str, now: datetime) -> None:
+    """An extraction is about to be paid for: the daily limit counts it even if it fails."""
+    conn.execute(
+        "UPDATE style_profile SET attempted_at = ? WHERE language = ?",
+        (now.isoformat(timespec="seconds"), language),
+    )
 
 
 def remember_pasted(conn, text: str, now: datetime) -> None:

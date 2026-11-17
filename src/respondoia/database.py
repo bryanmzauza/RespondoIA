@@ -91,6 +91,7 @@ MIGRATIONS: tuple[str, ...] = (
         data TEXT NOT NULL,
         manual TEXT NOT NULL DEFAULT '',
         extracted_at TEXT,
+        attempted_at TEXT,
         last_sample_id INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE pasted (
@@ -147,14 +148,22 @@ class Database:
             self._conn.execute("BEGIN")
             try:
                 yield self._conn
+                self._conn.execute("COMMIT")
             except BaseException:
-                self._conn.execute("ROLLBACK")
+                # Also after a failed COMMIT, so the next BEGIN does not fail forever.
+                if self._conn.in_transaction:
+                    self._conn.execute("ROLLBACK")
                 raise
-            self._conn.execute("COMMIT")
 
-    def close(self) -> None:
-        with self._lock:
+    def close(self, timeout_s: float = 2.0) -> None:
+        """Close, unless another thread still holds the database (a stopped thread may
+        never release it). The process is ending then, and the file stays consistent."""
+        if not self._lock.acquire(timeout=timeout_s):
+            return
+        try:
             self._conn.close()
+        finally:
+            self._lock.release()
 
     def _migrate(self) -> None:
         for number in range(self.version, len(MIGRATIONS)):

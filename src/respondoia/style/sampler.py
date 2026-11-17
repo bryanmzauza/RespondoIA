@@ -8,7 +8,7 @@ import hashlib
 import re
 import statistics
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from pydantic import BaseModel
@@ -66,10 +66,13 @@ _MARKER = re.compile(r"\[[A-Z]+\]")
 _DIGIT = re.compile(r"\d")
 _CURRENCY = re.compile(r"[$€£¥]")
 _WORD = re.compile(r"[^\W\d_]+")
+_NUMBER = re.compile(r"\d+")
 
 
 def text_hash(text: str) -> str:
-    return hashlib.sha256(normalize_name(text).encode("utf-8")).hexdigest()
+    """The same message with other punctuation, case or emoji has the same hash."""
+    words = _WORD.findall(normalize_name(text)) + _NUMBER.findall(text)
+    return hashlib.sha256(" ".join(words).encode("utf-8")).hexdigest()
 
 
 def _is_emoji(char: str) -> bool:
@@ -127,12 +130,17 @@ def from_screen(
     return tuple(learned)
 
 
+def import_key(other_authors: Iterable[str]) -> str:
+    """Where an imported chat's messages are kept: named after the other people in it."""
+    names = sorted(normalize_name(name) for name in other_authors)
+    return "import:" + hashlib.sha256("\n".join(names).encode("utf-8")).hexdigest()
+
+
 def from_export(
     chat: ExportChat, author: str, label: str | None, pasted: set[str]
 ) -> tuple[OwnMessage, ...]:
     lang = chat_language([m.text for m in chat.messages if m.kind == "text"])
-    others = sorted({m.author for m in chat.messages if m.author and m.author != author})
-    chat_key = "import:" + hashlib.sha256("\n".join(others).encode("utf-8")).hexdigest()
+    chat_key = import_key({m.author for m in chat.messages if m.author and m.author != author})
     learned, run, others_since, seen_user = [], 0, False, False
     for message in chat.messages:
         if message.kind == "system":

@@ -177,3 +177,8 @@ def test_examples_skip_names_places_prices_and_any_digit():
     texts = ["fica 50 a diária", "passa na Rua Augusta amanhã", "fala com a Ana depois",
              "custa R$ ou € tanto faz", "Combinado então, até amanhã", "beleza. Até mais tarde"]
     assert pick_examples(as_messages(texts)) == ["Combinado então, até amanhã", "beleza. Até mais tarde"]
+
+
+def test_hash_ignores_punctuation_case_and_emoji():
+    assert text_hash("Consigo sim, sexta de manhã 😅") == text_hash("consigo sim sexta de manhã!")
+    assert text_hash("consigo sim") != text_hash("consigo não")

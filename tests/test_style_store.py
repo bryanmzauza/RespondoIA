@@ -89,11 +89,11 @@ def test_extraction_due_rules(db):
         assert store.extraction_due(conn, "pt", NOW + timedelta(hours=25))
 
 
-def test_pasted_hashes_expire(db):
+def test_pasted_hashes_last_a_year(db):
     with db.transaction() as conn:
         store.remember_pasted(conn, "Consigo sim", NOW)
-        assert store.pasted_hashes(conn, NOW + timedelta(days=29)) == {text_hash("Consigo sim")}
-        assert store.pasted_hashes(conn, NOW + timedelta(days=31)) == set()
+        assert store.pasted_hashes(conn, NOW + timedelta(days=200)) == {text_hash("Consigo sim")}
+        assert store.pasted_hashes(conn, NOW + timedelta(days=366)) == set()
 
 
 def test_reset_clears_style_and_keeps_labels(db):
