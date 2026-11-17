@@ -636,3 +636,98 @@ def test_masked_lines_stay_unset_when_masking_fails(monkeypatch):
     with pytest.raises(RuntimeError):
         session.regenerate((1,), "")
     assert fake.count("suggest") == 0
+
+
+from respondoia.memory.merge import Stored
+from respondoia.memory.recall import Snippet
+from respondoia.memory.service import HistoryContext
+
+READY = HistoryContext(
+    "ready",
+    7,
+    "Marina Duarte",
+    memory="ZZ-MEMORY",
+    snippets=(Snippet("2026-10-20", (Stored("2026-10-20", "10:00", "contact", "", "text",
+                                            "ZZ-SNIPPET", ""),)),),
+)
+
+
+class FakeHistory:
+    def __init__(self, context=READY):
+        self.calls = []
+        self.context = context
+
+    def observe(self, title, lines, is_group, avatar):
+        self.calls.append(("observe", title, tuple(lines), is_group, avatar))
+        return self.context
+
+    def confirm(self, title, lines, contact_id):
+        self.calls.append(("confirm", title, contact_id))
+        return READY
+
+
+def historied(fake, history, style=None, settings=None, avatar=""):
+    ports = replace(fake.ports(), history=history, avatar=lambda hwnd, rect: avatar)
+    if style is not None:
+        ports = replace(ports, style=style)
+    session = Session(ports, settings or Settings())
+    return session, session.start()
+
+
+def test_history_is_observed_after_style_and_before_the_request():
+    fake, style, history = FakePorts(), FakeStyle(), FakeHistory()
+    fake.lines = TEXT_LINES
+    _, result = historied(fake, history, style, avatar="ab12")
+    assert style.names() == ["learn", "context"]
+    assert history.calls == [("observe", "Marina Duarte", tuple(TEXT_LINES), False, "ab12")]
+    assert result.history is READY and fake.count("suggest") == 0
+
+
+def test_ready_history_reaches_the_request():
+    fake, history = FakePorts(), FakeHistory()
+    fake.lines = TEXT_LINES
+    session, _ = historied(fake, history, FakeStyle())
+    session.suggest()
+    context = fake.calls[-1][1].context
+    assert context.memory == "ZZ-MEMORY" and context.snippets[0]["text"] == "ZZ-SNIPPET"
+    assert context.style == "ZZ-STYLE"
+
+
+@pytest.mark.parametrize("state", ["ask", "off", "group", "out_of_scope", "unavailable"])
+def test_history_not_ready_reaches_nothing(state):
+    fake = FakePorts()
+    fake.lines = TEXT_LINES
+    history = FakeHistory(HistoryContext(state, memory="ZZ-MEMORY"))
+    session, _ = historied(fake, history, FakeStyle())
+    session.suggest()
+    context = fake.calls[-1][1].context
+    assert context.memory == "" and context.snippets == ()
+
+
+def test_private_start_observes_nothing():
+    fake, history = FakePorts(), FakeHistory()
+    fake.lines = TEXT_LINES
+    _, result = historied(fake, history, settings=Settings(private_contacts=("Marina Duarte",)))
+    assert result.status is StartStatus.PRIVATE and history.calls == []
+
+
+def test_confirm_identity_rebuilds_the_context():
+    fake = FakePorts()
+    fake.lines = TEXT_LINES
+    history = FakeHistory(HistoryContext("ask", candidates=((3, "2026-10-01"),)))
+    session, _ = historied(fake, history, FakeStyle())
+    session.suggest()
+    assert fake.calls[-1][1].context.memory == ""
+    assert session.confirm_identity(3) is READY
+    assert history.calls[-1] == ("confirm", "Marina Duarte", 3)
+    session.regenerate((), "")
+    assert fake.calls[-1][1].context.memory == "ZZ-MEMORY"
+
+
+def test_logs_carry_no_history_content(caplog):
+    fake = FakePorts()
+    fake.lines = TEXT_LINES
+    with caplog.at_level(logging.INFO, logger="respondoia"):
+        session, _ = historied(fake, FakeHistory(), FakeStyle())
+        session.suggest()
+    assert "ZZ-" not in caplog.text

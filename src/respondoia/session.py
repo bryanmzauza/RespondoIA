@@ -7,7 +7,7 @@ tested without a desktop. A session is used from one thread.
 import logging
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Protocol
 
@@ -33,6 +33,8 @@ from respondoia.llm import (
     SuggestResult,
     check_reply,
 )
+from respondoia.memory.recall import snippet_rows
+from respondoia.memory.service import HistoryContext
 from respondoia.privacy import (
     PasteDecision,
     SendDecision,
@@ -82,6 +84,34 @@ class NoStyle:
 NO_STYLE = NoStyle()
 
 
+class HistoryPort(Protocol):
+    """The history service as the session sees it. It never raises."""
+
+    def observe(
+        self, title: str, lines: Sequence[ChatLine], is_group: bool, avatar: str
+    ) -> HistoryContext: ...
+    def confirm(
+        self, title: str, lines: Sequence[ChatLine], contact_id: int | None
+    ) -> HistoryContext: ...
+
+
+class NoHistory:
+    """History off: nothing stored, nothing attached."""
+
+    def observe(self, title, lines, is_group, avatar):
+        return HistoryContext("off")
+
+    def confirm(self, title, lines, contact_id):
+        return HistoryContext("off")
+
+
+NO_HISTORY = NoHistory()
+
+
+def _no_avatar(hwnd: int, rect: Rect | None) -> str:
+    return ""
+
+
 @dataclass(frozen=True)
 class Ports:
     foreground_window: Callable[[], WindowInfo | None]
@@ -92,6 +122,9 @@ class Ports:
     insert_text: Callable[[int, str], bool]
     copy_text: Callable[[str], None]
     style: StylePort = NO_STYLE
+    history: HistoryPort = NO_HISTORY
+    # Hash of the contact's real photo in the header, "" without one. Pixels stay in memory.
+    avatar: Callable[[int, Rect | None], str] = _no_avatar
 
 
 class StartStatus(Enum):
@@ -107,6 +140,7 @@ class StartResult:
     status: StartStatus
     chat: OpenChat | None = None
     context: UserContext | None = None
+    history: HistoryContext | None = None
 
 
 class ChooseResult(Enum):
@@ -132,6 +166,7 @@ class Session:
         self._fell_back = False
         self._context: UserContext | None = None
         self._label_guessed = False
+        self._history: HistoryContext | None = None
 
     @property
     def chat(self) -> ChatRef | None:
@@ -162,13 +197,36 @@ class Session:
         is_group = any(line.sender for line in view.lines)
         language = self._ports.style.learn(chat.title, view.lines, is_group)
         self._context = self._ports.style.context(chat.title, language, is_group)
+        try:
+            avatar = self._ports.avatar(window.hwnd, chat.avatar)
+        except Exception as exc:  # noqa: BLE001 - a missing photo only weakens the identity
+            logger.info("avatar failed type=%s", type(exc).__name__)
+            avatar = ""
+        self._use_history(self._ports.history.observe(chat.title, view.lines, is_group, avatar))
         logger.info(
             "start ok style=%d knowledge=%d label=%d",
             bool(self._context.style),
             bool(self._context.knowledge),
             bool(self._context.label),
         )
-        return StartResult(StartStatus.STARTED, chat, self._context)
+        return StartResult(StartStatus.STARTED, chat, self._context, self._history)
+
+    def confirm_identity(self, contact_id: int | None) -> HistoryContext:
+        """The user's answer to "same person?". The next request uses the result."""
+        chat = self._open_chat()
+        history = self._ports.history.confirm(chat.title, self._lines, contact_id)
+        self._use_history(history)
+        return history
+
+    def _use_history(self, history: HistoryContext) -> None:
+        """Memory and earlier messages go out only for a contact told apart from others."""
+        self._history = history
+        if history.state == "ready" and self._context is not None:
+            self._context = replace(
+                self._context, memory=history.memory, snippets=snippet_rows(history.snippets)
+            )
+        elif self._context is not None and (self._context.memory or self._context.snippets):
+            self._context = replace(self._context, memory="", snippets=())
 
     def suggest(self, on_preview: PreviewCallback | None = None) -> SuggestionReply:
         """Send the chat as masked text, or capture it once when there is no text."""
@@ -271,6 +329,7 @@ class Session:
         self._chat = None
         self._bounds = None
         self._context = None
+        self._history = None
 
     def _check_chat_again(self, captured: ChatRef) -> None:
         """Before a retried capture: same window, same chat, still allowed, new bounds."""

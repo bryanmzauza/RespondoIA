@@ -32,6 +32,7 @@ class WindowInfo:
 class OpenChat:
     title: str  # name at the top of the open chat, as displayed
     bounds: Rect  # open chat area in screen pixels
+    avatar: Rect | None = None  # the contact's picture in the header, screen pixels
 
 
 @dataclass(frozen=True)
