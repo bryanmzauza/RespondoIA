@@ -112,7 +112,8 @@ class Session:
     def suggest(self, on_preview: PreviewCallback | None = None) -> SuggestionReply:
         """Send the chat as masked text, or capture it once when there is no text."""
         chat = self._open_chat()
-        if self._settings.input == "text" and self._lines:
+        has_text = any(line.text.strip() for line in self._lines)
+        if self._settings.input == "text" and has_text:
             if self._masked is None:
                 found: tuple[str, ...] = ()
                 self._masked = self._lines

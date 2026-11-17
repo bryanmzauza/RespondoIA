@@ -28,7 +28,9 @@ def make_reply(count=3, text="mensagem"):
             ChatMessage(id=1, author="contact", text=text, pending=False),
             ChatMessage(id=2, author="contact", text="Consegue entregar até sexta?", pending=True),
         ],
-        suggestions=[Suggestion(label=f"Opção {n}", text=f"sugestão {n}") for n in range(1, count + 1)],
+        suggestions=[
+            Suggestion(label=f"Opção {n}", text=f"sugestão {n}") for n in range(1, count + 1)
+        ],
     )
 
 
@@ -74,8 +76,9 @@ class FakePorts:
     def suggest(self, request, on_preview=None):
         self.calls.append(("suggest", request))
         if on_preview is not None and self.preview_first:
-            on_preview(SuggestionPreview(summary=self.reply.summary,
-                                         suggestions=self.reply.suggestions))
+            on_preview(
+                SuggestionPreview(summary=self.reply.summary, suggestions=self.reply.suggestions)
+            )
         if self.suggest_error:
             raise self.suggest_error
         return SuggestResult(self.reply, "claude-haiku-5-5", 2100, 640, 1234, 900)
@@ -476,3 +479,15 @@ def test_logs_carry_no_content_in_text_mode(caplog):
         session.choose(0)
     assert "ZZ-SECRET" not in caplog.text
     assert "input=text" in caplog.text
+
+
+def test_lines_without_any_text_fall_back_to_the_screenshot():
+    fake = FakePorts()
+    fake.lines = [
+        ChatLine("contact", "", "09:10", "audio", "", ""),
+        ChatLine("contact", "", "09:11", "image", "", ""),
+    ]
+    session = started(fake)
+    session.suggest()
+    assert fake.count("capture_chat") == 1 and fake.calls[-1][1].lines == ()
+    assert session.fell_back is True
