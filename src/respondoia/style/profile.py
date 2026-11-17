@@ -159,5 +159,8 @@ def render(profile: StyleProfile, label: str | None, manual: str) -> str:
     if len(examples) < LABEL_EXAMPLES_MIN:
         examples = profile.examples
     if examples:
-        rows.append("Examples:\n" + "\n".join("- " + e for e in examples))
+        rows.append(
+            "Examples (they show the tone; never repeat one word for word):\n"
+            + "\n".join("- " + e for e in examples)
+        )
     return "\n".join(rows)

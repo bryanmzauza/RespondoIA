@@ -188,3 +188,12 @@ def test_no_example_copied():
     assert not check_case(SHORT, reply_for(SHORT, copied), 3, examples=examples)["no_example_copied"]
     assert check_case(SHORT, reply_for(SHORT, GOOD), 3, examples=examples)["no_example_copied"]
     assert "no_example_copied" not in check_case(SHORT, reply_for(SHORT, GOOD), 3)
+
+
+def test_figures_from_the_knowledge_base_need_no_marker():
+    knowledge = "- Bolo inteiro: R$ 90"
+    stated = ("Fica R$ 90 o bolo inteiro.", "Te passo já", "Custa R$ 120")
+    checks = check_case(PRICE, reply_for(PRICE, stated), 3, knowledge=knowledge)
+    assert checks["confirm_marker"] is False  # 120 is in neither the chat nor the base
+    fine = ("Fica R$ 90 o bolo inteiro.", "Te passo já", "O inteiro sai R$ 90")
+    assert check_case(PRICE, reply_for(PRICE, fine), 3, knowledge=knowledge)["confirm_marker"]

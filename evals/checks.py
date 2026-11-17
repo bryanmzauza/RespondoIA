@@ -79,11 +79,15 @@ def check_case(
         "no_invented_numbers": used <= known,
     }
     if expect["needs_confirm"]:
-        # A suggestion that states a figure must flag it; one that defers needs no marker.
-        result["confirm_marker"] = all(
-            "[confirm" in text.casefold() or not (re.search(r"\d", text) or "$" in text)
-            for text in texts
-        )
+        # A suggestion that states a figure the chat or the knowledge base does not give
+        # must flag it; one that defers needs no marker.
+        def flagged_or_known(text: str) -> bool:
+            figures = set(re.findall(r"\d+", text))
+            if "[confirm" in text.casefold():
+                return True
+            return figures <= known and ("$" not in text or bool(figures))
+
+        result["confirm_marker"] = all(flagged_or_known(text) for text in texts)
     if expect["note_expected"]:
         result["note_present"] = bool(reply.note and reply.note.strip())
     if expect.get("sensitive"):

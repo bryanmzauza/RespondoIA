@@ -67,7 +67,8 @@ def test_render_has_every_part():
         "Other habits: responde rápido",
         "With this contact (client): mais formal, sem kkk",
         "User's own notes, which take precedence: nunca uso prezado",
-        "Examples:\n- fechado então, até amanhã\n- beleza, combinado assim",
+        ("Examples (they show the tone; never repeat one word for word):\n"
+        "- fechado então, até amanhã\n- beleza, combinado assim"),
     ):
         assert part in text
 
