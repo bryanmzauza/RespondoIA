@@ -30,7 +30,7 @@ from respondoia.memory.recall import (
     plain_text,
     search_terms,
 )
-from respondoia.privacy import mask_text, normalize_name
+from respondoia.privacy import mask_text
 
 logger = logging.getLogger("respondoia")
 
@@ -75,7 +75,6 @@ class HistoryService:
         self._client = client
         self._settings = settings
         self._now = now
-        self._confirmed: dict[str, int] = {}  # name -> contact the user picked, until restart
 
     # The hotkey path.
 
@@ -106,11 +105,14 @@ class HistoryService:
                 return contacts.add_namesake(conn, title, is_group, self._stamp()).id
             return contact_id
 
-        chosen = self._safely("confirm", run, None)
-        if chosen is None:
-            return UNAVAILABLE
-        self._confirmed[normalize_name(title)] = chosen
-        return self.observe(title, lines, any(line.sender for line in lines), "")
+        def answer(conn):
+            chosen = run(conn)
+            # The answer holds for this screen only: it is stored under the chosen contact,
+            # so the next press continues it, and no other chat inherits the answer.
+            is_group = any(line.sender for line in lines)
+            return self._observe(conn, title, lines, is_group, "", chosen=chosen)
+
+        return self._safely("confirm", answer, UNAVAILABLE)
 
     def store_loaded(
         self, title: str, lines: Sequence[ChatLine], reached_start: bool, avatar: str
@@ -125,7 +127,7 @@ class HistoryService:
 
         return self._safely("loaded", run, UNAVAILABLE)
 
-    def _observe(self, conn, title, lines, is_group, avatar) -> HistoryContext:
+    def _observe(self, conn, title, lines, is_group, avatar, chosen=None) -> HistoryContext:
         settings = self._settings()
         found = contacts.candidates(conn, title)
         if not settings.history_enabled:
@@ -135,7 +137,6 @@ class HistoryService:
         if (is_group or any(c.is_group for c in found)) and not settings.history_include_groups:
             return HistoryContext("group")
         screen = from_lines(lines)
-        confirmed = self._confirmed.get(normalize_name(title))
         candidates = []
         for c in found:
             memory = store.load_memory(conn, c.id)
@@ -146,7 +147,7 @@ class HistoryService:
                     c.avatar,
                     store.recent(conn, c.id),
                     bool(memory and memory.text),
-                    c.id == confirmed,
+                    c.id == chosen,
                 )
             )
         identity = identify(candidates, screen, avatar)

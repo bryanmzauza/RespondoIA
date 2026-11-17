@@ -17,7 +17,7 @@ class Candidate:
     avatar: str  # "" when unknown or the default picture
     recent: tuple[Stored, ...]  # last stored messages; () when nothing is stored
     has_memory: bool
-    confirmed: bool  # the user said "same person" for this one
+    confirmed: bool  # the user just said "this one" for the screen being identified
 
 
 @dataclass(frozen=True)
@@ -38,14 +38,15 @@ def identify(candidates: Sequence[Candidate], screen: Sequence[Stored], avatar: 
 
     if not candidates:
         return Identity(None, "new", ())
-    confirmed = [c for c in candidates if c.confirmed]
-    if len(confirmed) == 1:
-        return decided(confirmed[0], "user")
     continuing = [c for c in candidates if c.recent and find_overlap(c.recent, screen)]
     if len(continuing) == 1:
         return decided(continuing[0], "overlap")
     if continuing:
         return undecided()
+    # The user's answer counts only where the messages themselves decide nothing.
+    confirmed = [c for c in candidates if c.confirmed]
+    if len(confirmed) == 1:
+        return decided(confirmed[0], "user")
     holding = [c for c in candidates if c.recent or c.has_memory]
     if holding:
         if avatar:

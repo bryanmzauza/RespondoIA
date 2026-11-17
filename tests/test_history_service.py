@@ -134,8 +134,9 @@ def test_confirm_same_person_attaches_memory(db):
         store.save_memory(conn, first.contact_id, "Cliente fiel.", 6, "2026-11-17T10:00:00")
     result = history.confirm("Ana", [line("oi de novo", time="12:00")], first.contact_id)
     assert result.state == "ready" and result.memory == "Cliente fiel."
-    # The answer holds for the next presses too.
-    assert history.observe("Ana", [line("e aí?", time="12:30")], False, "").state == "ready"
+    # The next press shows the confirmed message again: the messages decide from now on.
+    again = [line("oi de novo", time="12:00"), line("e aí?", time="12:30")]
+    assert history.observe("Ana", again, False, "").state == "ready"
 
 
 def test_confirm_another_person_creates_a_namesake(db):
@@ -148,6 +149,27 @@ def test_confirm_another_person_creates_a_namesake(db):
     assert result.memory == "" and result.owner_since == "2026-11-17"
     with db.transaction() as conn:
         assert len(contacts.candidates(conn, "Ana")) == 2
+
+
+def test_an_answer_never_outlives_its_screen(db):
+    # The user answers "another person" for Ana 2; Ana 1's chat must still be Ana 1.
+    history = service(db)
+    first = observe(history, db, "Ana", lines("bolo", 8))
+    other = history.confirm("Ana", lines("reunião", 6, start=30), None)
+    assert other.contact_id != first.contact_id
+    back = history.observe("Ana", lines("bolo", 10, start=4), False, "")
+    assert back.contact_id == first.contact_id and back.added == 6
+
+
+def test_a_same_person_answer_does_not_open_the_memory_to_a_namesake(db):
+    history = service(db)
+    first = observe(history, db, "Ana", lines("bolo", 8))
+    with db.transaction() as conn:
+        store.save_memory(conn, first.contact_id, "ZZ-MEMORY-A", 8, "x")
+    same = history.confirm("Ana", lines("depois da lacuna", 6, start=30), first.contact_id)
+    assert same.memory == "ZZ-MEMORY-A"
+    namesake = history.observe("Ana", lines("outra pessoa", 4, start=50), False, "")
+    assert namesake.state == "ask" and namesake.memory == ""
 
 
 def test_real_photo_decides_after_a_gap(db):
