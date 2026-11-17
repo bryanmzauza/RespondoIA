@@ -34,6 +34,7 @@ class Tray(QSystemTrayIcon):
     pause_toggled = Signal(bool)
     quit_requested = Signal()
     settings_requested = Signal()
+    style_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -41,6 +42,8 @@ class Tray(QSystemTrayIcon):
         self._menu = QMenu()
         self.settings_action = self._menu.addAction(t("tray.settings"))
         self.settings_action.triggered.connect(self.settings_requested)
+        self.style_action = self._menu.addAction(t("tray.style"))
+        self.style_action.triggered.connect(self.style_requested)
         self.pause_action = self._menu.addAction(t("tray.pause"))
         self.pause_action.triggered.connect(self._toggle)
         self._menu.addSeparator()
@@ -58,6 +61,7 @@ class Tray(QSystemTrayIcon):
     def retranslate(self) -> None:
         """Apply a language change to the menu and the tooltip."""
         self.settings_action.setText(t("tray.settings"))
+        self.style_action.setText(t("tray.style"))
         self.quit_action.setText(t("tray.quit"))
         self.set_paused(self._paused)
 

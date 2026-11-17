@@ -13,9 +13,9 @@ def labels(tray):
     return [action.text() for action in tray.contextMenu().actions() if not action.isSeparator()]
 
 
-def test_menu_has_settings_pause_and_quit(qapp):
+def test_menu_has_settings_style_pause_and_quit(qapp):
     tray = Tray()
-    assert labels(tray) == ["Configurações", "Pausar atalho", "Sair"]
+    assert labels(tray) == ["Configurações", "Aprender meu estilo", "Pausar atalho", "Sair"]
     assert tray.toolTip() == "RespondoIA"
 
 
@@ -24,18 +24,18 @@ def test_pause_action_toggles_label_and_signal(qtbot):
     with qtbot.waitSignal(tray.pause_toggled) as sig:
         tray.pause_action.trigger()
     assert sig.args == [True]
-    assert labels(tray)[1] == "Retomar atalho" and tray.toolTip() == "RespondoIA (pausado)"
+    assert labels(tray)[2] == "Retomar atalho" and tray.toolTip() == "RespondoIA (pausado)"
     with qtbot.waitSignal(tray.pause_toggled) as sig:
         tray.pause_action.trigger()
     assert sig.args == [False]
-    assert labels(tray)[1] == "Pausar atalho" and tray.toolTip() == "RespondoIA"
+    assert labels(tray)[2] == "Pausar atalho" and tray.toolTip() == "RespondoIA"
 
 
 def test_set_paused_does_not_emit(qtbot):
     tray = Tray()
     with qtbot.assertNotEmitted(tray.pause_toggled):
         tray.set_paused(True)
-    assert labels(tray)[1] == "Retomar atalho"
+    assert labels(tray)[2] == "Retomar atalho"
 
 
 def test_quit_action_emits(qtbot):
@@ -78,5 +78,11 @@ def test_retranslate_follows_the_installed_language(qapp):
     tray.set_paused(True)
     i18n.install(qapp, "en")
     tray.retranslate()
-    assert labels(tray) == ["Settings", "Resume hotkey", "Quit"]
+    assert labels(tray) == ["Settings", "Learn my style", "Resume hotkey", "Quit"]
     assert tray.toolTip() == "RespondoIA (paused)"
+
+
+def test_style_item_emits(qtbot):
+    tray = Tray()
+    with qtbot.waitSignal(tray.style_requested):
+        tray.style_action.trigger()

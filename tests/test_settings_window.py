@@ -125,3 +125,9 @@ def test_show_error_fills_the_placeholder(qtbot):
     window = make(qtbot)
     window.show_error("settings.hotkey_in_use", hotkey="Ctrl+Alt+R")
     assert window.error_label.text() == "O atalho Ctrl+Alt+R já está em uso por outro programa."
+
+
+def test_knowledge_button_emits(qtbot):
+    window = make(qtbot)
+    with qtbot.waitSignal(window.knowledge_requested):
+        window.knowledge_button.click()

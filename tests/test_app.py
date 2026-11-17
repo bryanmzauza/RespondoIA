@@ -65,6 +65,9 @@ class FakeWorker(Recorder):
     def forget(self, title):
         self.record("forget", title)
 
+    def set_label(self, title, label):
+        self.record("set_label", title, label)
+
 
 class FakePanel(Recorder):
     suggestion_chosen = Signal(int)
@@ -73,6 +76,11 @@ class FakePanel(Recorder):
     retry_requested = Signal()
     closed = Signal()
     settings_requested = Signal()
+    label_chosen = Signal(object)
+    style_requested = Signal()
+
+    def set_label(self, label, guessed):
+        self.record("set_label", label, guessed)
 
     def show_loading(self, title, bounds):
         self.record("show_loading", title, bounds)
@@ -103,6 +111,7 @@ class FakeTray(Recorder):
     pause_toggled = Signal(bool)
     quit_requested = Signal()
     settings_requested = Signal()
+    style_requested = Signal()
 
     def retranslate(self):
         self.record("retranslate")
@@ -735,11 +744,6 @@ def test_a_hotkey_changed_while_paused_registers_on_resume(rig, monkeypatch):
 # Style and context (stage 0.3).
 
 
-class FakeStyleWorker(Recorder):
-    def refresh_if_due(self, language):
-        self.record("refresh_if_due", language)
-
-
 def test_open_database_failure_notifies_once_and_returns_none(monkeypatch):
     from respondoia.database import DatabaseError
 
@@ -786,7 +790,7 @@ def test_worker_reports_the_learned_language(qapp):
 
 
 def test_learned_language_asks_for_a_due_refresh(tmp_path):
-    style_worker = FakeStyleWorker()
+    style_worker = FakeStyleWorkerFull()
     worker = FakeWorker()
     Controller(
         worker, FakePanel(), FakeTray(), FakeHotkey(), Settings(), style_worker=style_worker
@@ -805,3 +809,158 @@ def test_worker_forgets_on_request(qapp):
     worker.forget("Marina Duarte")
     worker.set_label("Marina Duarte", "client")
     assert style.calls == [("forget", "Marina Duarte"), ("set_label", "Marina Duarte", "client")]
+
+
+class FakeStyleWindow(Recorder):
+    import_requested = Signal(str)
+    author_chosen = Signal(str, object)
+    import_cancelled = Signal()
+    refresh_requested = Signal(str)
+    manual_saved = Signal(str, str)
+    example_removed = Signal(str, str)
+    reset_requested = Signal()
+
+    def show_overview(self, overview):
+        self.record("show_overview", overview)
+
+    def ask_author(self, authors):
+        self.record("ask_author", authors)
+
+    def show_busy(self, key):
+        self.record("show_busy", key)
+
+    def show_notice(self, key, **values):
+        self.record("show_notice", key, values)
+
+    def show_error(self, key, **values):
+        self.record("show_error", key, values)
+
+    def isVisible(self):
+        return True
+
+    def raise_(self):
+        self.record("raise")
+
+    def activateWindow(self):
+        pass
+
+    def show(self):
+        self.record("show")
+
+
+class FakeStyleWorkerFull(Recorder):
+    overview_ready = Signal(object)
+    authors_found = Signal(object)
+    imported = Signal(object)
+    refreshed = Signal(str)
+    failed = Signal(str)
+
+    def refresh_if_due(self, language):
+        self.record("refresh_if_due", language)
+
+    def load(self):
+        self.record("load")
+
+    def import_file(self, path):
+        self.record("import_file", path)
+
+    def import_chosen(self, author, label):
+        self.record("import_chosen", author, label)
+
+    def cancel_import(self):
+        self.record("cancel_import")
+
+    def refresh(self, language):
+        self.record("refresh", language)
+
+    def save_manual(self, language, text):
+        self.record("save_manual", language, text)
+
+    def exclude_example(self, language, text):
+        self.record("exclude_example", language, text)
+
+    def reset(self):
+        self.record("reset")
+
+
+def styled_rig(tmp_path, monkeypatch):
+    style_worker = FakeStyleWorkerFull()
+    window = FakeStyleWindow()
+    monkeypatch.setattr(app_module, "StyleWindow", lambda: window)
+    rig = Rig.__new__(Rig)
+    rig.worker, rig.panel, rig.tray, rig.hotkey = FakeWorker(), FakePanel(), FakeTray(), FakeHotkey()
+    rig.config_file = tmp_path / "config.toml"
+    rig.controller = Controller(
+        rig.worker, rig.panel, rig.tray, rig.hotkey, Settings(),
+        config_file=rig.config_file, style_worker=style_worker,
+    )
+    return rig, style_worker, window
+
+
+def test_style_window_gets_the_overview(tmp_path, monkeypatch):
+    from respondoia.style.service import StyleOverview
+
+    rig, style_worker, window = styled_rig(tmp_path, monkeypatch)
+    rig.tray.style_requested.emit()
+    assert style_worker.calls == [("load",)]
+    style_worker.overview_ready.emit(StyleOverview(()))
+    assert window.calls[-1] == ("show_overview", StyleOverview(()))
+    window.refresh_requested.emit("pt")
+    assert style_worker.calls[-1] == ("refresh", "pt")
+    assert ("show_busy", "style.refreshing") in window.calls
+
+
+def test_import_flow_and_errors_reach_the_window(tmp_path, monkeypatch):
+    from respondoia.style.service import ImportResult
+
+    rig, style_worker, window = styled_rig(tmp_path, monkeypatch)
+    rig.panel.style_requested.emit()
+    window.import_requested.emit("C:/x/a.txt")
+    assert style_worker.calls[-1] == ("import_file", "C:/x/a.txt")
+    style_worker.authors_found.emit((("Rafa", 3),))
+    assert window.calls[-1] == ("ask_author", (("Rafa", 3),))
+    window.author_chosen.emit("Rafa", "friend")
+    assert style_worker.calls[-1] == ("import_chosen", "Rafa", "friend")
+    style_worker.imported.emit(ImportResult(4, 1, "pt"))
+    assert window.calls[-1] == ("show_notice", "style.imported", {"count": 4})
+    style_worker.failed.emit("export_format")
+    assert window.calls[-1] == ("show_error", "error.export_format", {})
+
+
+def test_label_reaches_the_panel(tmp_path, monkeypatch):
+    from respondoia.domain import UserContext
+
+    rig, _, _ = styled_rig(tmp_path, monkeypatch)
+    rig.controller.resume()
+    rig.press()
+    generation = rig.worker.calls[-1][1]
+    context = UserContext("pt", "client", True, False, "", "")
+    rig.worker.started.emit(generation, StartResult(StartStatus.STARTED, CHAT, context))
+    assert ("set_label", "client", False) in rig.panel.calls
+    rig.panel.label_chosen.emit("friend")
+    assert rig.worker.calls[-1] == ("set_label", "Marina Duarte", "friend")
+
+
+def test_label_guess_in_the_reply_reaches_the_panel(tmp_path, monkeypatch):
+    from respondoia.domain import UserContext
+
+    rig, _, _ = styled_rig(tmp_path, monkeypatch)
+    rig.controller.resume()
+    rig.press()
+    generation = rig.worker.calls[-1][1]
+    context = UserContext("pt", None, False, True, "", "")
+    rig.worker.started.emit(generation, StartResult(StartStatus.STARTED, CHAT, context))
+    rig.worker.replied.emit(generation, make_reply().model_copy(update={"contact_label": "family"}))
+    assert ("set_label", "family", True) in rig.panel.calls
+
+
+def test_open_knowledge_creates_the_file_once(rig, tmp_path, monkeypatch):
+    opened = []
+    path = tmp_path / "knowledge.md"
+    monkeypatch.setattr(app_module, "knowledge_path", lambda: path)
+    monkeypatch.setattr(app_module.os, "startfile", opened.append, raising=False)
+    rig.controller.open_knowledge()
+    assert path.read_text(encoding="utf-8").startswith("# ")
+    path.write_text("mine", encoding="utf-8")
+    rig.controller.open_knowledge()
+    assert path.read_text(encoding="utf-8") == "mine" and opened == [str(path), str(path)]

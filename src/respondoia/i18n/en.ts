@@ -319,5 +319,248 @@
         <source>error.style_unavailable</source>
         <translation>Could not open the style data. Suggestions keep working without your style.</translation>
     </message>
+    <message>
+        <source>tray.style</source>
+        <translation>Learn my style</translation>
+    </message>
+    <message>
+        <source>panel.style</source>
+        <translation>Style</translation>
+    </message>
+    <message>
+        <source>label.client</source>
+        <translation>Client</translation>
+    </message>
+    <message>
+        <source>label.supplier</source>
+        <translation>Supplier</translation>
+    </message>
+    <message>
+        <source>label.friend</source>
+        <translation>Friend</translation>
+    </message>
+    <message>
+        <source>label.family</source>
+        <translation>Family</translation>
+    </message>
+    <message>
+        <source>label.none</source>
+        <translation>No label</translation>
+    </message>
+    <message>
+        <source>label.guessed</source>
+        <translation>{label}?</translation>
+    </message>
+    <message>
+        <source>language.pt</source>
+        <translation>Portuguese</translation>
+    </message>
+    <message>
+        <source>language.en</source>
+        <translation>English</translation>
+    </message>
+    <message>
+        <source>language.es</source>
+        <translation>Spanish</translation>
+    </message>
+    <message>
+        <source>style.title</source>
+        <translation>Learn my style</translation>
+    </message>
+    <message>
+        <source>style.language</source>
+        <translation>Language</translation>
+    </message>
+    <message>
+        <source>style.messages</source>
+        <translation>{count} of your messages analysed</translation>
+    </message>
+    <message>
+        <source>style.learning</source>
+        <translation>Still learning: {count} of your messages so far</translation>
+    </message>
+    <message>
+        <source>style.small</source>
+        <translation>Few messages yet. Import a chat to speed it up.</translation>
+    </message>
+    <message>
+        <source>style.updated</source>
+        <translation>Updated on {date}</translation>
+    </message>
+    <message>
+        <source>style.empty</source>
+        <translation>No style yet. It forms as you use the hotkey, or import a chat.</translation>
+    </message>
+    <message>
+        <source>style.noticed</source>
+        <translation>What the app noticed</translation>
+    </message>
+    <message>
+        <source>style.examples</source>
+        <translation>Examples</translation>
+    </message>
+    <message>
+        <source>style.remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <source>style.notes</source>
+        <translation>My notes</translation>
+    </message>
+    <message>
+        <source>style.notes_hint</source>
+        <translation>For example: I never use "prezado".</translation>
+    </message>
+    <message>
+        <source>style.save_notes</source>
+        <translation>Save notes</translation>
+    </message>
+    <message>
+        <source>style.import</source>
+        <translation>Import exported chat</translation>
+    </message>
+    <message>
+        <source>style.drop_hint</source>
+        <translation>Drop here a .txt or .zip exported from WhatsApp</translation>
+    </message>
+    <message>
+        <source>style.which_author</source>
+        <translation>Which of these names is you?</translation>
+    </message>
+    <message>
+        <source>style.chat_label</source>
+        <translation>This chat is with</translation>
+    </message>
+    <message>
+        <source>style.import_start</source>
+        <translation>Import</translation>
+    </message>
+    <message>
+        <source>style.cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>style.importing</source>
+        <translation>Reading your messages...</translation>
+    </message>
+    <message>
+        <source>style.imported</source>
+        <translation>{count} of your messages added. Messages from other people were discarded.</translation>
+    </message>
+    <message>
+        <source>style.refresh</source>
+        <translation>Update style</translation>
+    </message>
+    <message>
+        <source>style.refreshing</source>
+        <translation>Updating the style...</translation>
+    </message>
+    <message>
+        <source>style.refreshed</source>
+        <translation>Style updated.</translation>
+    </message>
+    <message>
+        <source>style.reset</source>
+        <translation>Restore default</translation>
+    </message>
+    <message>
+        <source>style.reset_confirm</source>
+        <translation>Delete the learned style and your saved messages? Contact labels stay.</translation>
+    </message>
+    <message>
+        <source>style.stat_length</source>
+        <translation>Messages usually have about {chars} characters.</translation>
+    </message>
+    <message>
+        <source>style.stat_burst</source>
+        <translation>{pct}% of your turns are split into several short messages.</translation>
+    </message>
+    <message>
+        <source>style.stat_case</source>
+        <translation>Starts with a lowercase letter in {lower}% of messages; ends with a full stop in {period}%.</translation>
+    </message>
+    <message>
+        <source>style.stat_emoji</source>
+        <translation>Emoji in {pct}% of messages: {emoji}</translation>
+    </message>
+    <message>
+        <source>style.stat_abbreviations</source>
+        <translation>Abbreviations: {items}</translation>
+    </message>
+    <message>
+        <source>style.stat_laughter</source>
+        <translation>Laughs with: {laugh}</translation>
+    </message>
+    <message>
+        <source>style.trait_formality</source>
+        <translation>Formality: {text}</translation>
+    </message>
+    <message>
+        <source>style.trait_greetings</source>
+        <translation>Greetings: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_farewells</source>
+        <translation>Farewells: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_expressions</source>
+        <translation>Typical expressions: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_avoids</source>
+        <translation>Never uses: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_habits</source>
+        <translation>Other habits: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_label</source>
+        <translation>With {label}: {text}</translation>
+    </message>
+    <message>
+        <source>error.export_format</source>
+        <translation>This file is not a WhatsApp chat export.</translation>
+    </message>
+    <message>
+        <source>error.export_empty</source>
+        <translation>No text messages in this file.</translation>
+    </message>
+    <message>
+        <source>error.export_too_large</source>
+        <translation>This file is too large.</translation>
+    </message>
+    <message>
+        <source>error.export_zip</source>
+        <translation>No chat found inside this .zip.</translation>
+    </message>
+    <message>
+        <source>settings.knowledge</source>
+        <translation>Knowledge base</translation>
+    </message>
+    <message>
+        <source>settings.knowledge_hint</source>
+        <translation>Facts suggestions may use: products, prices, hours. Only what any customer may read.</translation>
+    </message>
+    <message>
+        <source>knowledge.template</source>
+        <translation># Knowledge base
+
+Suggestions may quote anything written here. Only include what you would tell any customer. Leave out costs, margins and internal notes.
+
+## Business
+
+
+## Products and prices
+
+
+## Delivery
+
+
+## Frequent questions
+
+</translation>
+    </message>
 </context>
 </TS>

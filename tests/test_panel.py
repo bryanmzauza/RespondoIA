@@ -334,3 +334,29 @@ def test_corner_is_used_when_placing(qtbot, reply3):
     panel.show_loading("Marina Duarte", CHAT)
     screen = panel.screen().geometry()
     assert panel.x() <= CHAT.left + MARGIN + screen.x() + 1
+
+
+def test_label_menu_emits_the_choice(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    panel.set_label(None, False)
+    assert panel.label_button.text() == "Sem etiqueta" and panel.label_button.isVisible()
+    actions = {action.data(): action for action in panel.label_button.menu().actions()}
+    assert set(actions) == {"client", "supplier", "friend", "family", None}
+    assert actions["family"].text() == "Família"
+    with qtbot.waitSignal(panel.label_chosen) as signal:
+        actions["client"].trigger()
+    assert signal.args == ["client"]
+    assert panel.label_button.text() == "Cliente"
+
+
+def test_guessed_label_shows_a_question_mark(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    panel.set_label("client", True)
+    assert panel.label_button.text() == "Cliente?"
+
+
+def test_style_button_emits(qtbot, reply3):
+    panel = make_panel(qtbot, reply3)
+    assert panel.style_button.text() == "Estilo"
+    with qtbot.waitSignal(panel.style_requested):
+        qtbot.mouseClick(panel.style_button, Qt.MouseButton.LeftButton)

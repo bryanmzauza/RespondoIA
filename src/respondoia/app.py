@@ -1,6 +1,7 @@
 """Wires the tray, the hotkey, the panel and the worker thread together."""
 
 import logging
+import os
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import replace
@@ -22,7 +23,7 @@ from respondoia.hotkey import (
     display_hotkey,
     parse_hotkey,
 )
-from respondoia.knowledge import knowledge_path
+from respondoia.knowledge import create_knowledge, knowledge_path
 from respondoia.llm import (
     AnthropicClient,
     LlmError,
@@ -43,6 +44,7 @@ from respondoia.style.parser import ExportChat, ExportError, parse_export
 from respondoia.style.service import StyleService
 from respondoia.ui.panel import SuggestionPanel
 from respondoia.ui.settings import SettingsWindow
+from respondoia.ui.style_view import StyleWindow
 from respondoia.ui.tray import Tray
 
 logger = logging.getLogger("respondoia")
@@ -267,7 +269,16 @@ class Controller(QObject):
     request_close = Signal()
     request_settings = Signal(object)
     request_forget = Signal(str)
+    request_set_label = Signal(str, object)
     request_refresh_due = Signal(str)
+    request_style_load = Signal()
+    request_import_file = Signal(str)
+    request_import_chosen = Signal(str, object)
+    request_import_cancel = Signal()
+    request_refresh = Signal(str)
+    request_save_manual = Signal(str, str)
+    request_exclude_example = Signal(str, str)
+    request_style_reset = Signal()
 
     def __init__(
         self,
@@ -309,9 +320,25 @@ class Controller(QObject):
         self.request_close.connect(worker.close)
         self.request_settings.connect(worker.set_settings)
         self.request_forget.connect(worker.forget)
+        self.request_set_label.connect(worker.set_label)
+        self._style_window: StyleWindow | None = None
+        self._context = None  # the open chat's UserContext
         if style_worker is not None:
             self.request_refresh_due.connect(style_worker.refresh_if_due)
             worker.learned.connect(self._on_learned)
+            self.request_style_load.connect(style_worker.load)
+            self.request_import_file.connect(style_worker.import_file)
+            self.request_import_chosen.connect(style_worker.import_chosen)
+            self.request_import_cancel.connect(style_worker.cancel_import)
+            self.request_refresh.connect(style_worker.refresh)
+            self.request_save_manual.connect(style_worker.save_manual)
+            self.request_exclude_example.connect(style_worker.exclude_example)
+            self.request_style_reset.connect(style_worker.reset)
+            style_worker.overview_ready.connect(self._on_style_overview)
+            style_worker.authors_found.connect(self._on_authors_found)
+            style_worker.imported.connect(self._on_imported)
+            style_worker.refreshed.connect(self._on_refreshed)
+            style_worker.failed.connect(self._on_style_failed)
         worker.started.connect(self._on_started)
         worker.previewed.connect(self._on_previewed)
         worker.replied.connect(self._on_replied)
@@ -330,6 +357,9 @@ class Controller(QObject):
         tray.pause_toggled.connect(self._on_pause_toggled)
         tray.settings_requested.connect(lambda: self.open_settings())
         panel.settings_requested.connect(lambda: self.open_settings())
+        tray.style_requested.connect(lambda: self.open_style())
+        panel.style_requested.connect(lambda: self.open_style())
+        panel.label_chosen.connect(self._on_label_chosen)
         self._apply_to_panel(settings)
 
     def on_hotkey(self) -> None:
@@ -372,8 +402,14 @@ class Controller(QObject):
                 self._tray.notify("notice.unknown_chat")
             return
         self._chat = result.chat
+        self._context = result.context
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
+        if result.context is not None:
+            context = result.context
+            self._panel.set_label(
+                context.label, context.label is not None and not context.label_from_user
+            )
         self.request_suggest.emit(generation)
 
     def _on_previewed(self, generation: int, preview) -> None:
@@ -387,6 +423,9 @@ class Controller(QObject):
         if generation != self._generation or not self._active or self._choosing:
             return
         self._panel.show_reply(reply)
+        context = self._context
+        if context is not None and context.ask_label and reply.contact_label:
+            self._panel.set_label(reply.contact_label, True)
         total_ms = round((time.perf_counter() - self._pressed_at) * 1000)
         logger.info("%s ok total_ms=%d", self._waiting_for, total_ms)
 
@@ -414,6 +453,70 @@ class Controller(QObject):
         if generation == self._generation and not self._fallback_shown:
             self._fallback_shown = True
             self._tray.notify("notice.screenshot_fallback")
+
+    def _on_label_chosen(self, label: str | None) -> None:
+        if self._active and self._chat is not None:
+            self.request_set_label.emit(self._chat.title, label)
+
+    def open_style(self) -> None:
+        if self._style_worker is None:
+            return
+        if self._style_window is not None and self._style_window.isVisible():
+            self._style_window.raise_()
+            self._style_window.activateWindow()
+            return
+        window = StyleWindow()
+        window.import_requested.connect(self._on_import_requested)
+        window.author_chosen.connect(self._on_author_chosen)
+        window.import_cancelled.connect(self.request_import_cancel)
+        window.refresh_requested.connect(self._on_refresh_requested)
+        window.manual_saved.connect(self.request_save_manual)
+        window.example_removed.connect(self.request_exclude_example)
+        window.reset_requested.connect(self.request_style_reset)
+        self._style_window = window
+        window.show()
+        self.request_style_load.emit()
+
+    def open_knowledge(self) -> None:
+        """Create the file from the translated template the first time, then open it."""
+        path = knowledge_path()
+        create_knowledge(path, i18n.t("knowledge.template"))
+        os.startfile(str(path))
+
+    def _on_import_requested(self, path: str) -> None:
+        self._style_window.show_busy("style.importing")
+        self.request_import_file.emit(path)
+
+    def _on_author_chosen(self, author: str, label) -> None:
+        self._style_window.show_busy("style.importing")
+        self.request_import_chosen.emit(author, label)
+
+    def _on_refresh_requested(self, language: str) -> None:
+        if not config.get_api_key():
+            self._style_window.show_error("error.no_api_key")
+            return
+        self._style_window.show_busy("style.refreshing")
+        self.request_refresh.emit(language)
+
+    def _on_style_overview(self, overview) -> None:
+        if self._style_window is not None:
+            self._style_window.show_overview(overview)
+
+    def _on_authors_found(self, authors) -> None:
+        if self._style_window is not None:
+            self._style_window.ask_author(authors)
+
+    def _on_imported(self, result) -> None:
+        if self._style_window is not None:
+            self._style_window.show_notice("style.imported", count=result.added)
+
+    def _on_refreshed(self, language: str) -> None:
+        if self._style_window is not None and self._style_window.isVisible():
+            self._style_window.show_notice("style.refreshed")
+
+    def _on_style_failed(self, code: str) -> None:
+        if self._style_window is not None:
+            self._style_window.show_error("error." + code)
 
     def _on_learned(self, language: str) -> None:
         # Costs a model call at most once a day per language, and only with a key.
@@ -479,6 +582,7 @@ class Controller(QObject):
         self._window_base = self._settings
         window.saved.connect(self._on_window_saved)
         window.api_key_entered.connect(config.set_api_key)
+        window.knowledge_requested.connect(self.open_knowledge)
         self._settings_window = window
         window.show()
 
@@ -555,6 +659,7 @@ class Controller(QObject):
         self._active = False
         self._choosing = False
         self._chat = None
+        self._context = None
         self._generation += 1
         self.request_close.emit()
 

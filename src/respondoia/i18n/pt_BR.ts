@@ -319,5 +319,248 @@
         <source>error.style_unavailable</source>
         <translation>Não foi possível abrir os dados de estilo. As sugestões continuam, sem o seu estilo.</translation>
     </message>
+    <message>
+        <source>tray.style</source>
+        <translation>Aprender meu estilo</translation>
+    </message>
+    <message>
+        <source>panel.style</source>
+        <translation>Estilo</translation>
+    </message>
+    <message>
+        <source>label.client</source>
+        <translation>Cliente</translation>
+    </message>
+    <message>
+        <source>label.supplier</source>
+        <translation>Fornecedor</translation>
+    </message>
+    <message>
+        <source>label.friend</source>
+        <translation>Amigo</translation>
+    </message>
+    <message>
+        <source>label.family</source>
+        <translation>Família</translation>
+    </message>
+    <message>
+        <source>label.none</source>
+        <translation>Sem etiqueta</translation>
+    </message>
+    <message>
+        <source>label.guessed</source>
+        <translation>{label}?</translation>
+    </message>
+    <message>
+        <source>language.pt</source>
+        <translation>Português</translation>
+    </message>
+    <message>
+        <source>language.en</source>
+        <translation>Inglês</translation>
+    </message>
+    <message>
+        <source>language.es</source>
+        <translation>Espanhol</translation>
+    </message>
+    <message>
+        <source>style.title</source>
+        <translation>Aprender meu estilo</translation>
+    </message>
+    <message>
+        <source>style.language</source>
+        <translation>Idioma</translation>
+    </message>
+    <message>
+        <source>style.messages</source>
+        <translation>{count} mensagens suas analisadas</translation>
+    </message>
+    <message>
+        <source>style.learning</source>
+        <translation>Ainda aprendendo: {count} mensagens suas até agora</translation>
+    </message>
+    <message>
+        <source>style.small</source>
+        <translation>Poucas mensagens ainda. Importe uma conversa para acelerar.</translation>
+    </message>
+    <message>
+        <source>style.updated</source>
+        <translation>Atualizado em {date}</translation>
+    </message>
+    <message>
+        <source>style.empty</source>
+        <translation>Ainda sem estilo. Ele se forma conforme você usa o atalho, ou importe uma conversa.</translation>
+    </message>
+    <message>
+        <source>style.noticed</source>
+        <translation>O que o app percebeu</translation>
+    </message>
+    <message>
+        <source>style.examples</source>
+        <translation>Exemplos</translation>
+    </message>
+    <message>
+        <source>style.remove</source>
+        <translation>Remover</translation>
+    </message>
+    <message>
+        <source>style.notes</source>
+        <translation>Minhas observações</translation>
+    </message>
+    <message>
+        <source>style.notes_hint</source>
+        <translation>Por exemplo: nunca uso "prezado".</translation>
+    </message>
+    <message>
+        <source>style.save_notes</source>
+        <translation>Salvar observações</translation>
+    </message>
+    <message>
+        <source>style.import</source>
+        <translation>Importar conversa exportada</translation>
+    </message>
+    <message>
+        <source>style.drop_hint</source>
+        <translation>Solte aqui um .txt ou .zip exportado do WhatsApp</translation>
+    </message>
+    <message>
+        <source>style.which_author</source>
+        <translation>Qual destes nomes é você?</translation>
+    </message>
+    <message>
+        <source>style.chat_label</source>
+        <translation>Esta conversa é com</translation>
+    </message>
+    <message>
+        <source>style.import_start</source>
+        <translation>Importar</translation>
+    </message>
+    <message>
+        <source>style.cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>style.importing</source>
+        <translation>Lendo suas mensagens...</translation>
+    </message>
+    <message>
+        <source>style.imported</source>
+        <translation>{count} mensagens suas adicionadas. As mensagens das outras pessoas foram descartadas.</translation>
+    </message>
+    <message>
+        <source>style.refresh</source>
+        <translation>Atualizar estilo</translation>
+    </message>
+    <message>
+        <source>style.refreshing</source>
+        <translation>Atualizando o estilo...</translation>
+    </message>
+    <message>
+        <source>style.refreshed</source>
+        <translation>Estilo atualizado.</translation>
+    </message>
+    <message>
+        <source>style.reset</source>
+        <translation>Restaurar padrão</translation>
+    </message>
+    <message>
+        <source>style.reset_confirm</source>
+        <translation>Apagar o estilo aprendido e as suas mensagens guardadas? As etiquetas dos contatos ficam.</translation>
+    </message>
+    <message>
+        <source>style.stat_length</source>
+        <translation>As mensagens costumam ter cerca de {chars} caracteres.</translation>
+    </message>
+    <message>
+        <source>style.stat_burst</source>
+        <translation>Em {pct}% das vezes você manda várias mensagens curtas.</translation>
+    </message>
+    <message>
+        <source>style.stat_case</source>
+        <translation>Começa com letra minúscula em {lower}% das mensagens; termina com ponto final em {period}%.</translation>
+    </message>
+    <message>
+        <source>style.stat_emoji</source>
+        <translation>Emoji em {pct}% das mensagens: {emoji}</translation>
+    </message>
+    <message>
+        <source>style.stat_abbreviations</source>
+        <translation>Abreviações: {items}</translation>
+    </message>
+    <message>
+        <source>style.stat_laughter</source>
+        <translation>Ri com: {laugh}</translation>
+    </message>
+    <message>
+        <source>style.trait_formality</source>
+        <translation>Formalidade: {text}</translation>
+    </message>
+    <message>
+        <source>style.trait_greetings</source>
+        <translation>Saudações: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_farewells</source>
+        <translation>Despedidas: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_expressions</source>
+        <translation>Expressões típicas: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_avoids</source>
+        <translation>Nunca usa: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_habits</source>
+        <translation>Outros hábitos: {items}</translation>
+    </message>
+    <message>
+        <source>style.trait_label</source>
+        <translation>Com {label}: {text}</translation>
+    </message>
+    <message>
+        <source>error.export_format</source>
+        <translation>Este arquivo não é uma conversa exportada do WhatsApp.</translation>
+    </message>
+    <message>
+        <source>error.export_empty</source>
+        <translation>Nenhuma mensagem de texto neste arquivo.</translation>
+    </message>
+    <message>
+        <source>error.export_too_large</source>
+        <translation>Este arquivo é grande demais.</translation>
+    </message>
+    <message>
+        <source>error.export_zip</source>
+        <translation>Nenhuma conversa dentro deste .zip.</translation>
+    </message>
+    <message>
+        <source>settings.knowledge</source>
+        <translation>Base de conhecimento</translation>
+    </message>
+    <message>
+        <source>settings.knowledge_hint</source>
+        <translation>Fatos que as sugestões podem usar: produtos, preços, horários. Só o que qualquer cliente pode ler.</translation>
+    </message>
+    <message>
+        <source>knowledge.template</source>
+        <translation># Base de conhecimento
+
+As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você diria a qualquer cliente. Deixe de fora custos, margens e anotações internas.
+
+## Negócio
+
+
+## Produtos e preços
+
+
+## Entrega
+
+
+## Perguntas frequentes
+
+</translation>
+    </message>
 </context>
 </TS>

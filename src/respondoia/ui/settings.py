@@ -65,6 +65,7 @@ class HotkeyEdit(QLineEdit):
 class SettingsWindow(QWidget):
     saved = Signal(object)  # Settings
     api_key_entered = Signal(str)
+    knowledge_requested = Signal()
 
     def __init__(self, settings: Settings, has_api_key: bool) -> None:
         super().__init__()
@@ -117,6 +118,10 @@ class SettingsWindow(QWidget):
         )
         self.autostart_check = QCheckBox(t("settings.autostart"))
         self.autostart_check.setChecked(settings.start_with_windows)
+        self.knowledge_button = QPushButton(t("settings.knowledge"))
+        self.knowledge_button.clicked.connect(self.knowledge_requested)
+        self.knowledge_hint = QLabel(t("settings.knowledge_hint"))
+        self.knowledge_hint.setWordWrap(True)
 
         self.instructions_list = QListWidget()
         for entry in settings.quick_instructions:
@@ -158,6 +163,7 @@ class SettingsWindow(QWidget):
         key_row.addWidget(self.api_key_state)
         form.addRow(t("settings.api_key"), key_row)
         form.addRow(self.autostart_check)
+        form.addRow(self.knowledge_button, self.knowledge_hint)
 
         new_instruction = QHBoxLayout()
         new_instruction.addWidget(self.instruction_edit, 1)

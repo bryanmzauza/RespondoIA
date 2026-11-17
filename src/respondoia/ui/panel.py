@@ -10,12 +10,13 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMenu,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from respondoia.domain import Rect
+from respondoia.domain import LABELS, Rect
 from respondoia.i18n import t
 from respondoia.llm import Suggestion, SuggestionPreview, SuggestionReply
 
@@ -73,6 +74,8 @@ class SuggestionPanel(QWidget):
     retry_requested = Signal()
     closed = Signal()
     settings_requested = Signal()
+    label_chosen = Signal(object)  # label, or None for no label
+    style_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -102,8 +105,14 @@ class SuggestionPanel(QWidget):
         self.settings_button.setFlat(True)
         self.settings_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.settings_button.clicked.connect(self.settings_requested)
+        self.label_button = QPushButton()
+        self.label_button.setFlat(True)
+        self.label_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.label_button.setMenu(QMenu(self.label_button))
+        self.label_button.hide()
         header = QHBoxLayout()
         header.addWidget(self.title_label, 1)
+        header.addWidget(self.label_button)
         header.addWidget(self.settings_button)
         header.addWidget(self.esc_label)
 
@@ -131,6 +140,12 @@ class SuggestionPanel(QWidget):
         self.adjust_button = QPushButton()
         self.adjust_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.adjust_button.clicked.connect(self._toggle_details)
+        self.style_button = QPushButton()
+        self.style_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.style_button.clicked.connect(self.style_requested)
+        footer = QHBoxLayout()
+        footer.addWidget(self.adjust_button, 1)
+        footer.addWidget(self.style_button)
 
         self.details = QWidget()
         self.messages_label = QLabel()
@@ -166,7 +181,7 @@ class SuggestionPanel(QWidget):
         layout.addWidget(self.note_label)
         for button in self.option_buttons:
             layout.addWidget(button)
-        layout.addWidget(self.adjust_button)
+        layout.addLayout(footer)
         layout.addWidget(self.details)
 
     # Public interface
@@ -180,7 +195,13 @@ class SuggestionPanel(QWidget):
         self.title_label.setText(chat_title)
         self._set_status(t("panel.loading"))
         self.retry_button.hide()
-        for widget in (self.summary_label, self.note_label, self.adjust_button, self.details):
+        for widget in (
+            self.summary_label,
+            self.note_label,
+            self.adjust_button,
+            self.style_button,
+            self.details,
+        ):
             widget.hide()
         for button in self.option_buttons:
             button.hide()
@@ -206,6 +227,7 @@ class SuggestionPanel(QWidget):
         self._fill_messages(reply)
         self.instruction.clear()
         self.adjust_button.show()
+        self.style_button.show()
         self.details.hide()
         self._place()
         self.setFocus()
@@ -234,7 +256,13 @@ class SuggestionPanel(QWidget):
         self._choices = None
         for button in self.option_buttons:
             button.hide()
-        for widget in (self.summary_label, self.note_label, self.adjust_button, self.details):
+        for widget in (
+            self.summary_label,
+            self.note_label,
+            self.adjust_button,
+            self.style_button,
+            self.details,
+        ):
             widget.hide()
         self._set_status(t("error." + code))
         self.retry_button.show()
@@ -243,6 +271,20 @@ class SuggestionPanel(QWidget):
     def show_notice(self, key: str) -> None:
         self._set_status(t(key))
         self._place()
+
+    def set_label(self, label: str | None, guessed: bool) -> None:
+        """The contact's label in the header. A model guess is shown with a question mark."""
+        name = t("label." + label) if label in LABELS else t("label.none")
+        if guessed and label in LABELS:
+            name = t("label.guessed", label=name)
+        self.label_button.setText(_no_mnemonic(name))
+        menu = self.label_button.menu()
+        menu.clear()
+        for value in (*LABELS, None):
+            action = menu.addAction(t("label." + value) if value else t("label.none"))
+            action.setData(value)
+            action.triggered.connect(lambda _=False, v=value: self._choose_label(v))
+        self.label_button.show()
 
     def set_corner(self, corner: str) -> None:
         self._corner = corner
@@ -257,9 +299,7 @@ class SuggestionPanel(QWidget):
         for index, (label, instruction) in enumerate(items):
             button = QPushButton(_no_mnemonic(label))
             button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-            button.clicked.connect(
-                lambda _=False, text=instruction: self._request_regenerate(text)
-            )
+            button.clicked.connect(lambda _=False, text=instruction: self._request_regenerate(text))
             self._instructions_layout.addWidget(button, index // 2, index % 2)
             self.instruction_buttons.append(button)
 
@@ -298,10 +338,15 @@ class SuggestionPanel(QWidget):
         self.settings_button.setText(t("panel.settings"))
         self.retry_button.setText(t("panel.retry"))
         self.adjust_button.setText(t("panel.adjust"))
+        self.style_button.setText(t("panel.style"))
         self.messages_label.setText(t("panel.messages"))
         self.instruction.setPlaceholderText(t("panel.instruction_placeholder"))
         self.regenerate_button.setText(t("panel.regenerate"))
         self.private_button.setText(t("panel.mark_private"))
+
+    def _choose_label(self, label: str | None) -> None:
+        self.set_label(label, guessed=False)
+        self.label_chosen.emit(label)
 
     def _set_status(self, text: str) -> None:
         self.status_label.setText(text)
