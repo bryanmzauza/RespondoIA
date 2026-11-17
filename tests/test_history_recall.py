@@ -39,6 +39,17 @@ def test_snippets_keep_neighbours_and_fit_the_budget():
     assert snippets[0].day == "2026-10-20"
 
 
+def test_repeated_small_talk_counts_once():
+    groups = [
+        (msg("choveu muito aí?", time="10:00"),),
+        (msg("choveu muito aí?", time="11:00"),),
+        (msg("Choveu  muito aí?", time="12:00"),),
+        (msg("o bolo fica R$ 85"),),
+    ]
+    texts = [m.text for s in pick_snippets(groups) for m in s.messages]
+    assert texts == ["choveu muito aí?", "o bolo fica R$ 85"]
+
+
 def test_snippet_rows_are_oldest_first():
     snippets = pick_snippets([(msg("b", day="2026-10-21"),), (msg("a", day="2026-10-20"),)])
     assert [row["text"] for row in snippet_rows(snippets)] == ["a", "b"]

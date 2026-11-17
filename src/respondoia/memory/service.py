@@ -27,6 +27,7 @@ from respondoia.memory.recall import (
     memory_blocks,
     memory_text,
     pick_snippets,
+    plain_text,
     search_terms,
 )
 from respondoia.privacy import mask_text, normalize_name
@@ -189,9 +190,17 @@ class HistoryService:
     def _snippets(self, conn, contact_id, lines, screen) -> tuple[Snippet, ...]:
         limit = self._settings().snippets_per_suggestion
         visible = {fingerprint(m) for m in screen}
+        shown = {plain_text(m.text) for m in screen}
         terms = search_terms([mask_text(text).text for text in _pending(lines)])
-        groups = []
-        for hit in store.search(conn, contact_id, terms, visible, limit):
+        groups, found = [], set()
+        # More candidates than needed: what is on screen and repeated small talk are skipped.
+        for hit in store.search(conn, contact_id, terms, visible, limit * 5):
+            if len(groups) >= limit:
+                break
+            text = plain_text(store.get(conn, hit).text)
+            if text in shown or text in found:
+                continue
+            found.add(text)
             group = [m for m in store.around(conn, hit) if fingerprint(m) not in visible]
             groups.append(
                 tuple(

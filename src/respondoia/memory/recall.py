@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel
 
-from respondoia.memory.merge import Stored, fingerprint
+from respondoia.memory.merge import Stored
 from respondoia.privacy import mask_text
 
 MEMORY_BLOCK = 200
@@ -50,6 +50,10 @@ class Snippet:
     messages: tuple[Stored, ...]
 
 
+def plain_text(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
 def search_terms(pending: Sequence[str], limit: int = 12) -> list[str]:
     """Words worth searching for: 4 letters or more, not a stopword, a marker or a number."""
     terms: list[str] = []
@@ -64,18 +68,18 @@ def search_terms(pending: Sequence[str], limit: int = 12) -> list[str]:
 def pick_snippets(
     groups: Sequence[Sequence[Stored]], budget_chars: int = 3000
 ) -> tuple[Snippet, ...]:
-    """Best groups first, each message once, until the budget is spent."""
+    """Best groups first, each text once (small talk repeats), until the budget is spent."""
     seen: set[str] = set()
     out, used = [], 0
     for group in groups:
-        fresh = [m for m in group if fingerprint(m) not in seen]
+        fresh = [m for m in group if plain_text(m.text) not in seen]
         if not fresh:
             continue
         size = sum(len(m.text) + len(m.quote) for m in fresh)
         if used + size > budget_chars:
             continue
         used += size
-        seen.update(fingerprint(m) for m in fresh)
+        seen.update(plain_text(m.text) for m in fresh)
         day = next((m.sent_on for m in fresh if m.sent_on), "")
         out.append(Snippet(day, tuple(fresh)))
     return tuple(out)

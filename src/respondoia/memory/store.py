@@ -203,6 +203,11 @@ def search(conn, contact_id: int, terms: Sequence[str], exclude: set[str], limit
     return [row_id for row_id, mark in rows if mark not in exclude][:limit]
 
 
+def get(conn, message_id: int) -> Stored:
+    row = conn.execute(f"SELECT {_FIELDS} FROM history_message WHERE id = ?", (message_id,))
+    return Stored(*row.fetchone())
+
+
 def around(conn, message_id: int) -> tuple[Stored, ...]:
     """The message with the one before and the one after it in its segment."""
     hit = conn.execute(
