@@ -167,3 +167,7 @@ class Database:
 def open_default() -> Database:
     folder = app_dir()
     return Database.open(folder / DB_FILE, load_or_create_key(folder / KEY_FILE))
+
+
+# What the database library raises for a failed query, for callers that must not crash.
+SqlError = sqlcipher3.Error

@@ -62,6 +62,16 @@ def set_label(conn, contact_id: int, label: str | None, source: str) -> None:
     conn.execute(query, (label, source, contact_id))
 
 
+def sample_languages(conn, title: str) -> list[str]:
+    """Languages of the style samples kept for contacts with this name."""
+    rows = conn.execute(
+        "SELECT DISTINCT s.language FROM style_sample s JOIN contact c ON c.id = s.contact_id"
+        " WHERE c.name_key = ?",
+        (normalize_name(title),),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
 def forget(conn, title: str) -> int:
     """Delete every record with this name. Their style samples go with them."""
     cursor = conn.execute("DELETE FROM contact WHERE name_key = ?", (normalize_name(title),))
