@@ -1,0 +1,1238 @@
+{
+ "id": "en/05-namesake",
+ "language": "en",
+ "contact": "Ana",
+ "history": [
+  {
+   "day": "2026-10-06",
+   "time": "09:00",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-06",
+   "time": "09:07",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-06",
+   "time": "09:14",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-06",
+   "time": "09:21",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-06",
+   "time": "09:28",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-06",
+   "time": "09:35",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-07",
+   "time": "09:42",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-07",
+   "time": "09:49",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-07",
+   "time": "09:56",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-07",
+   "time": "10:03",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-07",
+   "time": "10:10",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-07",
+   "time": "10:17",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:24",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:31",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:38",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:45",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:52",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-08",
+   "time": "10:59",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-09",
+   "time": "11:06",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-09",
+   "time": "11:13",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-09",
+   "time": "11:20",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-09",
+   "time": "11:27",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-09",
+   "time": "11:34",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-10",
+   "time": "11:41",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-10",
+   "time": "11:48",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-10",
+   "time": "11:55",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-10",
+   "time": "12:02",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-10",
+   "time": "12:09",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-10",
+   "time": "12:16",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:23",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:30",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:37",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:44",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:51",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-11",
+   "time": "12:58",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-12",
+   "time": "13:05",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-12",
+   "time": "13:12",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-12",
+   "time": "13:19",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-12",
+   "time": "13:26",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-12",
+   "time": "13:33",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-13",
+   "time": "13:40",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-13",
+   "time": "13:47",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-13",
+   "time": "13:54",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-13",
+   "time": "14:01",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-13",
+   "time": "14:08",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-13",
+   "time": "14:15",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:22",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:29",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:36",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:43",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:50",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-14",
+   "time": "14:57",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:04",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:11",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:18",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:25",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:32",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-15",
+   "time": "15:39",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-16",
+   "time": "15:46",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-16",
+   "time": "15:53",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-16",
+   "time": "16:00",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-16",
+   "time": "16:07",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-16",
+   "time": "16:14",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-17",
+   "time": "16:21",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-17",
+   "time": "16:28",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-17",
+   "time": "16:35",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:03",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:10",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:17",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:24",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:31",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-18",
+   "time": "17:38",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-19",
+   "time": "17:45",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-19",
+   "time": "17:52",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-19",
+   "time": "17:59",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-19",
+   "time": "18:06",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-19",
+   "time": "18:13",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:20",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:27",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:34",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:41",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:48",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-20",
+   "time": "18:55",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:02",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:09",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:16",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:23",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:30",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-21",
+   "time": "09:37",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-22",
+   "time": "09:44",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-22",
+   "time": "09:51",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-22",
+   "time": "09:58",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-22",
+   "time": "10:05",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-22",
+   "time": "10:12",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-22",
+   "time": "10:19",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-23",
+   "time": "10:26",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-23",
+   "time": "10:33",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-23",
+   "time": "10:40",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-23",
+   "time": "10:47",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-23",
+   "time": "10:54",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:01",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:08",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:15",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:22",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:29",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-24",
+   "time": "11:36",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-25",
+   "time": "11:43",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-25",
+   "time": "11:50",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-25",
+   "time": "11:57",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-25",
+   "time": "12:04",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-25",
+   "time": "12:11",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-25",
+   "time": "12:18",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-26",
+   "time": "12:25",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-26",
+   "time": "12:32",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-26",
+   "time": "12:39",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-26",
+   "time": "12:46",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-26",
+   "time": "12:53",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:00",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:07",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:14",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:21",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:28",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-27",
+   "time": "13:35",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-27",
+   "time": "16:42",
+   "author": "contact",
+   "text": "how much is the full party kit?"
+  },
+  {
+   "day": "2026-10-27",
+   "time": "16:49",
+   "author": "user",
+   "text": "The full party kit is $90."
+  },
+  {
+   "day": "2026-10-27",
+   "time": "16:56",
+   "author": "contact",
+   "text": "I'll think about it"
+  },
+  {
+   "day": "2026-10-28",
+   "time": "13:42",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-28",
+   "time": "13:49",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-28",
+   "time": "13:56",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-28",
+   "time": "14:03",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-28",
+   "time": "14:10",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-28",
+   "time": "14:17",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:24",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:31",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:38",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:45",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:52",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-10-29",
+   "time": "14:59",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-10-30",
+   "time": "15:06",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-10-30",
+   "time": "15:13",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-10-30",
+   "time": "15:20",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-10-30",
+   "time": "15:27",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-10-30",
+   "time": "15:34",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-10-31",
+   "time": "15:41",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-10-31",
+   "time": "15:48",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-10-31",
+   "time": "15:55",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-10-31",
+   "time": "16:02",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-10-31",
+   "time": "16:09",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-10-31",
+   "time": "16:16",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:23",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:30",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:37",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:44",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:51",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-11-01",
+   "time": "16:58",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-11-02",
+   "time": "17:05",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-11-02",
+   "time": "17:12",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-11-02",
+   "time": "17:19",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-11-02",
+   "time": "17:26",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-11-02",
+   "time": "17:33",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-11-03",
+   "time": "17:40",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-11-03",
+   "time": "17:47",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-11-03",
+   "time": "17:54",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-11-03",
+   "time": "18:01",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-11-03",
+   "time": "18:08",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-11-03",
+   "time": "18:15",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:22",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:29",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:36",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:43",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:50",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-11-04",
+   "time": "18:57",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:04",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:11",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:18",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:25",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:32",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-11-05",
+   "time": "09:39",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-11-06",
+   "time": "09:46",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-11-06",
+   "time": "09:53",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-11-06",
+   "time": "10:00",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-11-06",
+   "time": "10:07",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-11-06",
+   "time": "10:14",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:21",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:28",
+   "author": "contact",
+   "text": "will do"
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:35",
+   "author": "user",
+   "text": "Have a nice weekend."
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:42",
+   "author": "contact",
+   "text": "you too"
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:49",
+   "author": "contact",
+   "text": "did it rain a lot there yesterday?"
+  },
+  {
+   "day": "2026-11-07",
+   "time": "10:56",
+   "author": "user",
+   "text": "It did, the street flooded a bit."
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:03",
+   "author": "contact",
+   "text": "same here"
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:10",
+   "author": "user",
+   "text": "Strange weather lately."
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:17",
+   "author": "contact",
+   "text": "true"
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:24",
+   "author": "contact",
+   "text": "hi, how are you?"
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:31",
+   "author": "user",
+   "text": "Doing well, thanks. You?"
+  },
+  {
+   "day": "2026-11-08",
+   "time": "11:38",
+   "author": "contact",
+   "text": "all good here"
+  },
+  {
+   "day": "2026-11-09",
+   "time": "11:45",
+   "author": "user",
+   "text": "Glad to hear it."
+  },
+  {
+   "day": "2026-11-09",
+   "time": "11:52",
+   "author": "contact",
+   "text": "saw the new window display, looks great"
+  },
+  {
+   "day": "2026-11-09",
+   "time": "11:59",
+   "author": "user",
+   "text": "Thank you! It took a while but I like it."
+  },
+  {
+   "day": "2026-11-09",
+   "time": "12:06",
+   "author": "contact",
+   "text": "I bet"
+  },
+  {
+   "day": "2026-11-09",
+   "time": "12:13",
+   "author": "user",
+   "text": "Let me know if you need anything."
+  }
+ ],
+ "messages": [
+  {
+   "day": "2026-11-17",
+   "time": "10:00",
+   "author": "contact",
+   "kind": "text",
+   "sender": null,
+   "quote": null,
+   "text": "hi, it's Ana from the dance school"
+  },
+  {
+   "day": "2026-11-17",
+   "time": "10:01",
+   "author": "contact",
+   "kind": "text",
+   "sender": null,
+   "quote": null,
+   "text": "how much is the full party kit?"
+  }
+ ],
+ "expect": {
+  "history_value": null,
+  "needs_confirm": true,
+  "absent": "90",
+  "pending": [
+   1,
+   2
+  ],
+  "note_expected": false,
+  "canary": null
+ }
+}

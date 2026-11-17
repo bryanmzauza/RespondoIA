@@ -3,11 +3,17 @@
 Usage:
     uv run python evals/run.py --models <id> [<id> ...] --out <dir>
         [--input screenshot|text] [--limit N] [--dry-run]
-        [--set screenshots|style] [--profile-dir <dir>] [--only <case id> ...]
+        [--set screenshots|style|history] [--profile-dir <dir>] [--only <case id> ...]
+        [--memory-dir <dir>] [--no-history]
 
 The style set (tests/style/chats) runs in text mode only. With --profile-dir, each
 case gets the persona profile <dir>/<lang>.json as its style; without it, no style.
 Cases marked "knowledge" get tests/style/knowledge-<lang>.md.
+
+The history set (tests/history) runs in text mode only. Each case's history is stored
+in a throwaway database and the visible chat observed as a hotkey press would, so the
+request carries the earlier messages the app finds; with --memory-dir, also the memory
+<dir>/<case name>.memory.txt built by evals/history.py. --no-history sends neither.
 
 With --input text the chat goes as masked text built from the fixture JSON, the
 way the app sends what it reads through accessibility.
@@ -34,6 +40,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from evals.checks import check_case
+from evals.history import HISTORY, history_context
 from respondoia.config import get_api_key
 from respondoia.domain import ChatLine, UserContext
 from respondoia.llm import (
@@ -59,7 +66,8 @@ class ServedModelMismatch(RuntimeError):
 
 
 def load_chats(chat_set: str = "screenshots") -> list[dict]:
-    folder = (SHOTS if chat_set == "screenshots" else STYLE) / "chats"
+    folders = {"screenshots": SHOTS / "chats", "style": STYLE / "chats", "history": HISTORY}
+    folder = folders[chat_set]
     chats = [json.loads(p.read_text(encoding="utf-8")) for p in folder.glob("*/*.json")]
     # Scenario first, then language, so a small --limit still covers both languages.
     return sorted(chats, key=lambda chat: tuple(reversed(chat["id"].split("/"))))
@@ -96,6 +104,17 @@ def style_context(chat: dict, profile: StyleProfile | None, knowledge: str) -> U
         style,
         knowledge if chat.get("knowledge") else "",
     )
+
+
+def history_case_context(
+    chat: dict, memory_dir: Path | None, use_history: bool
+) -> tuple[UserContext, str]:
+    """The memory (if built) and earlier messages the app would attach to this case."""
+    memory = None
+    if memory_dir is not None:
+        path = memory_dir / f"{chat['id'].split('/')[-1]}.memory.txt"
+        memory = path.read_text(encoding="utf-8") if path.exists() else None
+    return history_context(chat, memory, use_history)
 
 
 def plan_calls(chats: list[dict], models: list[str], limit: int | None) -> list[tuple]:
@@ -183,7 +202,11 @@ class Runner:
         input_mode: str = "screenshot",
         profiles: dict[str, StyleProfile] | None = None,
         chat_set: str = "screenshots",
+        memory_dir: Path | None = None,
+        use_history: bool = True,
     ) -> None:
+        self.memory_dir = memory_dir
+        self.use_history = use_history
         self.input_mode = input_mode
         self.profiles = profiles  # by chat language; None: the cases get no style
         self.chat_set = chat_set
@@ -206,7 +229,9 @@ class Runner:
         if self.input_mode != "text":
             image = (SHOTS / f"{chat['id']}.png").read_bytes()
         lines, _ = mask_lines(chat_lines(chat))
-        context, knowledge, examples = None, "", ()
+        context, knowledge, examples, history = None, "", (), ""
+        if self.chat_set == "history":
+            context, history = history_case_context(chat, self.memory_dir, self.use_history)
         if self.chat_set == "style":
             knowledge_file = STYLE / f"knowledge-{chat['language']}.md"
             knowledge = knowledge_file.read_text(encoding="utf-8").strip()
@@ -255,6 +280,7 @@ class Runner:
                 "input": self.input_mode,
                 "set": self.chat_set,
                 "profile": bool(context and context.style),
+                "history": bool(context and (context.memory or context.snippets)),
                 "served_model": result.model,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
@@ -267,6 +293,7 @@ class Runner:
                     instruction=instruction,
                     knowledge=knowledge,
                     examples=examples,
+                    history=history,
                 ),
                 "reply": result.reply.model_dump(),
             }
@@ -283,12 +310,16 @@ def main() -> int:
     parser.add_argument("--input", choices=["screenshot", "text"], default="screenshot")
     parser.add_argument("--limit", type=int, help="run only the first N cases")
     parser.add_argument("--dry-run", action="store_true", help="count the calls and stop")
-    parser.add_argument("--set", choices=["screenshots", "style"], default="screenshots")
+    parser.add_argument(
+        "--set", choices=["screenshots", "style", "history"], default="screenshots"
+    )
     parser.add_argument("--profile-dir", type=Path, help="persona profiles for the style set")
     parser.add_argument("--only", nargs="+", help="run only these case ids")
+    parser.add_argument("--memory-dir", type=Path, help="contact memories for the history set")
+    parser.add_argument("--no-history", action="store_true", help="history set without history")
     args = parser.parse_args()
-    if args.set == "style" and args.input != "text":
-        print("The style set has no screenshots: use --input text.")
+    if args.set in ("style", "history") and args.input != "text":
+        print(f"The {args.set} set has no screenshots: use --input text.")
         return 1
     profiles = None
     if args.profile_dir:
@@ -308,7 +339,9 @@ def main() -> int:
         print("No API key stored. Run: uv run python -m respondoia --set-api-key")
         return 1
     args.out.mkdir(parents=True, exist_ok=True)
-    runner = Runner(args.out, api_key, args.input, profiles, args.set)
+    runner = Runner(
+        args.out, api_key, args.input, profiles, args.set, args.memory_dir, not args.no_history
+    )
     todo = len(set(calls) - set(runner.done))
     print(f"{len(calls)} calls planned, {todo} to make")
 

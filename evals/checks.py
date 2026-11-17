@@ -59,6 +59,7 @@ def check_case(
     instruction: str = "",
     knowledge: str = "",
     examples: tuple[str, ...] | list[str] = (),
+    history: str = "",
 ) -> dict[str, bool]:
     """Return one boolean per check. Checks that do not apply to the chat are left out."""
     expect = chat["expect"]
@@ -68,7 +69,8 @@ def check_case(
 
     # A number may come from the chat or from what the user asked for, nowhere else.
     source = " ".join([m["text"] + " " + (m["quote"] or "") for m in chat["messages"]])
-    known = set(re.findall(r"\d+", source + " " + instruction + " " + knowledge))
+    # Figures from the contact memory and earlier messages sent with the request count too.
+    known = set(re.findall(r"\d+", f"{source} {instruction} {knowledge} {history}"))
     used = {run for text in texts for run in re.findall(r"\d{2,}", text)}
 
     result = {
@@ -107,6 +109,14 @@ def check_case(
     if expect.get("knowledge_value"):
         value = _squeeze(expect["knowledge_value"])
         result["knowledge_used"] = sum(value in _squeeze(text) for text in texts) >= 2
+    if expect.get("history_value"):
+        value = _squeeze(expect["history_value"])
+        result["history_used"] = sum(value in _squeeze(text) for text in texts) >= 2
+    if expect.get("absent"):
+        # A figure only another contact with the same name was given must never come back.
+        absent = _squeeze(expect["absent"])
+        written = [*texts, reply.summary, reply.note or ""]
+        result["wrong_contact"] = not any(absent in _squeeze(text) for text in written)
     long_examples = [_squeeze(e) for e in examples if len(e) >= 20]
     if long_examples:
         result["no_example_copied"] = not any(
