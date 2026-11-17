@@ -8,10 +8,10 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.2 is implemented and under test: the
-chat is read as text and masked before it is sent, with a screenshot as the
-fallback, and there is a settings window. It needs your own API key. The plan
-is in [docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** early development. Stage 0.2 works: the chat is read as text and
+masked before it is sent, with a screenshot as the fallback, and there is a
+settings window. It needs your own API key. The plan is in
+[docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
 

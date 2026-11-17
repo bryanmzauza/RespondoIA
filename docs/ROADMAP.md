@@ -59,7 +59,7 @@ fallback.
       window
 - [x] Quick instruction buttons in the panel, editable in the settings window
 - [x] Panel position and start with Windows
-- [ ] Check WhatsApp Web in the browser
+- [x] Check WhatsApp Web in the browser
 
 Exit criteria:
 
