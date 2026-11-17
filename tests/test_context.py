@@ -104,3 +104,9 @@ def test_system_prompt_covers_both_inputs_and_markers():
         "never guess the value behind them",
     ):
         assert phrase in SYSTEM_PROMPT
+
+
+def test_text_turn_names_the_lines_that_cannot_be_read():
+    text = build_user_content(None, 3, lines=LINES)[0]["text"]
+    assert "Not readable as text (audio, image or other media): [4]" in text
+    assert "Not readable" not in build_user_content(None, 3, lines=LINES[:3])[0]["text"]

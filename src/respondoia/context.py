@@ -76,6 +76,13 @@ def _text_content(
         rows.append(
             "The last message is the user's: suggest what the user could add, not a reply to it."
         )
+    unreadable = [i + 1 for i, line in enumerate(chat) if line.kind != "text"]
+    if unreadable:
+        # Also known locally: the model is told instead of having to notice the empty text.
+        rows.append(
+            f"Not readable as text (audio, image or other media): {unreadable}. "
+            'Mention them in "note".'
+        )
     if selected_ids:
         rows.append(f"Selected messages: {list(selected_ids)}")
     if instruction:
