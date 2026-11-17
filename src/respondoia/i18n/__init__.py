@@ -25,6 +25,21 @@ def pick_language(setting: str, system_locale: str) -> str:
     return "pt_BR" if system_locale.lower().startswith("pt") else "en"
 
 
+def system_locale() -> str:
+    """The Windows display language, for example "pt-BR".
+
+    Not QLocale.system(): Qt also reads LANG, which terminals such as Git Bash set to
+    en_US.UTF-8 whatever the Windows language is.
+    """
+    import ctypes
+
+    kernel32 = ctypes.windll.kernel32
+    buffer = ctypes.create_unicode_buffer(85)
+    if kernel32.LCIDToLocaleName(kernel32.GetUserDefaultUILanguage(), buffer, len(buffer), 0):
+        return buffer.value
+    return ""
+
+
 def install(app: QCoreApplication, language: str) -> None:
     global _installed
     if _installed is not None:

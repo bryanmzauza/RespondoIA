@@ -93,3 +93,24 @@ def test_a_placeholder_named_key_is_filled(qapp):
     assert t("error.config", key="suggestions.count") == (
         "config.toml has an invalid value: suggestions.count"
     )
+
+
+def test_auto_language_follows_windows_not_the_terminal():
+    # Terminals such as Git Bash set LANG=en_US.UTF-8, and Qt reads it.
+    import os
+    import subprocess
+    import sys
+
+    code = "from respondoia.i18n import system_locale; print(system_locale())"
+
+    def run(lang):
+        env = {k: v for k, v in os.environ.items() if k not in ("LANG", "LC_ALL")}
+        if lang:
+            env["LANG"] = lang
+        out = subprocess.run(
+            [sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True
+        )
+        return out.stdout.strip()
+
+    plain = run(None)
+    assert plain and run("en_US.UTF-8") == plain and run("de_DE.UTF-8") == plain

@@ -7,7 +7,7 @@ from dataclasses import replace
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from PySide6.QtCore import QLocale, QObject, QThread, Signal, Slot
+from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
 from respondoia import capture, config, i18n, paste, reader
@@ -389,7 +389,7 @@ def run(argv: Sequence[str]) -> int:
     except HotkeyError:
         settings, bad_key = replace(settings, hotkey=Settings().hotkey), "general.hotkey"
 
-    i18n.install(app, i18n.pick_language(settings.language, QLocale.system().name()))
+    i18n.install(app, i18n.pick_language(settings.language, i18n.system_locale()))
     _setup_log()
 
     tray = Tray()
