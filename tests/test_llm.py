@@ -5,6 +5,7 @@ import httpx2
 import pytest
 
 from respondoia.context import SYSTEM_PROMPT
+from respondoia.domain import ChatLine
 from respondoia.llm import (
     AnthropicClient,
     ChatMessage,
@@ -12,6 +13,7 @@ from respondoia.llm import (
     Suggestion,
     SuggestionReply,
     SuggestRequest,
+    TextReply,
     build_params,
     check_reply,
     read_preview,
@@ -249,3 +251,45 @@ def test_stop_reason_and_errors_map_to_codes(monkeypatch):
         with pytest.raises(LlmError) as err:
             client.suggest(SuggestRequest(b"png", 3))
         assert err.value.code == code
+
+
+LINES = (
+    ChatLine("contact", "Bia Rocha", "09:10", "text", "Quem leva a bola?", ""),
+    ChatLine("user", "", "09:12", "text", "eu levo", ""),
+    ChatLine("contact", "Tati Moraes", "09:13", "text", "E a rede?", ""),
+)
+
+
+def test_text_request_asks_for_the_short_reply():
+    params = build_params(SuggestRequest(None, 3, lines=LINES), "claude-haiku-5-5")
+    assert params["output_format"] is TextReply
+    assert [b["type"] for b in params["messages"][0]["content"]] == ["text"]
+
+
+def test_text_reply_is_completed_with_local_messages(monkeypatch):
+    short = TextReply(
+        summary="Tati pergunta da rede",
+        suggestions=[Suggestion(label=f"Opção {n}", text=f"levo a rede {n}") for n in (1, 2, 3)],
+    )
+    client = client_returning(monkeypatch, fake_response(text=short.model_dump_json()))
+    previews = []
+    result = client.suggest(SuggestRequest(None, 3, lines=LINES), previews.append)
+    reply = result.reply
+    assert reply.summary == short.summary and reply.suggestions == short.suggestions
+    assert [(m.id, m.author, m.text, m.pending) for m in reply.messages] == [
+        (1, "Bia Rocha", "Quem leva a bola?", False),
+        (2, "user", "eu levo", False),
+        (3, "Tati Moraes", "E a rede?", True),
+    ]
+    assert len(previews) == 1
+
+
+def test_unmapped_sdk_errors_are_server_errors(monkeypatch):
+    request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    error = anthropic.APIResponseValidationError(
+        response=httpx2.Response(200, request=request), body=None
+    )
+    client = client_returning(monkeypatch, error)
+    with pytest.raises(LlmError) as err:
+        client.suggest(SuggestRequest(b"png", 3))
+    assert err.value.code == "server"

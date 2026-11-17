@@ -10,7 +10,8 @@ import pydantic
 import pydantic_core
 from pydantic import BaseModel
 
-from respondoia.context import SYSTEM_PROMPT, build_user_content
+from respondoia.context import SYSTEM_PROMPT, build_user_content, number_lines
+from respondoia.domain import ChatLine
 
 
 class ChatMessage(BaseModel):
@@ -35,6 +36,14 @@ class SuggestionReply(BaseModel):
     messages: list[ChatMessage]
 
 
+class TextReply(BaseModel):
+    """What the model writes when the chat was sent as text: the list is already known."""
+
+    summary: str
+    suggestions: list[Suggestion]
+    note: str | None = None
+
+
 class SuggestionPreview(BaseModel):
     """The part of a reply the panel needs first."""
 
@@ -44,11 +53,12 @@ class SuggestionPreview(BaseModel):
 
 @dataclass(frozen=True)
 class SuggestRequest:
-    image_png: bytes
+    image_png: bytes | None
     count: int
     previous: SuggestionReply | None = None
     selected_ids: tuple[int, ...] = ()
     instruction: str = ""
+    lines: tuple[ChatLine, ...] = ()  # text input; when set, image_png is None
 
 
 @dataclass(frozen=True)
@@ -80,10 +90,15 @@ class ModelClient(Protocol):
 
 def build_params(request: SuggestRequest, model: str) -> dict:
     listed = None
-    if request.previous is not None:
+    if request.previous is not None and not request.lines:
         listed = [m.model_dump() for m in request.previous.messages]
     content = build_user_content(
-        request.image_png, request.count, listed, request.selected_ids, request.instruction
+        request.image_png,
+        request.count,
+        listed,
+        request.selected_ids,
+        request.instruction,
+        request.lines,
     )
     # No sampling keys: current models reject non-default values for them.
     params = {
@@ -92,7 +107,7 @@ def build_params(request: SuggestRequest, model: str) -> dict:
         "system": SYSTEM_PROMPT,
         "messages": [{"role": "user", "content": content}],
         "output_config": {"effort": "low"},
-        "output_format": SuggestionReply,
+        "output_format": TextReply if request.lines else SuggestionReply,
     }
     if model.startswith("claude-haiku"):
         # Haiku thinks before writing even at low effort, which can take over 10 s.
@@ -124,6 +139,25 @@ def read_preview(partial_json: str, count: int) -> SuggestionPreview | None:
     if len(suggestions) != count or any(not s.text.strip() for s in suggestions):
         return None
     return preview
+
+
+def _with_local_messages(short: TextReply, lines: tuple[ChatLine, ...]) -> SuggestionReply:
+    messages = [
+        ChatMessage(
+            id=row["id"],
+            author=row["author"] if row["author"] == "user" else row["sender"] or "contact",
+            text=row["text"],
+            pending=row["pending"],
+        )
+        for row in number_lines(lines)
+    ]
+    return SuggestionReply(
+        summary=short.summary,
+        suggestions=short.suggestions,
+        note=short.note,
+        contact="",
+        messages=messages,
+    )
 
 
 class AnthropicClient:
@@ -164,6 +198,8 @@ class AnthropicClient:
             raise LlmError("network") from exc
         except anthropic.APIStatusError as exc:
             raise LlmError("server") from exc
+        except anthropic.APIError as exc:  # anything else the SDK raises
+            raise LlmError("server") from exc
         latency_ms = round((time.perf_counter() - started) * 1000)
         if response.stop_reason == "refusal":
             raise LlmError("refused")
@@ -171,7 +207,12 @@ class AnthropicClient:
             raise LlmError("truncated")
         text = next((block.text for block in response.content if block.type == "text"), None)
         try:
-            reply = SuggestionReply.model_validate_json(text or "")
+            if request.lines:
+                reply = _with_local_messages(
+                    TextReply.model_validate_json(text or ""), request.lines
+                )
+            else:
+                reply = SuggestionReply.model_validate_json(text or "")
         except pydantic.ValidationError as exc:
             raise LlmError("invalid_reply") from exc
         return SuggestResult(
