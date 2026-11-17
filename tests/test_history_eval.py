@@ -91,10 +91,15 @@ def test_runner_loads_the_history_set(monkeypatch, capsys, tmp_path):
 def test_runner_builds_the_history_context(tmp_path):
     from evals import run
 
-    case = CASES[VALUE_CASES[0]]
-    (tmp_path / f"{case['id'].split('/')[-1]}.memory.txt").write_text("ZZ-MEM", encoding="utf-8")
+    case = CASES["en/01-cake-price"]
+    path = tmp_path / "en" / "01-cake-price.memory.txt"
+    path.parent.mkdir()
+    path.write_text("ZZ-MEM", encoding="utf-8")
     context, sent = run.history_case_context(case, tmp_path, use_history=True)
     assert context.memory == "ZZ-MEM" and "ZZ-MEM" in sent
+    # The case with the same name in the other language has its own memory file.
+    other, _ = run.history_case_context(CASES["pt-BR/01-cake-price"], tmp_path, True)
+    assert other.memory == ""
     empty, nothing = run.history_case_context(case, tmp_path, use_history=False)
     assert empty.memory == "" and nothing == ""
 

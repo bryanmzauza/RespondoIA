@@ -13,7 +13,8 @@ Cases marked "knowledge" get tests/style/knowledge-<lang>.md.
 The history set (tests/history) runs in text mode only. Each case's history is stored
 in a throwaway database and the visible chat observed as a hotkey press would, so the
 request carries the earlier messages the app finds; with --memory-dir, also the memory
-<dir>/<case name>.memory.txt built by evals/history.py. --no-history sends neither.
+<dir>/<case id>.memory.txt (for example <dir>/en/01-cake-price.memory.txt) built by
+evals/history.py. --no-history sends neither.
 
 With --input text the chat goes as masked text built from the fixture JSON, the
 way the app sends what it reads through accessibility.
@@ -112,7 +113,7 @@ def history_case_context(
     """The memory (if built) and earlier messages the app would attach to this case."""
     memory = None
     if memory_dir is not None:
-        path = memory_dir / f"{chat['id'].split('/')[-1]}.memory.txt"
+        path = memory_dir / f"{chat['id']}.memory.txt"
         memory = path.read_text(encoding="utf-8") if path.exists() else None
     return history_context(chat, memory, use_history)
 

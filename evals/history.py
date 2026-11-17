@@ -6,7 +6,7 @@ service the app uses; the visible chat is then observed as a hotkey press would.
 
 Build the contact memories (costs one call per 200 messages of history):
     uv run python evals/history.py --lang pt-BR --out <dir>
-writes <dir>/<case name>.memory.txt and prints counts and tokens, never texts.
+writes <dir>/<case id>.memory.txt and prints counts and tokens, never texts.
 """
 
 import argparse
@@ -141,10 +141,11 @@ def main() -> int:
     for case in load_cases():
         if case["language"] != args.lang:
             continue
-        name = case["id"].split("/")[-1]
         memory = build_memory(case, client)
-        (args.out / f"{name}.memory.txt").write_text(memory, encoding="utf-8")
-        print(f"{name}: {len(case['history'])} messages, memory {len(memory)} characters")
+        path = args.out / f"{case['id']}.memory.txt"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(memory, encoding="utf-8")
+        print(f"{case['id']}: {len(case['history'])} messages, memory {len(memory)} characters")
     print(f"calls {client.calls}, tokens in {client.tokens_in}, out {client.tokens_out}")
     return 0
 
