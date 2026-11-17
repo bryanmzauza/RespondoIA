@@ -630,5 +630,137 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <source>tray.loading</source>
         <translation>Carregando o histórico da conversa</translation>
     </message>
+    <message>
+        <source>history.status</source>
+        <translation>{count} mensagens · atualizado {day}</translation>
+    </message>
+    <message>
+        <source>history.today</source>
+        <translation>hoje</translation>
+    </message>
+    <message>
+        <source>history.gap</source>
+        <translation>Lacuna desde {day}</translation>
+    </message>
+    <message>
+        <source>history.none</source>
+        <translation>Ainda sem histórico</translation>
+    </message>
+    <message>
+        <source>history.owner</source>
+        <translation>Memória de {name}, desde {day}</translation>
+    </message>
+    <message>
+        <source>history.menu</source>
+        <translation>Histórico</translation>
+    </message>
+    <message>
+        <source>history.load_quick</source>
+        <translation>Carregar contexto (≈15 s)</translation>
+    </message>
+    <message>
+        <source>history.load_full</source>
+        <translation>Carregar mais</translation>
+    </message>
+    <message>
+        <source>history.load_gap</source>
+        <translation>Carregar o que falta</translation>
+    </message>
+    <message>
+        <source>history.view_memory</source>
+        <translation>Ver memória</translation>
+    </message>
+    <message>
+        <source>history.contact_off</source>
+        <translation>Não lembrar deste contato</translation>
+    </message>
+    <message>
+        <source>history.contact_off_confirm</source>
+        <translation>Parar de lembrar de {name} e apagar o que está guardado?</translation>
+    </message>
+    <message>
+        <source>history.contact_on</source>
+        <translation>Lembrar deste contato</translation>
+    </message>
+    <message>
+        <source>history.contact_delete</source>
+        <translation>Apagar histórico deste contato</translation>
+    </message>
+    <message>
+        <source>history.contact_delete_confirm</source>
+        <translation>Apagar o que está guardado de {name}?</translation>
+    </message>
+    <message>
+        <source>history.ask</source>
+        <translation>Este é o mesmo {name} de antes? Até você responder, nenhuma memória é usada.</translation>
+    </message>
+    <message>
+        <source>history.ask_same</source>
+        <translation>Sim, desde {day}</translation>
+    </message>
+    <message>
+        <source>history.ask_other</source>
+        <translation>Outra pessoa</translation>
+    </message>
+    <message>
+        <source>memory.title</source>
+        <translation>Memória de {name}</translation>
+    </message>
+    <message>
+        <source>memory.hint</source>
+        <translation>O que o app guarda sobre este contato. Edite à vontade; suas mudanças ficam.</translation>
+    </message>
+    <message>
+        <source>memory.empty</source>
+        <translation>Ainda sem memória. Ela é criada depois que algumas mensagens são guardadas.</translation>
+    </message>
+    <message>
+        <source>memory.save</source>
+        <translation>Salvar</translation>
+    </message>
+    <message>
+        <source>settings.history</source>
+        <translation>Histórico</translation>
+    </message>
+    <message>
+        <source>settings.history_enabled</source>
+        <translation>Lembrar conversas</translation>
+    </message>
+    <message>
+        <source>settings.history_hint</source>
+        <translation>Guarda as mensagens das conversas em que você usou o app, criptografadas neste computador. Grupos e contatos privados ficam de fora.</translation>
+    </message>
+    <message>
+        <source>settings.history_off_confirm</source>
+        <translation>Apagar o histórico já guardado?</translation>
+    </message>
+    <message>
+        <source>settings.retention</source>
+        <translation>Guardar mensagens por (meses)</translation>
+    </message>
+    <message>
+        <source>settings.history_delete_all</source>
+        <translation>Apagar todo o histórico</translation>
+    </message>
+    <message>
+        <source>settings.history_delete_all_confirm</source>
+        <translation>Apagar todas as mensagens e memórias guardadas?</translation>
+    </message>
+    <message>
+        <source>style.load</source>
+        <translation>Carregar da conversa aberta</translation>
+    </message>
+    <message>
+        <source>style.load_hint</source>
+        <translation>Abra uma conversa no WhatsApp antes. O app rola a conversa por cerca de um minuto; não use mouse nem teclado nesse tempo.</translation>
+    </message>
+    <message>
+        <source>style.loaded</source>
+        <translation>{count} mensagens suas adicionadas. As mensagens da outra pessoa não foram guardadas.</translation>
+    </message>
+    <message>
+        <source>error.history_unavailable</source>
+        <translation>Não foi possível abrir o histórico. As sugestões continuam, sem ele.</translation>
+    </message>
 </context>
 </TS>

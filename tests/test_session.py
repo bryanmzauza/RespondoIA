@@ -731,3 +731,14 @@ def test_logs_carry_no_history_content(caplog):
         session, _ = historied(fake, FakeHistory(), FakeStyle())
         session.suggest()
     assert "ZZ-" not in caplog.text
+
+
+def test_deleted_history_is_not_sent_on_regenerate():
+    fake = FakePorts()
+    fake.lines = TEXT_LINES
+    session, _ = historied(fake, FakeHistory(), FakeStyle())
+    session.suggest()
+    session.drop_history()
+    session.regenerate((), "")
+    context = fake.calls[-1][1].context
+    assert context.memory == "" and context.snippets == () and context.style == "ZZ-STYLE"

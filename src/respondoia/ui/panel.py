@@ -1,8 +1,9 @@
 """Suggestion panel."""
 
 from collections.abc import Sequence
+from datetime import date
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QDate, QLocale, Qt, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMenu,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -19,6 +21,7 @@ from PySide6.QtWidgets import (
 from respondoia.domain import LABELS, Rect
 from respondoia.i18n import t
 from respondoia.llm import Suggestion, SuggestionPreview, SuggestionReply
+from respondoia.memory.service import HistoryContext
 
 COMPOSER_CLEARANCE = 72  # logical pixels kept free above the bottom of the chat area
 HEADER_CLEARANCE = 72  # logical pixels kept free below the top of the chat area
@@ -62,6 +65,14 @@ def _one_line(text: str) -> str:
     return " ".join(text.split())
 
 
+def _day(iso: str) -> str:
+    """An ISO date in the short format of the interface language."""
+    parsed = QDate.fromString(iso, Qt.DateFormat.ISODate)
+    if not parsed.isValid():
+        return iso
+    return QLocale().toString(parsed, QLocale.FormatType.ShortFormat)
+
+
 def _no_mnemonic(text: str) -> str:
     # Buttons and check boxes read "&x" as a keyboard shortcut and hide the "&".
     return text.replace("&", "&&")
@@ -76,6 +87,11 @@ class SuggestionPanel(QWidget):
     settings_requested = Signal()
     label_chosen = Signal(object)  # label, or None for no label
     style_requested = Signal()
+    load_requested = Signal(str)  # "quick", "full" or "gap"
+    identity_answered = Signal(object)  # stored contact id, or None for another person
+    memory_requested = Signal()
+    contact_history_toggled = Signal(bool)
+    contact_history_deleted = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -94,6 +110,7 @@ class SuggestionPanel(QWidget):
         self._anchor: tuple[Rect, Rect] | None = None  # chat area and screen, logical pixels
         self._message_ids: list[int] = []
         self._corner = "bottom-right"
+        self._history: HistoryContext | None = None
 
         self.title_label = QLabel()
         title_font = self.title_label.font()
@@ -115,6 +132,28 @@ class SuggestionPanel(QWidget):
         header.addWidget(self.label_button)
         header.addWidget(self.settings_button)
         header.addWidget(self.esc_label)
+
+        # Whose memory is in use, and how much is stored. Names are shown as written.
+        self.history_label = QLabel()
+        self.history_label.setWordWrap(True)
+        self.history_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.history_label.hide()
+        self.history_button = QPushButton()
+        self.history_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.history_button.setMenu(QMenu(self.history_button))
+        self.history_button.hide()
+        self.ask_box = QWidget()
+        self.ask_label = QLabel()
+        self.ask_label.setWordWrap(True)
+        self.ask_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.ask_buttons: list[QPushButton] = []
+        self._ask_layout = QHBoxLayout()
+        self._ask_layout.setContentsMargins(0, 0, 0, 0)
+        ask_layout = QVBoxLayout(self.ask_box)
+        ask_layout.setContentsMargins(0, 0, 0, 0)
+        ask_layout.addWidget(self.ask_label)
+        ask_layout.addLayout(self._ask_layout)
+        self.ask_box.hide()
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
@@ -145,6 +184,7 @@ class SuggestionPanel(QWidget):
         self.style_button.clicked.connect(self.style_requested)
         footer = QHBoxLayout()
         footer.addWidget(self.adjust_button, 1)
+        footer.addWidget(self.history_button)
         footer.addWidget(self.style_button)
 
         self.details = QWidget()
@@ -175,6 +215,8 @@ class SuggestionPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
         layout.addLayout(header)
+        layout.addWidget(self.history_label)
+        layout.addWidget(self.ask_box)
         layout.addWidget(self.status_label)
         layout.addWidget(self.retry_button)
         layout.addWidget(self.summary_label)
@@ -285,6 +327,99 @@ class SuggestionPanel(QWidget):
             action.setData(value)
             action.triggered.connect(lambda _=False, v=value: self._choose_label(v))
         self.label_button.show()
+
+    def set_history(self, history: HistoryContext | None) -> None:
+        """The history state of the open chat. Nothing shows while the history is off."""
+        self._history = history
+        state = history.state if history is not None else "off"
+        self.history_label.setVisible(state == "ready")
+        self.history_button.setVisible(state in ("ready", "out_of_scope"))
+        self.ask_box.setVisible(state == "ask")
+        if state == "ready":
+            self.history_label.setText(self._history_line(history))
+        if state in ("ready", "out_of_scope"):
+            self._fill_history_menu(history)
+        if state == "ask":
+            self._fill_question(history)
+        self._place()
+
+    def _history_line(self, history: HistoryContext) -> str:
+        if history.gap_since:
+            line = t("history.gap", day=_day(history.gap_since))
+        elif not history.messages:
+            line = t("history.none")
+        else:
+            today = not history.last_day or history.last_day == date.today().isoformat()
+            when = t("history.today") if today else _day(history.last_day)
+            line = t("history.status", count=history.messages, day=when)
+        if history.owner_since:
+            owner = t("history.owner", name=history.owner, day=_day(history.owner_since))
+            line = owner + " · " + line
+        return line
+
+    def _fill_history_menu(self, history: HistoryContext) -> None:
+        self.history_button.setText(t("history.menu"))
+        menu = self.history_button.menu()
+        menu.clear()
+        if history.state == "out_of_scope":
+            entries = [("contact_on", "history.contact_on")]
+        else:
+            entries = [
+                ("load_quick", "history.load_quick"),
+                ("load_full", "history.load_full"),
+            ]
+            if history.gap_since:
+                entries.append(("load_gap", "history.load_gap"))
+            entries += [
+                ("view_memory", "history.view_memory"),
+                ("contact_off", "history.contact_off"),
+                ("contact_delete", "history.contact_delete"),
+            ]
+        for value, key in entries:
+            action = menu.addAction(t(key))
+            action.setData(value)
+            action.triggered.connect(lambda _=False, v=value: self._history_action(v))
+
+    def _history_action(self, value: str) -> None:
+        owner = self._history.owner if self._history is not None else ""
+        if value.startswith("load_"):
+            self.load_requested.emit(value.removeprefix("load_"))
+        elif value == "view_memory":
+            self.memory_requested.emit()
+        elif value == "contact_on":
+            self.contact_history_toggled.emit(True)
+        elif value == "contact_off" and self._confirm(
+            t("history.contact_off_confirm", name=owner)
+        ):
+            self.contact_history_toggled.emit(False)
+        elif value == "contact_delete" and self._confirm(
+            t("history.contact_delete_confirm", name=owner)
+        ):
+            self.contact_history_deleted.emit()
+
+    def _confirm(self, text: str) -> bool:
+        answer = QMessageBox.question(self, t("history.menu"), text)
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _fill_question(self, history: HistoryContext) -> None:
+        self.ask_label.setText(t("history.ask", name=history.owner))
+        for button in self.ask_buttons:
+            self._ask_layout.removeWidget(button)
+            button.deleteLater()
+        self.ask_buttons = []
+        choices = [(cid, t("history.ask_same", day=_day(day))) for cid, day in history.candidates]
+        choices.append((None, t("history.ask_other")))
+        for contact_id, text in choices:
+            button = QPushButton(_no_mnemonic(text))
+            button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            button.clicked.connect(lambda _=False, c=contact_id: self._answer(c))
+            self._ask_layout.addWidget(button)
+            self.ask_buttons.append(button)
+
+    def _answer(self, contact_id: int | None) -> None:
+        self.ask_box.hide()
+        self._place()
+        self.identity_answered.emit(contact_id)
 
     def set_corner(self, corner: str) -> None:
         self._corner = corner

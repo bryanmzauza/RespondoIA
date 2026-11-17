@@ -630,5 +630,137 @@ Suggestions may quote anything written here. Only include what you would tell an
         <source>tray.loading</source>
         <translation>Loading the chat history</translation>
     </message>
+    <message>
+        <source>history.status</source>
+        <translation>{count} messages · updated {day}</translation>
+    </message>
+    <message>
+        <source>history.today</source>
+        <translation>today</translation>
+    </message>
+    <message>
+        <source>history.gap</source>
+        <translation>Gap since {day}</translation>
+    </message>
+    <message>
+        <source>history.none</source>
+        <translation>No history yet</translation>
+    </message>
+    <message>
+        <source>history.owner</source>
+        <translation>Memory of {name}, since {day}</translation>
+    </message>
+    <message>
+        <source>history.menu</source>
+        <translation>History</translation>
+    </message>
+    <message>
+        <source>history.load_quick</source>
+        <translation>Load context (about 15 s)</translation>
+    </message>
+    <message>
+        <source>history.load_full</source>
+        <translation>Load more</translation>
+    </message>
+    <message>
+        <source>history.load_gap</source>
+        <translation>Load what is missing</translation>
+    </message>
+    <message>
+        <source>history.view_memory</source>
+        <translation>See memory</translation>
+    </message>
+    <message>
+        <source>history.contact_off</source>
+        <translation>Do not remember this contact</translation>
+    </message>
+    <message>
+        <source>history.contact_off_confirm</source>
+        <translation>Stop remembering {name} and delete what is stored?</translation>
+    </message>
+    <message>
+        <source>history.contact_on</source>
+        <translation>Remember this contact</translation>
+    </message>
+    <message>
+        <source>history.contact_delete</source>
+        <translation>Delete this contact's history</translation>
+    </message>
+    <message>
+        <source>history.contact_delete_confirm</source>
+        <translation>Delete what is stored for {name}?</translation>
+    </message>
+    <message>
+        <source>history.ask</source>
+        <translation>Is this {name} from before? Until you answer, no memory is used.</translation>
+    </message>
+    <message>
+        <source>history.ask_same</source>
+        <translation>Yes, since {day}</translation>
+    </message>
+    <message>
+        <source>history.ask_other</source>
+        <translation>Another person</translation>
+    </message>
+    <message>
+        <source>memory.title</source>
+        <translation>Memory of {name}</translation>
+    </message>
+    <message>
+        <source>memory.hint</source>
+        <translation>What the app keeps about this contact. Edit freely; your changes are kept.</translation>
+    </message>
+    <message>
+        <source>memory.empty</source>
+        <translation>No memory yet. It is created after some messages are stored.</translation>
+    </message>
+    <message>
+        <source>memory.save</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <source>settings.history</source>
+        <translation>History</translation>
+    </message>
+    <message>
+        <source>settings.history_enabled</source>
+        <translation>Remember chats</translation>
+    </message>
+    <message>
+        <source>settings.history_hint</source>
+        <translation>Keeps the messages of chats where you used the app, encrypted on this computer. Groups and private contacts are left out.</translation>
+    </message>
+    <message>
+        <source>settings.history_off_confirm</source>
+        <translation>Delete the history already stored?</translation>
+    </message>
+    <message>
+        <source>settings.retention</source>
+        <translation>Keep messages for (months)</translation>
+    </message>
+    <message>
+        <source>settings.history_delete_all</source>
+        <translation>Delete all history</translation>
+    </message>
+    <message>
+        <source>settings.history_delete_all_confirm</source>
+        <translation>Delete every stored message and memory?</translation>
+    </message>
+    <message>
+        <source>style.load</source>
+        <translation>Load from the open chat</translation>
+    </message>
+    <message>
+        <source>style.load_hint</source>
+        <translation>Open a chat in WhatsApp first. The app scrolls it for about a minute; do not use the mouse or keyboard meanwhile.</translation>
+    </message>
+    <message>
+        <source>style.loaded</source>
+        <translation>{count} of your messages added. Messages from the other person were not kept.</translation>
+    </message>
+    <message>
+        <source>error.history_unavailable</source>
+        <translation>Could not open the history. Suggestions keep working without it.</translation>
+    </message>
 </context>
 </TS>

@@ -78,6 +78,14 @@ class FakePanel(Recorder):
     settings_requested = Signal()
     label_chosen = Signal(object)
     style_requested = Signal()
+    load_requested = Signal(str)
+    identity_answered = Signal(object)
+    memory_requested = Signal()
+    contact_history_toggled = Signal(bool)
+    contact_history_deleted = Signal()
+
+    def set_history(self, history):
+        self.record("set_history", history)
 
     def set_label(self, label, guessed):
         self.record("set_label", label, guessed)

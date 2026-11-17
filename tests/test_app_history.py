@@ -68,6 +68,9 @@ class FakeHistoryAwareWorker(FakeWorker):
     def confirm_identity(self, generation, contact_id):
         self.record("confirm_identity", generation, contact_id)
 
+    def drop_history(self):
+        self.record("drop_history")
+
 
 class FakeGuard:
     def __init__(self, ok=True):
@@ -309,3 +312,80 @@ def test_bounds_center_is_where_the_cursor_goes(qtbot, db, tmp_path):
         worker.load("quick", 42, "Marina Duarte", None)
     bounds = Rect(0, 0, 800, 900)
     assert ("put_cursor", bounds.width // 2, bounds.height // 2) in desktop.calls
+
+
+# The panel, the memory window and the settings window, wired to the history worker.
+
+
+def test_started_shows_the_history_in_the_panel(tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel()
+    assert ("set_history", READY) in rig.panel.calls
+
+
+def test_panel_signals_reach_the_history(tmp_path):
+    rig = HistoryRig(tmp_path)
+    generation = rig.open_panel(HistoryContext("ask", candidates=((3, "2026-10-01"),)))
+    rig.panel.identity_answered.emit(None)
+    assert rig.worker.calls[-1] == ("confirm_identity", generation, None)
+    rig.panel.load_requested.emit("gap")
+    assert rig.history.calls[-1][:2] == ("load", "gap")
+
+
+def test_identity_answer_updates_the_panel(tmp_path):
+    rig = HistoryRig(tmp_path)
+    generation = rig.open_panel(HistoryContext("ask", candidates=((3, "2026-10-01"),)))
+    rig.worker.history_changed.emit(generation, READY)
+    assert rig.panel.calls[-1] == ("set_history", READY)
+
+
+def test_contact_off_and_delete_reach_the_worker(tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel()
+    rig.panel.contact_history_toggled.emit(False)
+    assert ("set_contact_history", "Marina Duarte", 7, False) in rig.history.calls
+    assert rig.panel.calls[-1][0] == "set_history"
+    assert rig.panel.calls[-1][1].state == "out_of_scope"
+    rig.panel.contact_history_toggled.emit(True)
+    assert ("set_contact_history", "Marina Duarte", 7, True) in rig.history.calls
+    assert rig.worker.calls.count(("drop_history",)) == 1
+    rig.panel.contact_history_deleted.emit()
+    assert ("forget_contact", "Marina Duarte", 7) in rig.history.calls
+    assert rig.worker.calls.count(("drop_history",)) == 2
+    assert rig.panel.calls[-1][1].messages == 0
+
+
+def test_memory_window_gets_and_saves_the_text(qtbot, tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel()
+    rig.panel.memory_requested.emit()
+    assert ("load_memory", 7) in rig.history.calls
+    rig.history.memory_ready.emit(7, "Cliente fiel.")
+    window = rig.controller._memory_window
+    assert window.editor.toPlainText() == "Cliente fiel."
+    window.editor.setPlainText("Prefere áudio.")
+    window.save_button.click()
+    assert ("save_memory", 7, "Prefere áudio.") in rig.history.calls
+    window.close()
+
+
+def test_settings_delete_all_reaches_the_worker(qtbot, tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.controller.open_settings()
+    rig.controller._settings_window.delete_all_requested.emit()
+    assert ("forget_all",) in rig.history.calls
+    rig.controller._settings_window.close()
+
+
+def test_style_window_load_requests_a_style_load(qtbot, tmp_path, monkeypatch):
+    rig = HistoryRig(tmp_path)
+    rig.controller._style_worker = Recorder()  # any object: open_style only needs one
+    window_info = type("W", (), {"hwnd": 77})()
+    monkeypatch.setattr(app_module.capture, "find_whatsapp_window", lambda allowed: window_info)
+    monkeypatch.setattr(
+        rig.controller, "request_style_load", type("S", (), {"emit": lambda s: None})()
+    )
+    rig.controller.open_style()
+    rig.controller._style_window.load_requested.emit()
+    assert rig.history.calls[-1] == ("load", "style", 77, "", None)
+    rig.controller._style_window.close()

@@ -12,7 +12,9 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
     QPushButton,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -66,6 +68,7 @@ class SettingsWindow(QWidget):
     saved = Signal(object)  # Settings
     api_key_entered = Signal(str)
     knowledge_requested = Signal()
+    delete_all_requested = Signal()  # every stored message and memory
 
     def __init__(self, settings: Settings, has_api_key: bool) -> None:
         super().__init__()
@@ -122,6 +125,15 @@ class SettingsWindow(QWidget):
         self.knowledge_button.clicked.connect(self.knowledge_requested)
         self.knowledge_hint = QLabel(t("settings.knowledge_hint"))
         self.knowledge_hint.setWordWrap(True)
+        self.history_check = QCheckBox(t("settings.history_enabled"))
+        self.history_check.setChecked(settings.history_enabled)
+        self.history_hint = QLabel(t("settings.history_hint"))
+        self.history_hint.setWordWrap(True)
+        self.retention_box = QSpinBox()
+        self.retention_box.setRange(1, 120)
+        self.retention_box.setValue(settings.retention_months)
+        self.history_delete_button = QPushButton(t("settings.history_delete_all"))
+        self.history_delete_button.clicked.connect(self._delete_all)
 
         self.instructions_list = QListWidget()
         for entry in settings.quick_instructions:
@@ -164,6 +176,11 @@ class SettingsWindow(QWidget):
         form.addRow(t("settings.api_key"), key_row)
         form.addRow(self.autostart_check)
         form.addRow(self.knowledge_button, self.knowledge_hint)
+        form.addRow(QLabel(t("settings.history")))
+        form.addRow(self.history_check)
+        form.addRow(self.history_hint)
+        form.addRow(t("settings.retention"), self.retention_box)
+        form.addRow(self.history_delete_button)
 
         new_instruction = QHBoxLayout()
         new_instruction.addWidget(self.instruction_edit, 1)
@@ -221,7 +238,18 @@ class SettingsWindow(QWidget):
         if row >= 0:
             listing.takeItem(row)
 
+    def _ask(self, key: str) -> bool:
+        answer = QMessageBox.question(self, t("settings.history"), t(key))
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _delete_all(self) -> None:
+        if self._ask("settings.history_delete_all_confirm"):
+            self.delete_all_requested.emit()
+
     def _save(self) -> None:
+        turned_off = self._settings.history_enabled and not self.history_check.isChecked()
+        if turned_off and self._ask("settings.history_off_confirm"):
+            self.delete_all_requested.emit()
         key = self.api_key_edit.text().strip()
         if key:
             self.api_key_entered.emit(key)
@@ -244,5 +272,7 @@ class SettingsWindow(QWidget):
                 start_with_windows=self.autostart_check.isChecked(),
                 quick_instructions=values(self.instructions_list),
                 private_contacts=values(self.private_list),
+                history_enabled=self.history_check.isChecked(),
+                retention_months=self.retention_box.value(),
             )
         )

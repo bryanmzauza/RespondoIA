@@ -80,6 +80,7 @@ class StyleWindow(QWidget):
     manual_saved = Signal(str, str)  # language, text
     example_removed = Signal(str, str)  # language, example
     reset_requested = Signal()
+    load_requested = Signal()  # scroll the open WhatsApp chat and learn from it
 
     def __init__(self) -> None:
         super().__init__()
@@ -115,6 +116,10 @@ class StyleWindow(QWidget):
         self.refresh_button.clicked.connect(self._refresh)
         self.reset_button = QPushButton(t("style.reset"))
         self.reset_button.clicked.connect(self._reset)
+        self.load_button = QPushButton(t("style.load"))
+        self.load_button.clicked.connect(self.load_requested)
+        self.load_hint = _plain_label()
+        self.load_hint.setText(t("style.load_hint"))
         self.message_label = _plain_label()
 
         # Shown after a file was read: whose messages to keep.
@@ -146,6 +151,7 @@ class StyleWindow(QWidget):
         language_row.addWidget(self.language_combo, 1)
         actions = QHBoxLayout()
         actions.addWidget(self.import_button)
+        actions.addWidget(self.load_button)
         actions.addWidget(self.refresh_button)
         actions.addStretch(1)
         actions.addWidget(self.reset_button)
@@ -165,6 +171,7 @@ class StyleWindow(QWidget):
         layout.addWidget(self.save_notes_button)
         layout.addWidget(self.drop_label)
         layout.addLayout(actions)
+        layout.addWidget(self.load_hint)
         layout.addWidget(self.author_box)
         layout.addWidget(self.message_label)
         self.show_overview(StyleOverview(()))

@@ -219,6 +219,10 @@ class Session:
         self._use_history(history)
         return history
 
+    def drop_history(self) -> None:
+        """The stored history was deleted: the open session stops sending it."""
+        self._use_history(HistoryContext("off"))
+
     def _use_history(self, history: HistoryContext) -> None:
         """Memory and earlier messages go out only for a contact told apart from others."""
         self._history = history

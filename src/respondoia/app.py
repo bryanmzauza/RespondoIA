@@ -51,6 +51,7 @@ from respondoia.session import (
 )
 from respondoia.style.parser import ExportChat, ExportError, parse_export
 from respondoia.style.service import StyleService
+from respondoia.ui.memory_view import MemoryWindow
 from respondoia.ui.panel import SuggestionPanel
 from respondoia.ui.settings import SettingsWindow
 from respondoia.ui.style_view import StyleWindow
@@ -168,6 +169,11 @@ class Worker(QObject):
             self._report_growth(history)
 
         self._guard(generation, confirm)
+
+    @Slot()
+    def drop_history(self) -> None:
+        if self._session is not None:
+            self._session.drop_history()
 
     def _report_growth(self, history: HistoryContext | None) -> None:
         if history is not None and history.state == "ready" and history.added > 0:
@@ -488,6 +494,7 @@ class Controller(QObject):
     request_contact_history = Signal(str, object, bool)
     request_load_memory = Signal(int)
     request_save_memory = Signal(int, str)
+    request_drop_history = Signal()
 
     def __init__(
         self,
@@ -567,8 +574,17 @@ class Controller(QObject):
             self.request_save_memory.connect(history_worker.save_memory)
             self.request_confirm.connect(worker.confirm_identity)
             history_worker.loaded.connect(self._on_loaded)
+            history_worker.memory_ready.connect(self._on_memory_ready)
             worker.history_changed.connect(self._on_history_changed)
             worker.history_grew.connect(self.request_memory_update)
+            self.request_drop_history.connect(worker.drop_history)
+            panel.load_requested.connect(self.request_load)
+            panel.identity_answered.connect(self.answer_identity)
+            panel.memory_requested.connect(self.open_memory)
+            panel.contact_history_toggled.connect(self._on_contact_history)
+            panel.contact_history_deleted.connect(self._on_contact_history_deleted)
+        self._memory_window: MemoryWindow | None = None
+        self._memory_owner = ""
         worker.started.connect(self._on_started)
         worker.previewed.connect(self._on_previewed)
         worker.replied.connect(self._on_replied)
@@ -635,6 +651,8 @@ class Controller(QObject):
         self._context = result.context
         self._hwnd = result.hwnd
         self._history = result.history
+        if self._history_worker is not None:
+            self._panel.set_history(result.history)
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         if result.context is not None:
@@ -705,6 +723,8 @@ class Controller(QObject):
         window.manual_saved.connect(self.request_save_manual)
         window.example_removed.connect(self.request_exclude_example)
         window.reset_requested.connect(self.request_style_reset)
+        if self._history_worker is not None:
+            window.load_requested.connect(lambda: self.request_load("style"))
         self._style_window = window
         window.show()
         self.request_style_load.emit()
@@ -823,6 +843,8 @@ class Controller(QObject):
         self._pending_key = None
         window.api_key_entered.connect(self._on_key_entered)
         window.knowledge_requested.connect(self.open_knowledge)
+        if self._history_worker is not None:
+            window.delete_all_requested.connect(self._on_delete_all_history)
         self._settings_window = window
         window.show()
 
@@ -955,6 +977,8 @@ class Controller(QObject):
         if history is not None and history.state == "ready" and history.added > 0:
             self.request_memory_update.emit(history.contact_id)
         if outcome.purpose == "style" and self._style_worker is not None:
+            if self._style_window is not None and outcome.reason != "private":
+                self._style_window.show_notice("style.loaded", count=outcome.style_added)
             self.request_style_load.emit()
 
     def answer_identity(self, contact_id) -> None:
@@ -965,6 +989,52 @@ class Controller(QObject):
     def _on_history_changed(self, generation: int, history) -> None:
         if generation == self._generation and self._active:
             self._history = history
+            self._panel.set_history(history)
+
+    def _on_contact_history(self, on: bool) -> None:
+        history = self._history
+        if not self._active or self._chat is None or history is None:
+            return
+        self.request_contact_history.emit(self._chat.title, history.contact_id, on)
+        if on:
+            self._history = HistoryContext("ready", history.contact_id, history.owner)
+        else:
+            # Turning a contact off deletes what is stored; this session stops using it too.
+            self.request_drop_history.emit()
+            self._history = HistoryContext("out_of_scope", history.contact_id, history.owner)
+        self._panel.set_history(self._history)
+
+    def _on_contact_history_deleted(self) -> None:
+        history = self._history
+        if not self._active or self._chat is None or history is None:
+            return
+        self.request_forget_contact_history.emit(self._chat.title, history.contact_id)
+        self.request_drop_history.emit()
+        self._history = HistoryContext(
+            "ready", history.contact_id, history.owner, history.owner_since
+        )
+        self._panel.set_history(self._history)
+
+    def _on_delete_all_history(self) -> None:
+        self.request_forget_all_history.emit()
+        self.request_drop_history.emit()
+
+    def open_memory(self) -> None:
+        history = self._history
+        if history is None or history.contact_id is None or history.state != "ready":
+            return
+        if self._memory_window is None:
+            self._memory_window = MemoryWindow()
+            self._memory_window.saved.connect(self.request_save_memory)
+        self._memory_owner = history.owner
+        self.request_load_memory.emit(history.contact_id)
+
+    def _on_memory_ready(self, contact_id: int, text: str) -> None:
+        if self._memory_window is None:
+            return
+        self._memory_window.show_memory(contact_id, self._memory_owner, text)
+        self._memory_window.show()
+        self._memory_window.raise_()
 
     def _end_session(self) -> None:
         """Leave the current session. Answers still on their way will be dropped."""
