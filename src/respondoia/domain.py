@@ -74,3 +74,5 @@ class UserContext:
     ask_label: bool  # no label yet, not a group: the model may guess one
     style: str  # rendered "Style" section, "" without a profile
     knowledge: str  # knowledge.md text, "" without one
+    memory: str = ""  # contact memory, masked; "" unless the contact was told apart
+    snippets: tuple[dict, ...] = ()  # earlier messages: day, time, author, text; oldest first

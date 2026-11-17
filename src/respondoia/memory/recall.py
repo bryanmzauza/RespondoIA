@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from respondoia.memory.merge import Stored, fingerprint
 from respondoia.privacy import mask_text
 
-MEMORY_LIMIT = 2500
 MEMORY_BLOCK = 200
 
 # Common words in Portuguese, English and Spanish that say nothing about the topic.

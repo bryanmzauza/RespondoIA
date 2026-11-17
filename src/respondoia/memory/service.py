@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 
 from respondoia import contacts
 from respondoia.config import Settings
+from respondoia.context import MEMORY_LIMIT
 from respondoia.database import Database
 from respondoia.domain import ChatLine
 from respondoia.llm import LlmError, ModelClient
@@ -20,7 +21,6 @@ from respondoia.memory import store
 from respondoia.memory.identity import Candidate, identify
 from respondoia.memory.merge import fingerprint, from_lines, merge
 from respondoia.memory.recall import (
-    MEMORY_LIMIT,
     MEMORY_SYSTEM,
     ContactMemory,
     Snippet,
