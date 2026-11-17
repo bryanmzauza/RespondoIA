@@ -1,0 +1,43 @@
+{
+  "id": "en/01-friend-plan",
+  "language": "en",
+  "theme": "light",
+  "contact": "Dan",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:02",
+      "kind": "text",
+      "text": "fancy five-a-side on thursday?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:02",
+      "kind": "text",
+      "text": "need names by tomorrow",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

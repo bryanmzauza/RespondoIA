@@ -1,0 +1,29 @@
+{
+  "id": "pt-BR/09-knowledge-price",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Renata",
+  "group": false,
+  "label": "client",
+  "knowledge": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:10",
+      "kind": "text",
+      "text": "Bom dia! Quanto custa o pão de fermentação natural?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": "R$ 18"
+  }
+}

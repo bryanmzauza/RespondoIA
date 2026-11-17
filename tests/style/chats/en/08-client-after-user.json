@@ -1,0 +1,42 @@
+{
+  "id": "en/08-client-after-user",
+  "language": "en",
+  "theme": "light",
+  "contact": "Fiona",
+  "group": false,
+  "label": "client",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:00",
+      "kind": "text",
+      "text": "Hello, I got your message.",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:04",
+      "kind": "text",
+      "text": "Great. Can you send me the quote today?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

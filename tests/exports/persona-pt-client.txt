@@ -1,0 +1,60 @@
+[01/09/2026, 09:00:00] Cláudia: ZZ-OTHER-1 vocês abrem no feriado?
+[01/09/2026, 09:07:00] Rafa Lima: Recebido, obrigado!
+[02/09/2026, 14:10:00] Cláudia: ZZ-OTHER-2 Obrigada pelo atendimento!
+[02/09/2026, 14:13:00] Rafa Lima: Qualquer coisa me chama por aqui.
+[02/09/2026, 22:14:00] Cláudia: ZZ-OTHER-3 que horas a gente se encontra?
+[02/09/2026, 22:15:00] Rafa Lima: Consigo sim, te confirmo ainda hoje.
+[03/09/2026, 09:16:00] Cláudia: ZZ-OTHER-4 conseguiu ver aquilo?
+[03/09/2026, 09:19:00] Rafa Lima: Obrigado pelo retorno!
+[04/09/2026, 02:21:00] Cláudia: ZZ-OTHER-5 viu a novidade?
+[04/09/2026, 02:30:00] Rafa Lima: Vou separar e te aviso quando sair.
+[05/09/2026, 07:31:00] Cláudia: ZZ-OTHER-6 chegou bem em casa?
+[05/09/2026, 07:38:00] Rafa Lima: Desculpe a demora para responder.
+[06/09/2026, 09:40:00] Cláudia: ZZ-OTHER-7 domingo tem almoço aqui
+[06/09/2026, 09:46:00] Rafa Lima: Boa tarde! Recebi sua mensagem.
+[07/09/2026, 13:48:00] Cláudia: ZZ-OTHER-8 chegou bem em casa?
+[07/09/2026, 13:51:00] Rafa Lima: Agradeço o contato! 🙏
+[08/09/2026, 12:54:00] Cláudia: ZZ-OTHER-9 chegou bem em casa?
+[08/09/2026, 13:03:00] Rafa Lima: Assim que estiver pronto eu aviso.
+[09/09/2026, 05:04:00] Cláudia: ZZ-OTHER-10 Bom dia, gostaria de fazer um pedido.
+[09/09/2026, 05:12:00] Rafa Lima: Combinado, obrigado! 🙏
+[10/09/2026, 03:14:00] Cláudia: ZZ-OTHER-11 chegou bem em casa?
+[10/09/2026, 03:22:00] Rafa Lima: Ótimo, então seguimos assim.
+[10/09/2026, 22:24:00] Cláudia: ZZ-OTHER-12 Obrigada pelo atendimento!
+[10/09/2026, 22:32:00] Rafa Lima: Pode deixar que eu cuido disso.
+[11/09/2026, 20:35:00] Cláudia: ZZ-OTHER-13 que horas a gente se encontra?
+[11/09/2026, 20:41:00] Rafa Lima: Já confirmei aqui, está reservado.
+[13/09/2026, 01:42:00] Cláudia: ZZ-OTHER-14 domingo tem almoço aqui
+[13/09/2026, 01:47:00] Rafa Lima: Sim, entregamos no seu bairro.
+[13/09/2026, 11:50:00] Cláudia: ZZ-OTHER-15 Bom dia, gostaria de fazer um pedido.
+[13/09/2026, 11:59:00] Rafa Lima: Certo, já anotei aqui.
+[13/09/2026, 22:02:00] Cláudia: ZZ-OTHER-16 que horas a gente se encontra?
+[13/09/2026, 22:10:00] Rafa Lima: Entendi, vou ajustar aqui.
+[15/09/2026, 04:12:00] Cláudia: ZZ-OTHER-17 viu a novidade?
+[15/09/2026, 04:14:00] Rafa Lima: Claro, sem problema nenhum.
+[16/09/2026, 04:16:00] Cláudia: ZZ-OTHER-18 oi, tudo bem por aí?
+[16/09/2026, 04:20:00] Rafa Lima: Fico no aguardo da confirmação.
+[16/09/2026, 06:20:00] Cláudia: ZZ-OTHER-19 domingo tem almoço aqui
+[16/09/2026, 06:21:00] Rafa Lima: Pode ficar tranquilo, está tudo certo.
+[17/09/2026, 01:23:00] Cláudia: ZZ-OTHER-20 que horas a gente se encontra?
+[17/09/2026, 01:25:00] Rafa Lima: Boa noite! Respondo amanhã cedo, tudo bem?
+[18/09/2026, 05:26:00] Cláudia: ZZ-OTHER-21 Bom dia, gostaria de fazer um pedido.
+[18/09/2026, 05:30:00] Rafa Lima: Tudo certo, pode vir buscar.
+[19/09/2026, 10:31:00] Cláudia: ZZ-OTHER-22 oi, tudo bem por aí?
+[19/09/2026, 10:38:00] Rafa Lima: Muito obrigado pela preferência!
+[19/09/2026, 12:38:00] Cláudia: ZZ-OTHER-23 vocês abrem no feriado?
+[19/09/2026, 12:44:00] Rafa Lima: Qualquer dúvida, estou à disposição.
+[19/09/2026, 20:45:00] Cláudia: ZZ-OTHER-24 viu a novidade?
+[19/09/2026, 20:46:00] Rafa Lima: Vou verificar e já te respondo.
+[20/09/2026, 00:46:00] Cláudia: ZZ-OTHER-25 vamos marcar algo essa semana?
+[20/09/2026, 00:47:00] Rafa Lima: Obrigado, tenha um ótimo dia!
+[21/09/2026, 00:47:00] Cláudia: ZZ-OTHER-26 oi, tudo bem por aí?
+[21/09/2026, 00:53:00] Rafa Lima: Bom dia! Tudo bem?
+[21/09/2026, 05:55:00] Cláudia: ZZ-OTHER-27 conseguiu ver aquilo?
+[21/09/2026, 05:58:00] Rafa Lima: Bom dia! Já está separado para você.
+[21/09/2026, 18:58:00] Cláudia: ZZ-OTHER-28 domingo tem almoço aqui
+[21/09/2026, 18:59:00] Rafa Lima: Vou conferir a disponibilidade e retorno.
+[22/09/2026, 00:00:00] Cláudia: ZZ-OTHER-29 oi, tudo bem por aí?
+[22/09/2026, 00:01:00] Rafa Lima: Estou finalizando e já envio.
+[22/09/2026, 20:03:00] Cláudia: ZZ-OTHER-30 viu a novidade?
+[22/09/2026, 20:05:00] Rafa Lima: Perfeito, fica combinado então.

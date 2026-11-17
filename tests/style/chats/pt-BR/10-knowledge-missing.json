@@ -1,0 +1,29 @@
+{
+  "id": "pt-BR/10-knowledge-missing",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Otávio",
+  "group": false,
+  "label": "client",
+  "knowledge": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:45",
+      "kind": "text",
+      "text": "Vocês entregam em Campinas? Moro lá.",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": null
+  }
+}

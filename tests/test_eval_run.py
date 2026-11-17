@@ -120,3 +120,52 @@ def test_blind_with_one_dir_labels_sides_by_model(tmp_path):
     )
     results, labels = load_results([tmp_path])
     assert labels == ["claude-haiku-5-5", "claude-sonnet-5-5"] and len(results) == 2
+
+
+def test_style_set_loads_and_builds_the_context():
+    from evals.run import style_context
+    from respondoia.style.profile import StyleProfile
+    from respondoia.style.sampler import StyleStats
+
+    chats = load_chats("style")
+    assert len(chats) == 20 and all(c["id"].split("/")[1][:2].isdigit() for c in chats)
+    chat = next(c for c in chats if c["id"] == "pt-BR/09-knowledge-price")
+    profile = StyleProfile(language="pt", messages=1, stats=StyleStats(messages=1),
+                           examples=["fechado então"], updated_at="2026-11-17T10:00:00")
+    context = style_context(chat, profile, "Pão: R$ 18")
+    assert context.label == "client" and context.label_from_user and not context.ask_label
+    assert "fechado então" in context.style and context.knowledge == "Pão: R$ 18"
+
+
+def test_without_profile_the_style_is_empty():
+    from evals.run import style_context
+
+    chat = next(c for c in load_chats("style") if c["id"] == "pt-BR/01-friend-plan")
+    context = style_context(chat, None, "")
+    assert context.style == "" and context.knowledge == "" and context.label == "friend"
+
+
+def test_only_filters_cases():
+    from evals.run import only_cases
+
+    chats = load_chats()
+    assert [c["id"] for c in only_cases(chats, ["en/14-nothing-pending"])] == ["en/14-nothing-pending"]
+    assert only_cases(chats, None) == chats
+
+
+def test_blind_finds_style_chats():
+    from evals.blind import chat_file
+
+    assert chat_file("pt-BR/01-friend-plan").parent.name == "pt-BR"
+    assert chat_file("pt-BR/01-short").exists()
+
+
+def test_persona_messages_are_only_the_personas():
+    from collections import Counter
+
+    from evals.persona import persona_messages
+
+    for lang in ("pt-BR", "en"):
+        messages = persona_messages(lang)
+        assert "ZZ-OTHER" not in repr(messages)
+        assert all(count >= 25 for count in Counter(m.label for m in messages).values())

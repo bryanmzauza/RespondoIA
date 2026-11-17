@@ -18,7 +18,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from evals.run import SHOTS, read_rows
+from evals.run import SHOTS, STYLE, read_rows
+
+
+def chat_file(case: str) -> Path:
+    """The fixture of a case, from the screenshot set or the style set."""
+    path = SHOTS / "chats" / f"{case}.json"
+    return path if path.exists() else STYLE / "chats" / f"{case}.json"
 
 
 def only_language(pairs: list[tuple], language: str | None) -> list[tuple]:
@@ -100,6 +106,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("dirs", type=Path, nargs="+", help="one dir with two models, or two dirs")
     parser.add_argument("--lang", help="review only one language, for example pt-BR")
+    parser.add_argument(
+        "--question",
+        choices=["default", "style"],
+        default="default",
+        help="style: show how the fictional persona writes and ask which side is closer",
+    )
     args = parser.parse_args()
 
     results, models = load_results(args.dirs)
@@ -115,12 +127,21 @@ def main() -> int:
     pairs = [c for c in cases if all((c[0], c[1], m) in results for m in models)]
     pairs = only_language(pairs, args.lang)
 
+    personas = {}
+    if args.question == "style":
+        personas = json.loads((STYLE / "personas.json").read_text(encoding="utf-8"))
+
     for number, (case, variant) in enumerate(pairs, 1):
         if (case, variant) in seen:
             continue
+        persona = personas.get(case.split("/")[0])
+        if persona:
+            print(f"\n{'=' * 72}\nHow {persona['author']} writes:")
+            for reference in persona["reference"]:
+                print(f"  - {reference}")
         # The order depends on the seed and the case only, so a resumed run keeps it.
         order = random.Random(f"{seed}/{case}/{variant}").sample(models, 2)
-        chat = json.loads((SHOTS / "chats" / f"{case}.json").read_text(encoding="utf-8"))
+        chat = json.loads(chat_file(case).read_text(encoding="utf-8"))
         show_chat(chat)
         print(f"\n  [{number}/{len(pairs)}] variant: {variant}")
         if variant == "selected":
@@ -132,7 +153,12 @@ def main() -> int:
         row = {"seed": seed, "case": case, "variant": variant, "a": order[0], "b": order[1]}
         print()
         if variant == "base":
-            row["better"] = ask("  Closer to how the user writes? (a/b/e for even): ", {"a", "b", "e"})
+            question = (
+                f"  Which side writes like {persona['author']}? (a/b/e for even): "
+                if persona
+                else "  Closer to how the user writes? (a/b/e for even): "
+            )
+            row["better"] = ask(question, {"a", "b", "e"})
             row["broke"] = ask_sides("  Who broke a rule? (a/b/ab/n for none): ")
         else:
             row["complied"] = ask_sides("  Who followed the restriction? (a/b/ab/n for none): ")

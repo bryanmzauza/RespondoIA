@@ -1,0 +1,43 @@
+{
+  "id": "pt-BR/01-friend-plan",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Dudu",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:02",
+      "kind": "text",
+      "text": "e aí, bora no futebol quinta?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:02",
+      "kind": "text",
+      "text": "preciso confirmar o nome até amanhã",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": true,
+      "final_period": false,
+      "emoji": true,
+      "abbreviation": true
+    },
+    "knowledge_value": null
+  }
+}

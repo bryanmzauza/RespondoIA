@@ -3,6 +3,11 @@
 Usage:
     uv run python evals/run.py --models <id> [<id> ...] --out <dir>
         [--input screenshot|text] [--limit N] [--dry-run]
+        [--set screenshots|style] [--profile-dir <dir>] [--only <case id> ...]
+
+The style set (tests/style/chats) runs in text mode only. With --profile-dir, each
+case gets the persona profile <dir>/<lang>.json as its style; without it, no style.
+Cases marked "knowledge" get tests/style/knowledge-<lang>.md.
 
 With --input text the chat goes as masked text built from the fixture JSON, the
 way the app sends what it reads through accessibility.
@@ -30,7 +35,7 @@ sys.path.insert(0, str(ROOT))
 
 from evals.checks import check_case
 from respondoia.config import get_api_key
-from respondoia.domain import ChatLine
+from respondoia.domain import ChatLine, UserContext
 from respondoia.llm import (
     AnthropicClient,
     LlmError,
@@ -38,8 +43,10 @@ from respondoia.llm import (
     SuggestRequest,
 )
 from respondoia.privacy import mask_lines
+from respondoia.style.profile import StyleProfile, render
 
 SHOTS = ROOT / "tests" / "screenshots"
+STYLE = ROOT / "tests" / "style"
 COUNT = 3
 WORKERS = 4
 # One retry inside the client, so a case takes at most twice this.
@@ -51,10 +58,9 @@ class ServedModelMismatch(RuntimeError):
     pass
 
 
-def load_chats() -> list[dict]:
-    chats = [
-        json.loads(p.read_text(encoding="utf-8")) for p in (SHOTS / "chats").glob("*/*.json")
-    ]
+def load_chats(chat_set: str = "screenshots") -> list[dict]:
+    folder = (SHOTS if chat_set == "screenshots" else STYLE) / "chats"
+    chats = [json.loads(p.read_text(encoding="utf-8")) for p in folder.glob("*/*.json")]
     # Scenario first, then language, so a small --limit still covers both languages.
     return sorted(chats, key=lambda chat: tuple(reversed(chat["id"].split("/"))))
 
@@ -71,6 +77,24 @@ def chat_lines(chat: dict) -> tuple[ChatLine, ...]:
             quote=m["quote"] or "",
         )
         for m in chat["messages"]
+    )
+
+
+def only_cases(chats: list[dict], ids: list[str] | None) -> list[dict]:
+    return chats if not ids else [chat for chat in chats if chat["id"] in ids]
+
+
+def style_context(chat: dict, profile: StyleProfile | None, knowledge: str) -> UserContext:
+    """What the app would add for this case: the persona's style and the knowledge base."""
+    label = chat.get("label")
+    style = render(profile, label, "") if profile is not None else ""
+    return UserContext(
+        profile.language if profile else None,
+        label,
+        True,
+        False,
+        style,
+        knowledge if chat.get("knowledge") else "",
     )
 
 
@@ -152,8 +176,17 @@ def print_summary(summary: dict) -> None:
 
 
 class Runner:
-    def __init__(self, out: Path, api_key: str, input_mode: str = "screenshot") -> None:
+    def __init__(
+        self,
+        out: Path,
+        api_key: str,
+        input_mode: str = "screenshot",
+        profiles: dict[str, StyleProfile] | None = None,
+        chat_set: str = "screenshots",
+    ) -> None:
         self.input_mode = input_mode
+        self.profiles = profiles  # by chat language; None: the cases get no style
+        self.chat_set = chat_set
         self.results = out / "results.jsonl"
         self.errors = out / "errors.jsonl"
         self.api_key = api_key
@@ -169,8 +202,21 @@ class Runner:
     def run_chain(self, chat: dict, model: str) -> None:
         """Base first, then the variants that reuse its message list."""
         client = AnthropicClient(self.api_key, model, timeout_s=CALL_TIMEOUT_S)
-        image = (SHOTS / f"{chat['id']}.png").read_bytes()
+        image = None
+        if self.input_mode != "text":
+            image = (SHOTS / f"{chat['id']}.png").read_bytes()
         lines, _ = mask_lines(chat_lines(chat))
+        context, knowledge, examples = None, "", ()
+        if self.chat_set == "style":
+            knowledge_file = STYLE / f"knowledge-{chat['language']}.md"
+            knowledge = knowledge_file.read_text(encoding="utf-8").strip()
+            profile = (self.profiles or {}).get(chat["language"])
+            context = style_context(chat, profile, knowledge)
+            if profile is not None:
+                examples = tuple(profile.examples) + tuple(
+                    e for items in profile.examples_by_label.values() for e in items
+                )
+            knowledge = context.knowledge
         base: SuggestionReply | None = None
         for variant in VARIANTS if "regenerate" in chat else VARIANTS[:1]:
             key = (chat["id"], model, variant)
@@ -186,7 +232,9 @@ class Runner:
             if variant == "instruction":
                 instruction = chat["regenerate"]["instruction"]
             if self.input_mode == "text":
-                request = SuggestRequest(None, COUNT, None, selected, instruction, lines)
+                request = SuggestRequest(
+                    None, COUNT, None, selected, instruction, lines, context=context
+                )
             else:
                 previous = None if variant == "base" else base
                 request = SuggestRequest(image, COUNT, previous, selected, instruction)
@@ -205,12 +253,21 @@ class Runner:
                 "model": model,
                 "variant": variant,
                 "input": self.input_mode,
+                "set": self.chat_set,
+                "profile": bool(context and context.style),
                 "served_model": result.model,
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
                 "latency_ms": result.latency_ms,
                 "preview_ms": result.preview_ms,
-                "checks": check_case(chat, result.reply, COUNT, instruction=instruction),
+                "checks": check_case(
+                    chat,
+                    result.reply,
+                    COUNT,
+                    instruction=instruction,
+                    knowledge=knowledge,
+                    examples=examples,
+                ),
                 "reply": result.reply.model_dump(),
             }
             self.append(self.results, row)
@@ -226,9 +283,21 @@ def main() -> int:
     parser.add_argument("--input", choices=["screenshot", "text"], default="screenshot")
     parser.add_argument("--limit", type=int, help="run only the first N cases")
     parser.add_argument("--dry-run", action="store_true", help="count the calls and stop")
+    parser.add_argument("--set", choices=["screenshots", "style"], default="screenshots")
+    parser.add_argument("--profile-dir", type=Path, help="persona profiles for the style set")
+    parser.add_argument("--only", nargs="+", help="run only these case ids")
     args = parser.parse_args()
+    if args.set == "style" and args.input != "text":
+        print("The style set has no screenshots: use --input text.")
+        return 1
+    profiles = None
+    if args.profile_dir:
+        profiles = {
+            path.stem: StyleProfile.model_validate_json(path.read_text(encoding="utf-8"))
+            for path in args.profile_dir.glob("*.json")
+        }
 
-    chats = load_chats()[: args.limit]
+    chats = only_cases(load_chats(args.set), args.only)[: args.limit]
     calls = plan_calls(chats, args.models, None)
     if args.dry_run:
         print(f"{len(calls)} calls planned, none made")
@@ -239,7 +308,7 @@ def main() -> int:
         print("No API key stored. Run: uv run python -m respondoia --set-api-key")
         return 1
     args.out.mkdir(parents=True, exist_ok=True)
-    runner = Runner(args.out, api_key, args.input)
+    runner = Runner(args.out, api_key, args.input, profiles, args.set)
     todo = len(set(calls) - set(runner.done))
     print(f"{len(calls)} calls planned, {todo} to make")
 

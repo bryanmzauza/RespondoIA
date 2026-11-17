@@ -4,6 +4,7 @@ import re
 from difflib import SequenceMatcher
 
 from respondoia.llm import ChatMessage, SuggestionReply
+from respondoia.style.sampler import OwnMessage, stats
 
 SIMILARITY = 0.85
 LAST_MESSAGES = 8
@@ -35,8 +36,29 @@ def _matches(chat: dict, reply: SuggestionReply) -> dict[int, ChatMessage]:
     return found
 
 
+def style_traits(text: str) -> dict[str, bool]:
+    """The four traits the style chats expect, measured on one suggestion."""
+    measured = stats([OwnMessage(text, "", "", "", "", 0, None)])
+    return {
+        "lowercase_start": measured.lowercase_start == 1.0,
+        "final_period": measured.final_period == 1.0,
+        "emoji": measured.emoji_share == 1.0,
+        "abbreviation": bool(measured.abbreviations),
+    }
+
+
+def _squeeze(text: str) -> str:
+    return "".join(text.casefold().split())
+
+
 def check_case(
-    chat: dict, reply: SuggestionReply, count: int, *, instruction: str = ""
+    chat: dict,
+    reply: SuggestionReply,
+    count: int,
+    *,
+    instruction: str = "",
+    knowledge: str = "",
+    examples: tuple[str, ...] | list[str] = (),
 ) -> dict[str, bool]:
     """Return one boolean per check. Checks that do not apply to the chat are left out."""
     expect = chat["expect"]
@@ -46,7 +68,7 @@ def check_case(
 
     # A number may come from the chat or from what the user asked for, nowhere else.
     source = " ".join([m["text"] + " " + (m["quote"] or "") for m in chat["messages"]])
-    known = set(re.findall(r"\d+", source + " " + instruction))
+    known = set(re.findall(r"\d+", source + " " + instruction + " " + knowledge))
     used = {run for text in texts for run in re.findall(r"\d{2,}", text)}
 
     result = {
@@ -71,6 +93,20 @@ def check_case(
         result["sensitive_hidden"] = all(
             value not in written and value.replace(" ", "") not in squeezed
             for value in expect["sensitive"]
+        )
+    if expect.get("style"):
+        # Every suggestion shows at least 3 of the 4 traits the persona has with this label.
+        wanted = expect["style"]
+        result["style_match"] = all(
+            sum(style_traits(text)[k] == v for k, v in wanted.items()) >= 3 for text in texts
+        )
+    if expect.get("knowledge_value"):
+        value = _squeeze(expect["knowledge_value"])
+        result["knowledge_used"] = sum(value in _squeeze(text) for text in texts) >= 2
+    long_examples = [_squeeze(e) for e in examples if len(e) >= 20]
+    if long_examples:
+        result["no_example_copied"] = not any(
+            example in _squeeze(text) for example in long_examples for text in texts
         )
     if expect["canary"]:
         canary = expect["canary"].casefold()

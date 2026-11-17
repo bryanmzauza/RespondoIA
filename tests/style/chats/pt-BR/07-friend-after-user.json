@@ -1,0 +1,42 @@
+{
+  "id": "pt-BR/07-friend-after-user",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Gui",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:00",
+      "kind": "text",
+      "text": "Oi, tudo bem?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:03",
+      "kind": "text",
+      "text": "tudo sim! vc vai no aniversário da Bia?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": true,
+      "final_period": false,
+      "emoji": true,
+      "abbreviation": true
+    },
+    "knowledge_value": null
+  }
+}

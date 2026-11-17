@@ -1,0 +1,43 @@
+{
+  "id": "en/05-family-lunch",
+  "language": "en",
+  "theme": "light",
+  "contact": "Mum",
+  "group": false,
+  "label": "family",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:40",
+      "kind": "text",
+      "text": "lunch here on sunday love?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:41",
+      "kind": "text",
+      "text": "doing the roast",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

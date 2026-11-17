@@ -1,0 +1,29 @@
+{
+  "id": "en/10-knowledge-missing",
+  "language": "en",
+  "theme": "light",
+  "contact": "Oliver",
+  "group": false,
+  "label": "client",
+  "knowledge": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:45",
+      "kind": "text",
+      "text": "Do you deliver to London? I live there.",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": null
+  }
+}

@@ -1,0 +1,50 @@
+[9/1/26, 9:00:00 AM] Claire: ZZ-OTHER-1 Can you send me the address again?
+[9/1/26, 9:03:00 AM] Jordan Price: Understood, I will update the order.
+[9/1/26, 2:03:00 PM] Claire: ZZ-OTHER-2 Lunch on Sunday?
+[9/1/26, 2:11:00 PM] Jordan Price: Thank you, have a lovely day.
+[9/1/26, 7:12:00 PM] Claire: ZZ-OTHER-3 Hey, how are you?
+[9/1/26, 7:13:00 PM] Jordan Price: I will send the details this afternoon.
+[9/2/26, 8:14:00 PM] Claire: ZZ-OTHER-4 What time works for you?
+[9/2/26, 8:17:00 PM] Jordan Price: Many thanks for the quick reply.
+[9/3/26, 6:18:00 AM] Claire: ZZ-OTHER-5 Are you open on the bank holiday?
+[9/3/26, 6:22:00 AM] Jordan Price: I will keep you posted.
+[9/3/26, 12:23:00 PM] Claire: ZZ-OTHER-6 What time works for you?
+[9/3/26, 12:30:00 PM] Jordan Price: Hi there, thanks for getting in touch.
+[9/3/26, 1:32:00 PM] Claire: ZZ-OTHER-7 Are you open on the bank holiday?
+[9/3/26, 1:39:00 PM] Jordan Price: Kind regards, and thank you again.
+[9/4/26, 7:40:00 PM] Claire: ZZ-OTHER-8 Did you see the news?
+[9/4/26, 7:45:00 PM] Jordan Price: Please let me know if you need anything else.
+[9/5/26, 6:45:00 AM] Claire: ZZ-OTHER-9 Hello, I would like to place an order.
+[9/5/26, 6:46:00 AM] Jordan Price: Hi there, I can confirm the order is ready.
+[9/5/26, 9:48:00 AM] Claire: ZZ-OTHER-10 Hello, I would like to place an order.
+[9/5/26, 9:54:00 AM] Jordan Price: Of course, happy to help.
+[9/6/26, 1:56:00 AM] Claire: ZZ-OTHER-11 Are you open on the bank holiday?
+[9/6/26, 1:59:00 AM] Jordan Price: Hi there, I hope you are well.
+[9/6/26, 6:02:00 PM] Claire: ZZ-OTHER-12 Did you see the news?
+[9/6/26, 6:03:00 PM] Jordan Price: Hi there, the item is back in stock.
+[9/6/26, 7:05:00 PM] Claire: ZZ-OTHER-13 Are you open on the bank holiday?
+[9/6/26, 7:12:00 PM] Jordan Price: Thank you for choosing us.
+[9/7/26, 1:12:00 PM] Claire: ZZ-OTHER-14 Can you send me the address again?
+[9/7/26, 1:18:00 PM] Jordan Price: Hi there, I will check availability and get back to you.
+[9/8/26, 8:21:00 AM] Claire: ZZ-OTHER-15 Hey, how are you?
+[9/8/26, 8:29:00 AM] Jordan Price: Hi there, your booking is confirmed.
+[9/9/26, 7:29:00 AM] Claire: ZZ-OTHER-16 Did you see the news?
+[9/9/26, 7:33:00 AM] Jordan Price: Thanks for letting me know.
+[9/10/26, 8:33:00 AM] Claire: ZZ-OTHER-17 What time works for you?
+[9/10/26, 8:41:00 AM] Jordan Price: Hi there, everything is ready for collection.
+[9/11/26, 1:43:00 AM] Claire: ZZ-OTHER-18 Are you open on the bank holiday?
+[9/11/26, 1:52:00 AM] Jordan Price: Certainly, I will arrange that.
+[9/12/26, 2:54:00 AM] Claire: ZZ-OTHER-19 Did you get home all right?
+[9/12/26, 2:56:00 AM] Jordan Price: Best wishes, and speak soon.
+[9/13/26, 6:58:00 AM] Claire: ZZ-OTHER-20 Hello, I would like to place an order.
+[9/13/26, 6:59:00 AM] Jordan Price: Thanks, that works for us.
+[9/13/26, 10:02:00 AM] Claire: ZZ-OTHER-21 What time works for you?
+[9/13/26, 10:08:00 AM] Jordan Price: Hi there, apologies for the delay.
+[9/14/26, 4:10:00 PM] Claire: ZZ-OTHER-22 Did you see the news?
+[9/14/26, 4:16:00 PM] Jordan Price: Hi there, we deliver to your area.
+[9/15/26, 10:18:00 PM] Claire: ZZ-OTHER-23 Thanks for the help!
+[9/15/26, 10:20:00 PM] Jordan Price: Thanks for your message. I will reply shortly.
+[9/16/26, 8:22:00 PM] Claire: ZZ-OTHER-24 Are you open on the bank holiday?
+[9/16/26, 8:27:00 PM] Jordan Price: Noted, thank you.
+[9/17/26, 10:28:00 PM] Claire: ZZ-OTHER-25 Are we still on for later?
+[9/17/26, 10:31:00 PM] Jordan Price: Thank you for your patience.

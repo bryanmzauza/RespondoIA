@@ -1,0 +1,43 @@
+{
+  "id": "pt-BR/02-friend-news",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Lari",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:15",
+      "kind": "text",
+      "text": "PASSEI NA PROVA!!",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:15",
+      "kind": "text",
+      "text": "nem acredito",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": true,
+      "final_period": false,
+      "emoji": true,
+      "abbreviation": true
+    },
+    "knowledge_value": null
+  }
+}

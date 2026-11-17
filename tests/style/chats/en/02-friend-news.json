@@ -1,0 +1,43 @@
+{
+  "id": "en/02-friend-news",
+  "language": "en",
+  "theme": "light",
+  "contact": "Lucy",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:15",
+      "kind": "text",
+      "text": "I PASSED THE EXAM!!",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "21:15",
+      "kind": "text",
+      "text": "can't believe it",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

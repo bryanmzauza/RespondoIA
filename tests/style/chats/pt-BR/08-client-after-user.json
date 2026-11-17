@@ -1,0 +1,42 @@
+{
+  "id": "pt-BR/08-client-after-user",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Fernanda",
+  "group": false,
+  "label": "client",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:00",
+      "kind": "text",
+      "text": "Olá, recebi sua mensagem.",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:04",
+      "kind": "text",
+      "text": "Ótimo. Consegue me mandar o orçamento ainda hoje?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

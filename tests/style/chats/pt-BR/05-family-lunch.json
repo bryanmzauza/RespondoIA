@@ -1,0 +1,43 @@
+{
+  "id": "pt-BR/05-family-lunch",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Mãe",
+  "group": false,
+  "label": "family",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:40",
+      "kind": "text",
+      "text": "filho, vem almoçar domingo?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:41",
+      "kind": "text",
+      "text": "vou fazer aquela lasanha",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1,
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": true,
+      "final_period": false,
+      "emoji": true,
+      "abbreviation": true
+    },
+    "knowledge_value": null
+  }
+}

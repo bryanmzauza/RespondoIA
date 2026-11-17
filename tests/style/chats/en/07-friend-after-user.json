@@ -1,0 +1,42 @@
+{
+  "id": "en/07-friend-after-user",
+  "language": "en",
+  "theme": "light",
+  "contact": "Sam",
+  "group": false,
+  "label": "friend",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "18:00",
+      "kind": "text",
+      "text": "Hi, how are you?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "18:03",
+      "kind": "text",
+      "text": "all good! coming to Beth's birthday?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "pt-BR/06-no-label",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Portaria",
+  "group": false,
+  "label": null,
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:30",
+      "kind": "text",
+      "text": "Bom dia, chegou uma encomenda no seu nome. Pode retirar hoje?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": null
+  }
+}

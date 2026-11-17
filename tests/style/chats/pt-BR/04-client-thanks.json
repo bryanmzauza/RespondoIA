@@ -1,0 +1,34 @@
+{
+  "id": "pt-BR/04-client-thanks",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Sr. Paulo",
+  "group": false,
+  "label": "client",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "10:05",
+      "kind": "text",
+      "text": "Recebi o pedido, ficou ótimo. Obrigado!",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

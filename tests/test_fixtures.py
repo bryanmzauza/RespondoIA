@@ -110,3 +110,45 @@ def test_sensitive_scenario_lists_its_values():
         assert len(values) >= 4
         text = " ".join(m["text"] for m in chat["messages"])
         assert all(value in text for value in values)
+
+
+STYLE = Path(__file__).parent / "style"
+EXPORTS = Path(__file__).parent / "exports"
+
+
+def test_style_chats_follow_the_schema():
+    chats = [json.loads(p.read_text(encoding="utf-8")) for p in (STYLE / "chats").glob("*/*.json")]
+    assert len(chats) == 20
+    for chat in chats:
+        assert chat["label"] in (None, "client", "supplier", "friend", "family")
+        expect = chat["expect"]
+        assert {"pending", "needs_confirm", "style", "knowledge_value"} <= set(expect)
+        for index in expect["pending"]:
+            assert chat["messages"][index - 1]["author"] == "contact"
+        if expect["knowledge_value"]:
+            assert chat["knowledge"]
+
+
+def test_persona_exports_parse_and_have_enough_messages():
+    from respondoia.style.parser import parse_export
+
+    personas = json.loads((STYLE / "personas.json").read_text(encoding="utf-8"))
+    for persona in personas.values():
+        for name in persona["label_files"].values():
+            chat = parse_export((EXPORTS / name).read_bytes(), name)
+            assert dict(chat.authors)[persona["author"]] >= 25, name
+
+
+def test_persona_messages_make_clean_examples():
+    import re
+
+    personas = json.loads((STYLE / "personas.json").read_text(encoding="utf-8"))
+    for persona in personas.values():
+        for name in persona["label_files"].values():
+            for line in (EXPORTS / name).read_text(encoding="utf-8").splitlines():
+                if f"{persona['author']}: " in line:
+                    text = line.split(f"{persona['author']}: ", 1)[1]
+                    assert not re.search(r"\d", text), line
+        for reference in persona["reference"]:
+            assert any(reference in (EXPORTS / n).read_text(encoding="utf-8")
+                       for n in persona["label_files"].values())

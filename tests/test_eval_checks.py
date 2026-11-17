@@ -153,3 +153,38 @@ def test_sensitive_hidden():
     leaked = reply_for(chat, ("Seu CPF 529.982.247-25 está ok", "ok", "certo"))
     assert check_case(chat, leaked, 3)["sensitive_hidden"] is False
     assert "sensitive_hidden" not in check_case(SHORT, reply_for(SHORT, GOOD), 3)
+
+
+STYLE_CHATS = Path(__file__).parent / "style" / "chats"
+
+
+def style_chat(chat_id):
+    return json.loads((STYLE_CHATS / f"{chat_id}.json").read_text(encoding="utf-8"))
+
+
+def test_style_match():
+    chat = style_chat("pt-BR/01-friend-plan")
+    casual = ("bora sim, vc me confirma qnd 😅", "fechou, vc pode contar cmg", "blz, conta cmg 🙏")
+    formal = ("Claro, pode contar comigo.", "Combinado, estarei lá.", "Sim, confirmo presença.")
+    assert check_case(chat, reply_for(chat, casual), 3)["style_match"]
+    assert not check_case(chat, reply_for(chat, formal), 3)["style_match"]
+    assert "style_match" not in check_case(SHORT, reply_for(SHORT, GOOD), 3)
+
+
+def test_knowledge_used_and_numbers_from_knowledge():
+    chat = style_chat("pt-BR/09-knowledge-price")
+    knowledge = "- Pão de fermentação natural: R$ 18"
+    stated = ("Custa R$ 18.", "Sai por R$18, quer reservar?", "Bom dia! O pão está R$ 18.")
+    checks = check_case(chat, reply_for(chat, stated), 3, knowledge=knowledge)
+    assert checks["knowledge_used"] and checks["no_invented_numbers"]
+    vague = ("Vou ver o preço.", "Te confirmo já.", "Custa R$ 18.")
+    assert not check_case(chat, reply_for(chat, vague), 3, knowledge=knowledge)["knowledge_used"]
+    assert not check_case(chat, reply_for(chat, stated), 3)["no_invented_numbers"]
+
+
+def test_no_example_copied():
+    examples = ("fechado então, até amanhã", "ok")
+    copied = ("Fechado então, até amanhã!", "bora", "blz")
+    assert not check_case(SHORT, reply_for(SHORT, copied), 3, examples=examples)["no_example_copied"]
+    assert check_case(SHORT, reply_for(SHORT, GOOD), 3, examples=examples)["no_example_copied"]
+    assert "no_example_copied" not in check_case(SHORT, reply_for(SHORT, GOOD), 3)

@@ -1,0 +1,29 @@
+{
+  "id": "en/09-knowledge-price",
+  "language": "en",
+  "theme": "light",
+  "contact": "Rachel",
+  "group": false,
+  "label": "client",
+  "knowledge": true,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:10",
+      "kind": "text",
+      "text": "Morning! How much is the sourdough loaf?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": "£6"
+  }
+}

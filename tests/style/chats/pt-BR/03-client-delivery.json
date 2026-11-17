@@ -1,0 +1,34 @@
+{
+  "id": "pt-BR/03-client-delivery",
+  "language": "pt-BR",
+  "theme": "light",
+  "contact": "Cláudia",
+  "group": false,
+  "label": "client",
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:20",
+      "kind": "text",
+      "text": "Boa tarde, vocês fazem entrega no sábado?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": {
+      "lowercase_start": false,
+      "final_period": true,
+      "emoji": false,
+      "abbreviation": false
+    },
+    "knowledge_value": null
+  }
+}

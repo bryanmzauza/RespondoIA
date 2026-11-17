@@ -1,0 +1,29 @@
+{
+  "id": "en/06-no-label",
+  "language": "en",
+  "theme": "light",
+  "contact": "Building office",
+  "group": false,
+  "label": null,
+  "knowledge": false,
+  "messages": [
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "08:30",
+      "kind": "text",
+      "text": "Good morning, a parcel arrived for you. Can you collect it today?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      1
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "style": null,
+    "knowledge_value": null
+  }
+}

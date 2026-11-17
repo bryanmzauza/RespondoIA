@@ -1,0 +1,34 @@
+{
+  "pt-BR": {
+    "author": "Rafa Lima",
+    "label_files": {
+      "friend": "persona-pt-friend.txt",
+      "client": "persona-pt-client.txt",
+      "family": "persona-pt-family.txt"
+    },
+    "reference": [
+      "bora sim, que horas vc chega",
+      "kkkk nem me fala",
+      "tmj, valeu demais",
+      "tá bom, combinado",
+      "Consigo sim, te confirmo ainda hoje.",
+      "Perfeito, fica combinado então."
+    ]
+  },
+  "en": {
+    "author": "Jordan Price",
+    "label_files": {
+      "friend": "persona-en-friend.txt",
+      "client": "persona-en-client.txt",
+      "family": "persona-en-family.txt"
+    },
+    "reference": [
+      "Sounds good. See you there.",
+      "No worries, take your time.",
+      "Cheers for the help today.",
+      "Cheers, speak soon.",
+      "Hi there, thanks for getting in touch.",
+      "Of course, happy to help."
+    ]
+  }
+}
