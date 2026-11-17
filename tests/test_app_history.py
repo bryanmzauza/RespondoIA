@@ -225,6 +225,33 @@ def test_startup_cleans_private_contacts_and_old_messages(tmp_path):
     assert rig.history.calls == [("startup", ("Bia",))]
 
 
+def test_memory_work_runs_apart_from_loads_and_deletes(tmp_path):
+    # A first memory can take minutes of calls; loads and deletes must not wait behind it.
+    worker, panel, tray, hotkey = (
+        FakeHistoryAwareWorker(),
+        FakePanel(),
+        FakeTrayWithLoading(),
+        FakeHotkey(),
+    )
+    loads, memory = FakeHistoryWorker(), FakeHistoryWorker()
+    controller = Controller(
+        worker,
+        panel,
+        tray,
+        hotkey,
+        ON,
+        config_file=tmp_path / "config.toml",
+        history_worker=loads,
+        memory_worker=memory,
+        guard=FakeGuard(),
+    )
+    worker.history_grew.emit(7)
+    controller._history = READY
+    controller.open_memory()
+    assert memory.calls == [("update_memory", 7), ("load_memory", 7)] and loads.calls == []
+    assert not hasattr(app_module.HistoryWorker, "update_memory")
+
+
 # The worker itself, with a real database and the fake chat of the loader tests.
 
 

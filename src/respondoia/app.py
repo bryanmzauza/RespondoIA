@@ -351,8 +351,6 @@ class HistoryWorker(QObject):
     """Runs the loader and the memory updates off the hotkey's thread."""
 
     loaded = Signal(object)  # LoadOutcome
-    memory_updated = Signal(int)  # contact id
-    memory_ready = Signal(int, str)  # contact id, memory text
 
     def __init__(
         self,
@@ -434,11 +432,6 @@ class HistoryWorker(QObject):
         )
         return LoadOutcome(purpose, report.reason, len(report.lines), history, style_added)
 
-    @Slot(int)
-    def update_memory(self, contact_id: int) -> None:
-        if self._history.update_memory_if_due(contact_id):
-            self.memory_updated.emit(contact_id)
-
     @Slot(object)
     def startup(self, private_contacts) -> None:
         """Nothing stays from a contact made private, even by hand in the config file."""
@@ -457,6 +450,24 @@ class HistoryWorker(QObject):
     @Slot(str, object, bool)
     def set_contact_history(self, title: str, contact_id, on: bool) -> None:
         self._history.set_contact_history(title, contact_id, on)
+
+
+
+class MemoryWorker(QObject):
+    """The contact memory on its own thread: a first memory can take minutes of calls, and
+    loads and deletes must not wait behind it."""
+
+    memory_updated = Signal(int)  # contact id
+    memory_ready = Signal(int, str)  # contact id, memory text
+
+    def __init__(self, history: HistoryService) -> None:
+        super().__init__()
+        self._history = history
+
+    @Slot(int)
+    def update_memory(self, contact_id: int) -> None:
+        if self._history.update_memory_if_due(contact_id):
+            self.memory_updated.emit(contact_id)
 
     @Slot(int)
     def load_memory(self, contact_id: int) -> None:
@@ -510,6 +521,7 @@ class Controller(QObject):
         style_worker=None,
         history_worker=None,
         guard=None,
+        memory_worker=None,
     ):
         super().__init__()
         self._style_worker = style_worker
@@ -566,17 +578,18 @@ class Controller(QObject):
             style_worker.refreshed.connect(self._on_refreshed)
             style_worker.failed.connect(self._on_style_failed)
         if history_worker is not None:
+            memory = memory_worker or history_worker
             self.request_history_load.connect(history_worker.load)
-            self.request_memory_update.connect(history_worker.update_memory)
+            self.request_memory_update.connect(memory.update_memory)
             self.request_history_startup.connect(history_worker.startup)
             self.request_forget_contact_history.connect(history_worker.forget_contact)
             self.request_forget_all_history.connect(history_worker.forget_all)
             self.request_contact_history.connect(history_worker.set_contact_history)
-            self.request_load_memory.connect(history_worker.load_memory)
-            self.request_save_memory.connect(history_worker.save_memory)
+            self.request_load_memory.connect(memory.load_memory)
+            self.request_save_memory.connect(memory.save_memory)
             self.request_confirm.connect(worker.confirm_identity)
             history_worker.loaded.connect(self._on_loaded)
-            history_worker.memory_ready.connect(self._on_memory_ready)
+            memory.memory_ready.connect(self._on_memory_ready)
             worker.history_changed.connect(self._on_history_changed)
             worker.history_grew.connect(self.request_memory_update)
             self.request_drop_history.connect(worker.drop_history)
@@ -1141,6 +1154,10 @@ def run(argv: Sequence[str]) -> int:
     )
     history_worker.moveToThread(history_thread)
     history_thread.start()
+    memory_thread = QThread()
+    memory_worker = MemoryWorker(history)
+    memory_worker.moveToThread(memory_thread)
+    memory_thread.start()
     controller = Controller(
         worker,
         panel,
@@ -1151,6 +1168,7 @@ def run(argv: Sequence[str]) -> int:
         style_worker=style_worker,
         history_worker=history_worker,
         guard=guard,
+        memory_worker=memory_worker,
     )
     tray.quit_requested.connect(app.quit)
 
@@ -1165,7 +1183,7 @@ def run(argv: Sequence[str]) -> int:
     code = app.exec()
     hotkey.unregister()
     guard.disarm()
-    for running in (thread, style_thread, history_thread):
+    for running in (thread, style_thread, history_thread, memory_thread):
         running.quit()
         if not running.wait(3000):
             # A model call is still running. Stop the thread instead of destroying it
