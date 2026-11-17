@@ -221,6 +221,47 @@ def test_status_reports_a_gap(db):
         )
 
 
+WORD = "zzqwertyword"
+
+
+def index_bytes(conn) -> bytes:
+    return b"".join(row[0] or b"" for row in conn.execute("SELECT block FROM history_fts_data"))
+
+
+def stored_word(conn, name="Ana", day="2026-11-10"):
+    cid = contact(conn, name)
+    save(conn, cid, msgs(4, word=WORD, day=day))
+    assert WORD.encode() in index_bytes(conn)
+    return cid
+
+
+def test_deleted_words_leave_the_search_index(db):
+    paths = {
+        "contact": lambda conn, cid: store.forget_contact(conn, [cid]),
+        "all": lambda conn, cid: store.forget_all(conn),
+        "cascade": lambda conn, cid: contacts.forget(conn, "Ana"),
+        "retention": lambda conn, cid: store.apply_retention(conn, "2026-12-01"),
+    }
+    for name, delete in paths.items():
+        with db.transaction() as conn:
+            cid = stored_word(conn)
+        with db.transaction() as conn:
+            delete(conn, cid)
+        # The index writes a delete when the transaction commits.
+        with db.transaction() as conn:
+            assert WORD.encode() not in index_bytes(conn), name
+
+
+def test_row_ids_are_never_reused(db):
+    with db.transaction() as conn:
+        cid = contact(conn)
+        save(conn, cid, msgs(5))
+        highest = max(store.segments(conn, cid)[0].ids)
+        store.forget_contact(conn, [cid])
+        save(conn, cid, msgs(5, start=20))
+        assert min(store.segments(conn, cid)[0].ids) > highest
+
+
 def test_memory_round_trip_and_attempt(db):
     with db.transaction() as conn:
         cid = contact(conn)

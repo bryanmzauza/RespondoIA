@@ -108,7 +108,7 @@ MIGRATIONS: tuple[str, ...] = (
     ALTER TABLE contact ADD COLUMN history INTEGER;
     ALTER TABLE contact ADD COLUMN avatar TEXT NOT NULL DEFAULT '';
     CREATE TABLE history_message (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         contact_id INTEGER NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
         segment INTEGER NOT NULL,
         ord INTEGER NOT NULL,
@@ -128,6 +128,8 @@ MIGRATIONS: tuple[str, ...] = (
         text, quote, content='history_message', content_rowid='id',
         tokenize='unicode61 remove_diacritics 2'
     );
+    -- Deleted messages leave the index at once, not at the next merge of its segments.
+    INSERT INTO history_fts(history_fts, rank) VALUES('secure-delete', 1);
     CREATE TRIGGER history_ai AFTER INSERT ON history_message BEGIN
         INSERT INTO history_fts(rowid, text, quote) VALUES (new.id, new.text, new.quote);
     END;
