@@ -73,6 +73,7 @@ def build_local(
     messages: Sequence[OwnMessage],
     traits: StyleTraits | None,
     now: str,
+    names: frozenset[str] | set[str] = frozenset(),
 ) -> StyleProfile:
     """Counts and examples from the messages, keeping the traits the model last wrote."""
     by_label: dict[str, list[OwnMessage]] = {}
@@ -84,9 +85,9 @@ def build_local(
         messages=len(messages),
         stats=stats(messages),
         traits=traits,
-        examples=pick_examples(messages, EXAMPLES),
+        examples=pick_examples(messages, EXAMPLES, names=names),
         examples_by_label={
-            label: pick_examples(items, EXAMPLES)
+            label: pick_examples(items, EXAMPLES, names=names)
             for label, items in by_label.items()
             if len(items) >= LABEL_MIN
         },

@@ -139,7 +139,10 @@ class StyleService:
         own = store.newest(kept)
         skipped = len(everything) - len(kept)
 
+        others = [name for name, _ in chat.authors if name != author]
+
         def run(conn):
+            contacts.remember_names(conn, others)
             added = store.add_samples(conn, own, None, self._stamp())
             for lang in {m.language for m in own}:
                 self._rebuild(conn, lang)
@@ -162,7 +165,8 @@ class StyleService:
 
         def save(conn):
             current = store.samples(conn, language)
-            profile = build_local(language, current, result.value, self._stamp())
+            names = contacts.known_names(conn)
+            profile = build_local(language, current, result.value, self._stamp(), names)
             store.save_profile(conn, profile, extracted=True)
             return profile
 
@@ -201,7 +205,9 @@ class StyleService:
         return self._safely("overview", run, StyleOverview(()))
 
     def save_manual(self, language: str, text: str) -> None:
-        self._safely("manual", lambda conn: store.save_manual(conn, language, text), None)
+        self._safely(
+            "manual", lambda conn: store.save_manual(conn, language, text, self._stamp()), None
+        )
 
     def exclude_example(self, language: str, text: str) -> None:
         def run(conn):
@@ -229,7 +235,9 @@ class StyleService:
         if len(messages) < LOCAL_MIN and loaded is None:
             return
         traits = loaded[0].traits if loaded and keep_traits else None
-        store.save_profile(conn, build_local(language, messages, traits, self._stamp()), False)
+        names = contacts.known_names(conn)
+        profile = build_local(language, messages, traits, self._stamp(), names)
+        store.save_profile(conn, profile, False)
 
     def _stamp(self) -> str:
         return self._now().isoformat(timespec="seconds")

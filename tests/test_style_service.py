@@ -304,3 +304,26 @@ def test_forget_also_drops_imports_from_that_person_and_the_traits(service, db):
     service.forget("Marina Duarte")
     assert "ZZ-IMPORTED" not in db_dump(db)
     assert service.overview().languages[0].profile.traits is None
+
+
+def test_examples_never_hold_a_known_name(service):
+    lines = [user(f"chego aí já, ana {w}", f"09:{n:02d}") for n, w in enumerate(WORDS)]
+    lines += [user("vc vem hoje? tô aqui em casa sim", "10:00")]
+    service.learn("Ana Souza", lines, False)
+    chat = ExportChat(
+        (
+            ExportMessage("2026-11-16", "09:00", "Marcos", "oi, tudo bem com vc?", "text"),
+            ExportMessage("2026-11-16", "09:01", "Rafa", "fala marcos, tudo sim aqui", "text"),
+        ),
+        (("Marcos", 1), ("Rafa", 1)),
+    )
+    service.import_export(chat, "Rafa", None)
+    examples = service.overview().languages[0].profile.examples
+    assert examples == ["vc vem hoje? tô aqui em casa sim"]
+
+
+def test_notes_are_kept_before_the_profile_exists(service):
+    service.learn("Marina Duarte", PT[:3], False)
+    service.save_manual("pt", "nunca uso prezado")
+    assert service.overview().languages[0].manual == "nunca uso prezado"
+    assert "nunca uso prezado" in service.context("Marina Duarte", "pt", False).style

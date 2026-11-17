@@ -2,6 +2,7 @@
 
 import logging
 import os
+import subprocess
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import replace
@@ -31,6 +32,7 @@ from respondoia.llm import (
     SuggestRequest,
     SuggestResult,
 )
+from respondoia.privacy import is_private
 from respondoia.session import (
     NO_STYLE,
     ChooseResult,
@@ -194,9 +196,12 @@ class StyleWorker(QObject):
     refreshed = Signal(str)  # language
     failed = Signal(str)  # error code, e.g. "export_format" or "rate_limit"
 
-    def __init__(self, service: StyleService) -> None:
+    def __init__(
+        self, service: StyleService, private_contacts: Callable[[], Sequence[str]] = tuple
+    ) -> None:
         super().__init__()
         self._service = service
+        self._private = private_contacts
         self._export: ExportChat | None = None  # read and waiting for the user's name
 
     @Slot()
@@ -220,6 +225,11 @@ class StyleWorker(QObject):
     def import_chosen(self, author: str, label: str | None) -> None:
         chat, self._export = self._export, None
         if chat is None:
+            return
+        # Nothing is kept from a chat with a private contact.
+        others = [name for name, _ in chat.authors if name != author]
+        if any(is_private(name, self._private()) for name in others):
+            self.failed.emit("export_private")
             return
         self.imported.emit(self._service.import_export(chat, author, label))
         self.load()
@@ -481,8 +491,15 @@ class Controller(QObject):
     def open_knowledge(self) -> None:
         """Create the file from the translated template the first time, then open it."""
         path = knowledge_path()
-        create_knowledge(path, i18n.t("knowledge.template"))
-        os.startfile(str(path))
+        try:
+            create_knowledge(path, i18n.t("knowledge.template"))
+        except OSError:
+            self._tray.notify("error.save_failed")
+            return
+        try:
+            os.startfile(str(path))
+        except OSError:  # no application is associated with .md files
+            subprocess.Popen(["notepad.exe", str(path)])
 
     def _on_import_requested(self, path: str) -> None:
         self._style_window.show_busy("style.importing")
@@ -756,7 +773,7 @@ def run(argv: Sequence[str]) -> int:
     worker.moveToThread(thread)
     thread.start()
     style_thread = QThread()
-    style_worker = StyleWorker(style)
+    style_worker = StyleWorker(style, lambda: worker.settings.private_contacts)
     style_worker.moveToThread(style_thread)
     style_thread.start()
     controller = Controller(

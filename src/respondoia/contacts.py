@@ -4,9 +4,11 @@ A contact is found by its displayed name. Two contacts with the same name cannot
 told apart from the title alone, so a lookup only succeeds on a unique match.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from respondoia.privacy import normalize_name
+from respondoia.style.sampler import name_hashes
 
 _COLUMNS = "id, name, is_group, label, label_source, language"
 
@@ -28,6 +30,17 @@ def _rows(conn, title: str) -> list[Contact]:
     return [Contact(r[0], r[1], bool(r[2]), r[3], r[4], r[5]) for r in rows]
 
 
+def remember_names(conn, names: Iterable[str]) -> None:
+    """Keep hashes of people's names, so their names never become style examples."""
+    for name in names:
+        for token in name_hashes(name):
+            conn.execute("INSERT OR IGNORE INTO name_token (hash) VALUES (?)", (token,))
+
+
+def known_names(conn) -> set[str]:
+    return {r[0] for r in conn.execute("SELECT hash FROM name_token").fetchall()}
+
+
 def find(conn, title: str) -> Contact | None:
     """Exactly one match, else None."""
     rows = _rows(conn, title)
@@ -37,6 +50,7 @@ def find(conn, title: str) -> Contact | None:
 def see(conn, title: str, is_group: bool, language: str | None, now: str) -> Contact | None:
     """Create the record the first time, update it after. None when the name is ambiguous."""
     rows = _rows(conn, title)
+    remember_names(conn, [title])
     if not rows:
         conn.execute(
             "INSERT INTO contact (name, name_key, is_group, language, first_seen, last_seen)"

@@ -182,3 +182,12 @@ def test_examples_skip_names_places_prices_and_any_digit():
 def test_hash_ignores_punctuation_case_and_emoji():
     assert text_hash("Consigo sim, sexta de manhã 😅") == text_hash("consigo sim sexta de manhã!")
     assert text_hash("consigo sim") != text_hash("consigo não")
+
+
+def test_examples_skip_known_names_and_places():
+    from respondoia.style.sampler import name_hashes
+
+    names = name_hashes("Ana Souza") | name_hashes("Marcos")
+    texts = ["passa na casa da ana amanha cedo", "Tudo certo! Marcos leva o bolo",
+             "manda o endereço da rua das flores", "beleza, combinado assim"]
+    assert pick_examples(as_messages(texts), names=names) == ["beleza, combinado assim"]

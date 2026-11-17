@@ -1005,3 +1005,60 @@ def test_autostart_error_is_reported_after_saving(rig, monkeypatch):
     monkeypatch.setattr(app_module.autostart, "set_enabled", broken)
     assert rig.controller.apply_settings(replace(Settings(), start_with_windows=True)) is True
     assert ("notify", "error.save_failed", {}) in rig.tray.calls
+
+
+class RecordingService:
+    def __init__(self):
+        self.imports = []
+
+    def import_export(self, chat, author, label):
+        self.imports.append(author)
+
+    def overview(self):
+        from respondoia.style.service import StyleOverview
+
+        return StyleOverview(())
+
+
+def test_an_import_with_a_private_contact_is_refused(qapp, tmp_path):
+    from respondoia.app import StyleWorker
+
+    path = tmp_path / "chat.txt"
+    path.write_text(
+        "16/11/2026 09:00 - Marina Duarte: oi\n16/11/2026 09:01 - Rafa: oi, tudo bem\n",
+        encoding="utf-8",
+    )
+    service = RecordingService()
+    worker = StyleWorker(service, lambda: ("marina  duarte",))
+    failures = []
+    worker.failed.connect(failures.append)
+    worker.import_file(str(path))
+    worker.import_chosen("Rafa", None)
+    assert service.imports == [] and failures == ["export_private"]
+    worker.import_file(str(path))
+    worker.import_chosen("Marina Duarte", None)  # the user is the private name: nothing to refuse
+    assert service.imports == ["Marina Duarte"]
+
+
+def test_knowledge_opens_in_notepad_without_a_default_app(rig, tmp_path, monkeypatch):
+    path = tmp_path / "knowledge.md"
+    started = []
+
+    def no_app(target):
+        raise OSError("no application is associated")
+
+    monkeypatch.setattr(app_module, "knowledge_path", lambda: path)
+    monkeypatch.setattr(app_module.os, "startfile", no_app, raising=False)
+    monkeypatch.setattr(app_module.subprocess, "Popen", lambda args: started.append(args))
+    rig.controller.open_knowledge()
+    assert started == [["notepad.exe", str(path)]]
+
+
+def test_knowledge_file_that_cannot_be_created_is_reported(rig, tmp_path, monkeypatch):
+    def broken(path, template):
+        raise OSError("read-only")
+
+    monkeypatch.setattr(app_module, "knowledge_path", lambda: tmp_path / "knowledge.md")
+    monkeypatch.setattr(app_module, "create_knowledge", broken)
+    rig.controller.open_knowledge()
+    assert rig.tray.notices()[-1] == "error.save_failed"

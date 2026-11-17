@@ -105,5 +105,6 @@ def test_reset_clears_style_and_keeps_labels(db):
         store.remember_pasted(conn, "x", NOW)
         store.reset(conn)
         assert store.samples(conn, "pt") == [] and store.load_profile(conn, "pt") is None
-        assert store.pasted_hashes(conn, NOW) == set()
+        # What the app pasted stays known: it must not be learned after a fresh start.
+        assert store.pasted_hashes(conn, NOW) == {text_hash("x")}
         assert contacts.find(conn, "Marina Duarte").label == "client"

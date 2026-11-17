@@ -566,5 +566,9 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <source>error.save_failed</source>
         <translation>Não foi possível salvar as configurações.</translation>
     </message>
+    <message>
+        <source>error.export_private</source>
+        <translation>Esta conversa é com um contato privado, então nada dela é guardado.</translation>
+    </message>
 </context>
 </TS>

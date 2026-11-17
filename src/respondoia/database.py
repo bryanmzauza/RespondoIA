@@ -98,6 +98,9 @@ MIGRATIONS: tuple[str, ...] = (
         text_hash TEXT PRIMARY KEY,
         at TEXT NOT NULL
     );
+    CREATE TABLE name_token (
+        hash TEXT PRIMARY KEY
+    );
     """,
 )
 

@@ -236,6 +236,28 @@ def stats(messages: Sequence[OwnMessage]) -> StyleStats:
     )
 
 
+def _token_hash(word: str) -> str:
+    return hashlib.sha256(word.encode("utf-8")).hexdigest()
+
+
+def name_hashes(name: str) -> set[str]:
+    """Hashes of the words of a person's name, to keep them out of examples."""
+    return {_token_hash(w) for w in _WORD.findall(normalize_name(name)) if len(w) >= 3}
+
+
+# Words that introduce an address. Content analysis vocabulary, not interface text.
+_PLACES = _words(
+    "rua avenida av travessa alameda praça rodovia estrada street road avenue lane st rd"
+)
+
+
+def _names_a_person_or_place(text: str, names: frozenset[str] | set[str]) -> bool:
+    words = _WORD.findall(normalize_name(text))
+    return any(w in _PLACES for w in words) or any(
+        len(w) >= 3 and _token_hash(w) in names for w in words
+    )
+
+
 def _has_inner_capital(text: str) -> bool:
     """A capitalised word that does not start a sentence: likely a name or a place."""
     for match in _WORD.finditer(text):
@@ -248,7 +270,7 @@ def _has_inner_capital(text: str) -> bool:
     return False
 
 
-def _example_ok(text: str) -> bool:
+def _example_ok(text: str, names: frozenset[str] | set[str] = frozenset()) -> bool:
     """Examples go with every request, to every contact: no number, price, name or link."""
     return (
         8 <= len(text) <= 160
@@ -258,11 +280,15 @@ def _example_ok(text: str) -> bool:
         and not _URL.search(text)
         and "@" not in text
         and not _has_inner_capital(text)
+        and not _names_a_person_or_place(text, names)
     )
 
 
 def pick_examples(
-    messages: Sequence[OwnMessage], count: int = 12, excluded: set[str] = frozenset()
+    messages: Sequence[OwnMessage],
+    count: int = 12,
+    excluded: set[str] = frozenset(),
+    names: frozenset[str] | set[str] = frozenset(),
 ) -> list[str]:
     """Clean examples, spread across chats. They go to other contacts, so no data."""
     seen = {normalize_name(e) for e in excluded}
@@ -271,7 +297,7 @@ def pick_examples(
         queue = []
         for message in items:
             key = normalize_name(message.text)
-            if key not in seen and _example_ok(message.text):
+            if key not in seen and _example_ok(message.text, names):
                 seen.add(key)
                 queue.append(message.text)
         queues.append(queue)

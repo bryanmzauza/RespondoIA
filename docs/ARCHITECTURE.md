@@ -48,13 +48,18 @@ no message could be read, and the user is told.
 
 The style profile is built from the user's own messages only: the lines the app
 reads on screen at each hotkey press, and exported chats the user imports. Lines
-from other people, quotes, forwarded messages and link previews are dropped
-locally, and what is kept is masked before it is stored. Text the app pasted is
-recognised by a hash and not learned back.
+from other people and quotes are dropped locally. On screen, a bubble that holds
+more than a single text (a forwarded message, a link preview or a card, as far
+as the structure shows) is not learned; in exports, media, attachments, contact
+cards and locations are left out. What is kept is masked before it is stored.
+Text the app pasted is recognised by a hash and not learned back. Nothing is
+kept from a chat with a private contact.
 
 Counts (length, capitalisation, punctuation, emoji, abbreviations) and examples
-are worked out locally. The model only describes what cannot be counted, from a
-sample of the user's messages, at most once a day per language. There is one
+are worked out locally. Examples leave out numbers, prices, links and the names
+of people the app has seen. The model only describes what cannot be counted,
+from a sample of the user's messages: on its own at most once a day per
+language, or when the user asks for an update. There is one
 profile per language, with a variation per contact label (client, supplier,
 friend, family). The user's own notes about their style take precedence.
 

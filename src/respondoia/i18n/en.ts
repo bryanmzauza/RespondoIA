@@ -566,5 +566,9 @@ Suggestions may quote anything written here. Only include what you would tell an
         <source>error.save_failed</source>
         <translation>Could not save the settings.</translation>
     </message>
+    <message>
+        <source>error.export_private</source>
+        <translation>This chat is with a private contact, so nothing from it is kept.</translation>
+    </message>
 </context>
 </TS>

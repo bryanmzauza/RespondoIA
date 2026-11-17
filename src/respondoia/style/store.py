@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from respondoia.style.profile import EXTRACT_MIN, StyleProfile
-from respondoia.style.sampler import OwnMessage, import_key, text_hash
+from respondoia.style.sampler import OwnMessage, StyleStats, import_key, text_hash
 
 POOL_LIMIT = 500  # per language
 PASTED_DAYS = 365
@@ -127,8 +127,16 @@ def load_profile(conn, language: str) -> tuple[StyleProfile, str] | None:
     return StyleProfile.model_validate_json(row[0]), row[1]
 
 
-def save_manual(conn, language: str, text: str) -> None:
-    conn.execute("UPDATE style_profile SET manual = ? WHERE language = ?", (text.strip(), language))
+def save_manual(conn, language: str, text: str, now: str = "") -> None:
+    """Keep the notes even before a profile exists: an empty one is created for them."""
+    empty = StyleProfile(
+        language=language, messages=0, stats=StyleStats(), examples=[], updated_at=now
+    )
+    conn.execute(
+        "INSERT INTO style_profile (language, data, manual) VALUES (?, ?, ?)"
+        " ON CONFLICT (language) DO UPDATE SET manual = excluded.manual",
+        (language, empty.model_dump_json(), text.strip()),
+    )
 
 
 def extraction_due(conn, language: str, now: datetime) -> bool:
@@ -172,5 +180,6 @@ def pasted_hashes(conn, now: datetime) -> set[str]:
 
 def reset(conn) -> None:
     """Forget the learned style. Contacts and their labels stay."""
-    for table in ("style_profile", "style_sample", "pasted"):
+    # The pasted hashes stay: what the app wrote must not come back as the user's style.
+    for table in ("style_profile", "style_sample"):
         conn.execute(f"DELETE FROM {table}")

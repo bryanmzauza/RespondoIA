@@ -114,3 +114,13 @@ def test_auto_language_follows_windows_not_the_terminal():
 
     plain = run(None)
     assert plain and run("en_US.UTF-8") == plain and run("de_DE.UTF-8") == plain
+
+
+def test_every_style_error_code_is_translated():
+    codes = ("export_format", "export_empty", "export_too_large", "export_zip", "export_private",
+             "auth", "rate_limit", "network", "server", "refused", "truncated", "invalid_reply",
+             "no_api_key", "style_unavailable", "save_failed")
+    for name in ("en.ts", "pt_BR.ts"):
+        text = (SRC / "i18n" / name).read_text(encoding="utf-8")
+        for code in codes:
+            assert f"<source>error.{code}</source>" in text, (name, code)
