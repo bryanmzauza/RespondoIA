@@ -113,3 +113,21 @@ def test_too_large_is_rejected(monkeypatch):
 def test_bom_is_ignored():
     data = read("android-pt.txt")
     assert parse_export(b"\xef\xbb\xbf" + data, "a.txt") == parse_export(data, "a.txt")
+
+
+def test_attachments_cards_and_locations_are_media():
+    notes = [
+        "<attached: 00000015-Ana Souza.vcf>",
+        "Ana Souza.vcf (arquivo anexado)",
+        "IMG-20261116-WA0001.jpg (file attached)",
+        "Location: https://maps.google.com/?q=-23.5,-46.6",
+        "Localização: https://maps.google.com/?q=1,2",
+        "localização em tempo real compartilhada",
+        "live location shared",
+        "Cartão de contato omitido",
+        "Contact card omitted",
+    ]
+    data = "\n".join(f"16/11/2026 09:{n:02d} - Rafa Lima: {note}" for n, note in enumerate(notes))
+    data += "\n16/11/2026 10:00 - Rafa Lima: bora sim\n"
+    chat = parse_export(data.encode(), "a.txt")
+    assert [m.kind for m in chat.messages] == ["media"] * len(notes) + ["text"]

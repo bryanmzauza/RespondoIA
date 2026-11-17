@@ -64,7 +64,17 @@ _MEDIA = {
     "gif omitted",
     "documento omitido",
     "document omitted",
+    "cartão de contato omitido",
+    "contact card omitted",
+    "localização em tempo real compartilhada",
+    "live location shared",
 }
+# Attachments, contact cards and locations: someone's name or a place, never style.
+_ATTACHMENTS = [
+    re.compile(r"^attached: .+"),
+    re.compile(r".+\((?:arquivo anexado|file attached)\)$"),
+    re.compile(r"^(?:location|localização|localizacao): \S+"),
+]
 _DELETED = {
     "mensagem apagada",
     "esta mensagem foi apagada",
@@ -119,7 +129,7 @@ def _clock(hour: int, minute: int, half: str | None) -> str:
 
 def _kind(text: str) -> str:
     folded = text.strip().strip("<>").strip().casefold()
-    if folded in _MEDIA:
+    if folded in _MEDIA or any(p.match(folded) for p in _ATTACHMENTS):
         return "media"
     if folded in _DELETED:
         return "deleted"

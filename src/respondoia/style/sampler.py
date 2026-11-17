@@ -63,7 +63,8 @@ _LAUGHS = [
 ]
 _URL = re.compile(r"(?i)\b(?:https?://|www\.)\S+")
 _MARKER = re.compile(r"\[[A-Z]+\]")
-_LONG_NUMBER = re.compile(r"\d{3,}")
+_DIGIT = re.compile(r"\d")
+_CURRENCY = re.compile(r"[$€£¥]")
 _WORD = re.compile(r"[^\W\d_]+")
 
 
@@ -84,7 +85,12 @@ def is_learnable(text: str) -> bool:
 
 
 def _is_own_text(line: ChatLine) -> bool:
-    return line.author == "user" and line.kind == "text" and bool(line.text.strip())
+    return (
+        line.author == "user"
+        and line.kind == "text"
+        and line.plain
+        and bool(line.text.strip())
+    )
 
 
 def own_lines(lines: Sequence[ChatLine]) -> tuple[ChatLine, ...]:
@@ -222,13 +228,28 @@ def stats(messages: Sequence[OwnMessage]) -> StyleStats:
     )
 
 
+def _has_inner_capital(text: str) -> bool:
+    """A capitalised word that does not start a sentence: likely a name or a place."""
+    for match in _WORD.finditer(text):
+        word = match.group(0)
+        if not word[0].isupper() or word == "I":
+            continue
+        before = text[: match.start()].rstrip()
+        if before and before[-1] not in ".!?":
+            return True
+    return False
+
+
 def _example_ok(text: str) -> bool:
+    """Examples go with every request, to every contact: no number, price, name or link."""
     return (
         8 <= len(text) <= 160
         and not _MARKER.search(text)
-        and not _LONG_NUMBER.search(text)
+        and not _DIGIT.search(text)
+        and not _CURRENCY.search(text)
         and not _URL.search(text)
         and "@" not in text
+        and not _has_inner_capital(text)
     )
 
 

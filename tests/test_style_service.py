@@ -72,7 +72,8 @@ def contact(text, time="09:00"):
     return ChatLine("contact", "", time, "text", text, "")
 
 
-PT = [user(f"vc vem hoje? tô aqui em casa {n}", f"09:{n:02d}") for n in range(12)]
+WORDS = ["agora", "cedo", "tarde", "depois", "logo", "mais", "menos", "sempre", "nunca", "ainda", "talvez", "enfim"]
+PT = [user(f"vc vem hoje? tô aqui em casa {w}", f"09:{n:02d}") for n, w in enumerate(WORDS)]
 
 
 def test_learn_stores_no_third_party_text(service, db):
@@ -105,7 +106,10 @@ def test_local_profile_appears_after_ten_messages(service):
 
 def test_context_follows_the_chat_language(service):
     service.learn("Marina Duarte", PT, False)
-    english = [user(f"are you coming over tonight? I am at home {n}", f"10:{n:02d}") for n in range(12)]
+    english = [
+        user(f"are you coming over tonight? I am at home {w}", f"10:{n:02d}")
+        for n, w in enumerate(WORDS)
+    ]
     service.learn("Marina Duarte", english, False)
     assert "are you coming over" in service.context("Marina Duarte", "en", False).style
     assert "tô aqui em casa" in service.context("Marina Duarte", "pt", False).style

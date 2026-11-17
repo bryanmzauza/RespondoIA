@@ -19,6 +19,7 @@ _BUBBLE_SHARE = 0.97
 _SENDER_BAND = 30
 # Smaller pictures inside a bubble are avatars, not photos.
 _PHOTO_SIDE = 80
+_EMOJI_SIDE = 32  # images smaller than this are emoji drawn inline
 
 # UI Automation ids: properties, tree scopes and the control types the tree uses.
 _P_RECT, _P_TYPE, _P_NAME, _P_AUTOMATION_ID, _P_ARIA_ROLE = 30001, 30003, 30005, 30011, 30101
@@ -167,6 +168,15 @@ def _read_row(row: UiNode) -> ChatLine | None:
         kind = "text"
     else:
         kind = "other"
+    others = [n for n in nodes if id(n) not in quoted and n is not quote]
+    plain = (
+        len(body) == 1
+        and not any(n.control_type in ("Hyperlink", "Button") for n in others)
+        and not any(
+            n.control_type == "Image" and max(n.rect.width, n.rect.height) >= _EMOJI_SIDE
+            for n in others
+        )
+    )
     return ChatLine(
         author="user" if is_user else "contact",
         sender=sender,
@@ -174,6 +184,7 @@ def _read_row(row: UiNode) -> ChatLine | None:
         kind=kind,
         text="\n".join(n.name.strip() for n in body),
         quote="\n".join(n.name.strip() for n in texts_in(quote)) if quote else "",
+        plain=plain,
     )
 
 

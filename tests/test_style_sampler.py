@@ -163,3 +163,17 @@ def test_excluded_examples_are_not_picked():
     assert pick_examples(texts, excluded={"fechado então, até amanhã"}) == [
         "beleza, combinado assim"
     ]
+
+
+def test_lines_that_are_not_plain_are_not_learned():
+    forwarded = ChatLine("user", "", "09:01", "text", "Encaminhada\nZZ-SOMEONE-ELSE", "", plain=False)
+    assert from_screen((forwarded, user("bora sim, combinado")), "contact:1", "pt", set())[0].text == (
+        "bora sim, combinado"
+    )
+    assert len(from_screen((forwarded,), "contact:1", "pt", set())) == 0
+
+
+def test_examples_skip_names_places_prices_and_any_digit():
+    texts = ["fica 50 a diária", "passa na Rua Augusta amanhã", "fala com a Ana depois",
+             "custa R$ ou € tanto faz", "Combinado então, até amanhã", "beleza. Até mais tarde"]
+    assert pick_examples(as_messages(texts)) == ["Combinado então, até amanhã", "beleza. Até mais tarde"]

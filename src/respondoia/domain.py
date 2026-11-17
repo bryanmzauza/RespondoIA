@@ -48,6 +48,9 @@ class ChatLine:
     kind: str  # "text", "image", "audio" or "other"
     text: str  # message text, "" for media without caption
     quote: str  # text of the quoted message, "" if none
+    # One text and nothing else besides time and quote. Forwarded messages, link
+    # previews and cards carry other people's text, so only plain lines are learned.
+    plain: bool = True
 
 
 @dataclass(frozen=True)

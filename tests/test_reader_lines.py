@@ -122,3 +122,48 @@ def test_a_wide_bubble_keeps_its_side_and_text():
 def test_the_play_button_is_not_a_sender():
     audio = read_lines(panel_of("msgs-media.json"))[1]
     assert audio.kind == "audio" and audio.sender == ""
+
+
+def user_row(top, *extras):
+    """A user-side row: one body text, the time, and any extra nodes inside the bubble."""
+
+    def node(kind, name="", rect=(0, 0, 0, 0), role=""):
+        return {"control_type": kind, "name": name, "automation_id": "", "aria_role": role,
+                "rect": list(rect), "children": []}
+
+    bubble = node("Group", rect=(1298, top, 1528, top + 58), role="group")
+    body = node("Group", rect=(1307, top + 6, 1488, top + 27), role="group")
+    body["children"] = [node("Text", "bora sim", (1307, top + 7, 1468, top + 25), "description")]
+    clock = node("Group", rect=(1488, top + 42, 1519, top + 58), role="group")
+    clock["children"] = [node("Text", "09:12", (1488, top + 43, 1519, top + 57), "description")]
+    bubble["children"] = [*extras, body, clock]
+    row = node("DataItem", rect=(420, top, 1590, top + 60), role="row")
+    inner = node("Group", rect=(420, top, 1590, top + 60), role="group")
+    inner["children"] = [bubble]
+    row["children"] = [inner]
+    return row
+
+
+def plain_flags(*rows):
+    panel = {"control_type": "Group", "name": "", "automation_id": "main", "aria_role": "group",
+             "rect": [420, 0, 1600, 900], "children": list(rows)}
+    return [line.plain for line in read_lines(node_from_dict(panel))]
+
+
+def extra(kind, name, rect):
+    return {"control_type": kind, "name": name, "automation_id": "", "aria_role": "",
+            "rect": list(rect), "children": []}
+
+
+def test_only_a_single_text_makes_a_plain_line():
+    assert plain_flags(user_row(100)) == [True]
+    assert plain_flags(user_row(100, extra("Text", "Encaminhada", (1307, 101, 1400, 105)))) == [False]
+    assert plain_flags(user_row(100, extra("Hyperlink", "exemplo.com", (1307, 101, 1400, 160)))) == [False]
+    assert plain_flags(user_row(100, extra("Button", "Conversar", (1307, 101, 1400, 130)))) == [False]
+    assert plain_flags(user_row(100, extra("Image", "", (1307, 101, 1500, 300)))) == [False]
+    # Emoji drawn as small images stay plain.
+    assert plain_flags(user_row(100, extra("Image", "", (1307, 101, 1327, 121)))) == [True]
+
+
+def test_fixture_lines_are_plain():
+    assert all(line.plain for line in read_lines(panel_of("msgs-pt.json")))
