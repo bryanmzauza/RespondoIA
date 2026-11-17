@@ -193,12 +193,12 @@ def test_save_then_load_round_trips(tmp_path):
 def test_save_keeps_tables_of_later_stages(tmp_path):
     path = tmp_path / "config.toml"
     path.write_text(
-        '[history]\nenabled = true\n[ai]\nmode = "hybrid"\nmodel = "claude-haiku-5-5"\n',
+        '[history]\nfollow = true\n[ai]\nmode = "hybrid"\nmodel = "claude-haiku-5-5"\n',
         encoding="utf-8",
     )
     save_settings(path, Settings(suggestion_count=2))
     data = tomllib.loads(path.read_text(encoding="utf-8"))
-    assert data["history"]["enabled"] is True and data["ai"]["mode"] == "hybrid"
+    assert data["history"]["follow"] is True and data["ai"]["mode"] == "hybrid"
     assert data["suggestions"]["count"] == 2
 
 
@@ -218,3 +218,43 @@ def test_save_refuses_invalid_settings(tmp_path):
         save_settings(path, Settings(suggestion_count=4))
     assert err.value.key == "suggestions.count"
     assert path.read_text(encoding="utf-8") == "[history]\nenabled = true\n"
+
+
+def test_history_is_off_by_default():
+    settings = Settings()
+    assert not settings.history_enabled and not settings.history_include_groups
+    assert (settings.snippets_per_suggestion, settings.quick_load_screens) == (5, 15)
+    assert (settings.max_load_screens, settings.max_load_months) == (80, 6)
+    assert settings.retention_months == 12
+
+
+def test_history_keys_load(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        "[history]\nenabled = true\ninclude_groups = true\nsnippets_per_suggestion = 3\n"
+        "quick_load_screens = 10\nmax_load_screens = 40\nmax_load_months = 2\n"
+        "retention_months = 24\n",
+        encoding="utf-8",
+    )
+    settings = load_settings(path)
+    assert settings.history_enabled and settings.history_include_groups
+    assert (settings.snippets_per_suggestion, settings.quick_load_screens) == (3, 10)
+    assert (settings.max_load_screens, settings.max_load_months) == (40, 2)
+    assert settings.retention_months == 24
+
+
+@pytest.mark.parametrize(
+    "body,key",
+    [
+        ("[history]\nretention_months = 0\n", "history.retention_months"),
+        ("[history]\nenabled = 1\n", "history.enabled"),
+        ("[history]\nsnippets_per_suggestion = 11\n", "history.snippets_per_suggestion"),
+        ("[history]\nmax_load_months = -1\n", "history.max_load_months"),
+    ],
+)
+def test_history_keys_validate(tmp_path, body, key):
+    path = tmp_path / "config.toml"
+    path.write_text(body, encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_settings(path)
+    assert err.value.key == key

@@ -41,6 +41,14 @@ class Settings:
     panel_position: str = "bottom-right"
     start_with_windows: bool = False
     quick_instructions: tuple[str, ...] = DEFAULT_INSTRUCTIONS
+    # Off until the user turns it on: the first-run screen will ask.
+    history_enabled: bool = False
+    history_include_groups: bool = False
+    snippets_per_suggestion: int = 5
+    quick_load_screens: int = 15
+    max_load_screens: int = 80
+    max_load_months: int = 6  # 0: no limit by date
+    retention_months: int = 12
 
 
 def app_dir() -> Path:
@@ -69,6 +77,10 @@ def _is_bool(value: object) -> bool:
     return isinstance(value, bool)
 
 
+def _in(value: object, low: int, high: int) -> bool:
+    return _is_int(value) and low <= value <= high
+
+
 # Settings field -> (table, key, validator). Other keys in the file belong to later stages.
 _KEYS = {
     "hotkey": ("general", "hotkey", _is_str),
@@ -88,6 +100,13 @@ _KEYS = {
         "quick_instructions",
         lambda v: _is_str_list(v) and all(item.strip() for item in v),
     ),
+    "history_enabled": ("history", "enabled", _is_bool),
+    "history_include_groups": ("history", "include_groups", _is_bool),
+    "snippets_per_suggestion": ("history", "snippets_per_suggestion", lambda v: _in(v, 0, 10)),
+    "quick_load_screens": ("history", "quick_load_screens", lambda v: _in(v, 1, 80)),
+    "max_load_screens": ("history", "max_load_screens", lambda v: _in(v, 1, 400)),
+    "max_load_months": ("history", "max_load_months", lambda v: _in(v, 0, 24)),
+    "retention_months": ("history", "retention_months", lambda v: _in(v, 1, 120)),
 }
 
 

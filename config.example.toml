@@ -40,7 +40,7 @@ mask_sensitive_data = true
 private_contacts = []
 
 [history]
-enabled = true                  # chosen on the first-run screen
+enabled = false                 # off until you turn it on; the first-run screen will ask
 scope = "used"                  # "used", "all" or "per_contact"
 include_groups = false
 snippets_per_suggestion = 5
