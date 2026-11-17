@@ -47,16 +47,19 @@ Exit criteria:
 Read the chat as text through accessibility. The screenshot becomes the
 fallback.
 
-- [ ] `reader`: message text with author and time, on top of the contact name
+- [x] `reader`: message text with author and time, on top of the contact name
       and chat bounds from 0.1. Must rely on structure and position, not on
       translated labels
-- [ ] `privacy`: mask CPF, CNPJ, card numbers, Pix keys and similar before
+- [x] `privacy`: mask CPF, CNPJ, card numbers, Pix keys and similar before
       anything is sent, with Brazilian and international formats
-- [ ] Text mode as default input, automatic fallback to screenshot with a
+- [x] Text mode as default input, automatic fallback to screenshot with a
       notice to the user
-- [ ] `ui/settings`: settings window with hotkey recorder and conflict check
-- [ ] `config`: read and write every setting in `config.toml` from the settings
-      window. 0.1 reads a subset and only writes private contacts
+- [x] `ui/settings`: settings window with hotkey recorder and conflict check
+- [x] `config`: read and write every setting in `config.toml` from the settings
+      window
+- [x] Quick instruction buttons in the panel, editable in the settings window
+- [x] Panel position and start with Windows
+- [ ] Check WhatsApp Web in the browser
 
 Exit criteria:
 

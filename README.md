@@ -8,9 +8,10 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.1 works: hotkey, suggestion panel and
-paste, with a screenshot of the chat as model input. It needs your own API
-key. The plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** early development. Stage 0.2 is implemented and under test: the
+chat is read as text and masked before it is sent, with a screenshot as the
+fallback, and there is a settings window. It needs your own API key. The plan
+is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
 
@@ -50,7 +51,9 @@ uv run python -m respondoia
 ```
 
 The key goes to the Windows Credential Manager, never to a file. The app sits
-in the tray. Set a monthly spend limit on the provider account before use.
+in the tray; right-click the icon and choose Settings to change the hotkey,
+the model, the key and the rest. Set a monthly spend limit on the provider
+account before use.
 
 `config.example.toml` lists every setting. Module responsibilities and the
 rules the code must follow are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

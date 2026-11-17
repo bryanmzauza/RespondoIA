@@ -26,6 +26,7 @@
 | `style` | Learn the user's writing style | own parser + `llm` |
 | `memory` | Per-contact history, gaps, memory, snippet search | encrypted SQLite, FTS5 |
 | `config` | Settings and API key | `tomllib`, `tomli-w`, `keyring` |
+| `autostart` | Start with Windows | `HKCU` Run key |
 | `auth` | Product account or own key | HTTPS, Credential Manager |
 
 ## Model input
@@ -34,8 +35,11 @@ Text read through accessibility is the default input. A screenshot of the chat
 is the automatic fallback when reading fails, so the app keeps working if the
 WhatsApp layout changes.
 
-Stage 0.1 sends only the screenshot. Accessibility is already used there, but
-just for the contact name and the bounds of the open chat.
+The app reads the visible messages through accessibility, masks recognisable
+sensitive data and sends them as JSON. Who wrote each message and which ones
+are pending are worked out locally, from the position of each bubble, so the
+model only writes the summary and the suggestions. The screenshot is sent when
+no message could be read, and the user is told.
 
 ## Model output
 
