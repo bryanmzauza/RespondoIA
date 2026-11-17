@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from respondoia.privacy import normalize_name
 from respondoia.style.sampler import name_hashes
 
-_COLUMNS = "id, name, is_group, label, label_source, language"
+_COLUMNS = (
+    "id, name, is_group, label, label_source, language, used_at, history, avatar, first_seen"
+)
 
 
 @dataclass(frozen=True)
@@ -21,13 +23,17 @@ class Contact:
     label: str | None
     label_source: str | None  # "model", "user" or None
     language: str | None
+    used_at: str | None = None  # last hotkey press in this chat; None: never used
+    history: int | None = None  # None follows the setting, 0 off, 1 on
+    avatar: str = ""  # hash of the header photo, "" unknown or no real photo
+    first_seen: str = ""
 
 
 def _rows(conn, title: str) -> list[Contact]:
     rows = conn.execute(
-        f"SELECT {_COLUMNS} FROM contact WHERE name_key = ?", (normalize_name(title),)
+        f"SELECT {_COLUMNS} FROM contact WHERE name_key = ? ORDER BY id", (normalize_name(title),)
     ).fetchall()
-    return [Contact(r[0], r[1], bool(r[2]), r[3], r[4], r[5]) for r in rows]
+    return [Contact(r[0], r[1], bool(r[2]), *r[3:]) for r in rows]
 
 
 def remember_names(conn, names: Iterable[str]) -> None:
@@ -61,11 +67,40 @@ def see(conn, title: str, is_group: bool, language: str | None, now: str) -> Con
     if len(rows) > 1:
         return None
     conn.execute(
-        "UPDATE contact SET last_seen = ?, is_group = ?, language = COALESCE(?, language)"
+        # Once a group, always a group: a screen without senders proves nothing.
+        "UPDATE contact SET last_seen = ?, is_group = max(is_group, ?),"
+        " language = COALESCE(?, language)"
         " WHERE id = ?",
         (now, int(is_group), language, rows[0].id),
     )
     return find(conn, title)
+
+
+def candidates(conn, title: str) -> list[Contact]:
+    """Every record with this name, oldest first."""
+    return _rows(conn, title)
+
+
+def add_namesake(conn, title: str, is_group: bool, now: str) -> Contact:
+    """A second person with a name already stored."""
+    cursor = conn.execute(
+        "INSERT INTO contact (name, name_key, is_group, first_seen, last_seen)"
+        " VALUES (?, ?, ?, ?, ?)",
+        (title.strip(), normalize_name(title), int(is_group), now, now),
+    )
+    return next(c for c in _rows(conn, title) if c.id == cursor.lastrowid)
+
+
+def mark_used(conn, contact_id: int, now: str) -> None:
+    conn.execute("UPDATE contact SET used_at = ? WHERE id = ?", (now, contact_id))
+
+
+def set_history(conn, contact_id: int, value: int | None) -> None:
+    conn.execute("UPDATE contact SET history = ? WHERE id = ?", (value, contact_id))
+
+
+def set_avatar(conn, contact_id: int, avatar: str) -> None:
+    conn.execute("UPDATE contact SET avatar = ? WHERE id = ?", (avatar, contact_id))
 
 
 def set_label(conn, contact_id: int, label: str | None, source: str) -> None:

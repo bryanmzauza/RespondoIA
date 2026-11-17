@@ -177,3 +177,33 @@ def test_close_does_not_hang_while_another_thread_holds_the_database(tmp_path):
     assert time.perf_counter() - started < 4
     release.set()
     thread.join()
+
+
+def test_migration_two_from_version_one(tmp_path, monkeypatch):
+    from respondoia import database
+
+    monkeypatch.setattr(database, "MIGRATIONS", MIGRATIONS[:1])
+    old = Database.open(tmp_path / "db", KEY)
+    with old.transaction() as conn:
+        conn.execute(
+            "INSERT INTO contact (name, name_key, label, first_seen, last_seen)"
+            " VALUES ('Ana', 'ana', 'client', 'x', 'x')"
+        )
+    old.close()
+    monkeypatch.setattr(database, "MIGRATIONS", MIGRATIONS)
+    db = Database.open(tmp_path / "db", KEY)
+    try:
+        assert db.version == len(MIGRATIONS) >= 2
+        with db.transaction() as conn:
+            row = conn.execute("SELECT label, used_at, avatar, history FROM contact").fetchone()
+        assert tuple(row) == ("client", None, "", None)
+    finally:
+        db.close()
+
+
+def test_checkpoint_runs_outside_a_transaction(tmp_path):
+    db = Database.open(tmp_path / "db", KEY)
+    try:
+        db.checkpoint()
+    finally:
+        db.close()

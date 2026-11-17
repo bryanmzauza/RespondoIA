@@ -49,3 +49,29 @@ def test_forget_removes_the_contact_and_its_samples(db):
         assert contacts.forget(conn, "  marina ") == 1
         assert conn.execute("SELECT count(*) FROM contact").fetchone()[0] == 0
         assert conn.execute("SELECT count(*) FROM style_sample").fetchone()[0] == 0
+
+
+def test_group_flag_is_sticky(db):
+    with db.transaction() as conn:
+        contacts.see(conn, "Família", True, None, STAMP)
+        assert contacts.see(conn, "Família", False, None, STAMP).is_group
+
+
+def test_namesake_makes_the_name_ambiguous(db):
+    with db.transaction() as conn:
+        first = contacts.see(conn, "Ana", False, None, STAMP)
+        second = contacts.add_namesake(conn, "Ana", False, "2026-11-18T10:00:00")
+        assert second.id != first.id and contacts.find(conn, "Ana") is None
+        assert [c.id for c in contacts.candidates(conn, "ana")] == [first.id, second.id]
+        assert contacts.see(conn, "Ana", False, None, STAMP) is None
+
+
+def test_history_fields(db):
+    with db.transaction() as conn:
+        cid = contacts.see(conn, "Ana", False, None, STAMP).id
+        contacts.mark_used(conn, cid, STAMP)
+        contacts.set_history(conn, cid, 0)
+        contacts.set_avatar(conn, cid, "ab12")
+        found = contacts.find(conn, "Ana")
+        assert (found.used_at, found.history, found.avatar, found.first_seen) == (
+            STAMP, 0, "ab12", STAMP)

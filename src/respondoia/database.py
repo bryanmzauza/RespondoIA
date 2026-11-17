@@ -102,6 +102,58 @@ MIGRATIONS: tuple[str, ...] = (
         hash TEXT PRIMARY KEY
     );
     """,
+    # 2: chat history, its search index and the contact memory.
+    """
+    ALTER TABLE contact ADD COLUMN used_at TEXT;
+    ALTER TABLE contact ADD COLUMN history INTEGER;
+    ALTER TABLE contact ADD COLUMN avatar TEXT NOT NULL DEFAULT '';
+    CREATE TABLE history_message (
+        id INTEGER PRIMARY KEY,
+        contact_id INTEGER NOT NULL REFERENCES contact(id) ON DELETE CASCADE,
+        segment INTEGER NOT NULL,
+        ord INTEGER NOT NULL,
+        sent_on TEXT NOT NULL DEFAULT '',
+        time TEXT NOT NULL DEFAULT '',
+        author TEXT NOT NULL,
+        sender TEXT NOT NULL DEFAULT '',
+        kind TEXT NOT NULL,
+        text TEXT NOT NULL,
+        quote TEXT NOT NULL DEFAULT '',
+        fingerprint TEXT NOT NULL,
+        seen_at TEXT NOT NULL,
+        UNIQUE (contact_id, segment, ord)
+    );
+    CREATE INDEX history_order ON history_message(contact_id, segment, ord);
+    CREATE VIRTUAL TABLE history_fts USING fts5(
+        text, quote, content='history_message', content_rowid='id',
+        tokenize='unicode61 remove_diacritics 2'
+    );
+    CREATE TRIGGER history_ai AFTER INSERT ON history_message BEGIN
+        INSERT INTO history_fts(rowid, text, quote) VALUES (new.id, new.text, new.quote);
+    END;
+    CREATE TRIGGER history_ad AFTER DELETE ON history_message BEGIN
+        INSERT INTO history_fts(history_fts, rowid, text, quote)
+            VALUES ('delete', old.id, old.text, old.quote);
+    END;
+    CREATE TRIGGER history_au AFTER UPDATE ON history_message BEGIN
+        INSERT INTO history_fts(history_fts, rowid, text, quote)
+            VALUES ('delete', old.id, old.text, old.quote);
+        INSERT INTO history_fts(rowid, text, quote) VALUES (new.id, new.text, new.quote);
+    END;
+    CREATE TABLE contact_memory (
+        contact_id INTEGER PRIMARY KEY REFERENCES contact(id) ON DELETE CASCADE,
+        text TEXT NOT NULL,
+        edited INTEGER NOT NULL DEFAULT 0,
+        through_id INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT,
+        attempted_at TEXT
+    );
+    CREATE TABLE history_state (
+        contact_id INTEGER PRIMARY KEY REFERENCES contact(id) ON DELETE CASCADE,
+        loaded_at TEXT,
+        reached_start INTEGER NOT NULL DEFAULT 0
+    );
+    """,
 )
 
 
@@ -157,6 +209,11 @@ class Database:
                 if self._conn.in_transaction:
                     self._conn.execute("ROLLBACK")
                 raise
+
+    def checkpoint(self) -> None:
+        """Move the write-ahead log into the file and empty it, so deleted text leaves it."""
+        with self._lock:
+            self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
 
     def close(self, timeout_s: float = 2.0) -> None:
         """Close, unless another thread still holds the database (a stopped thread may
