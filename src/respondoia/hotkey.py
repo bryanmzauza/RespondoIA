@@ -4,7 +4,7 @@ import ctypes
 import ctypes.wintypes
 from dataclasses import dataclass
 
-from PySide6.QtCore import QAbstractNativeEventFilter, QCoreApplication, QObject, Signal
+from PySide6.QtCore import QAbstractNativeEventFilter, QCoreApplication, QObject, Qt, Signal
 
 MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN, MOD_NOREPEAT = 0x1, 0x2, 0x4, 0x8, 0x4000
 WM_HOTKEY = 0x0312
@@ -59,6 +59,34 @@ def display_hotkey(text: str) -> str:
     return "+".join(name.capitalize() for name in [*modifiers, key])
 
 
+# Qt key -> key name accepted by parse_hotkey.
+_QT_KEYS = {
+    Qt.Key.Key_Space: "space",
+    **{getattr(Qt.Key, f"Key_{chr(c)}"): chr(c).lower() for c in range(ord("A"), ord("Z") + 1)},
+    **{getattr(Qt.Key, f"Key_{d}"): str(d) for d in range(10)},
+    **{getattr(Qt.Key, f"Key_F{n}"): f"f{n}" for n in range(1, 13)},
+}
+# In display order, like _MODIFIERS. On Windows, Qt reports the Win key as Meta.
+_QT_MODIFIERS = (
+    (Qt.KeyboardModifier.ControlModifier, "ctrl"),
+    (Qt.KeyboardModifier.AltModifier, "alt"),
+    (Qt.KeyboardModifier.ShiftModifier, "shift"),
+    (Qt.KeyboardModifier.MetaModifier, "win"),
+)
+
+
+def text_from_keys(modifiers: Qt.KeyboardModifier, key: int) -> str | None:
+    """A key press from the recorder as hotkey text, or None if it is not a full hotkey."""
+    try:
+        name = _QT_KEYS.get(Qt.Key(key))  # key events carry a plain int
+    except ValueError:
+        return None
+    held = [text for flag, text in _QT_MODIFIERS if modifiers & flag]
+    if name is None or not held:
+        return None
+    return "+".join([*held, name])
+
+
 def is_hotkey_message(message: int, wparam: int, hotkey_id: int) -> bool:
     return message == WM_HOTKEY and wparam == hotkey_id
 
@@ -88,6 +116,7 @@ class GlobalHotkey(QObject):
     def __init__(self, app: QCoreApplication) -> None:
         super().__init__()
         self._registered = False
+        self._current: Hotkey | None = None
         self._user32 = ctypes.WinDLL("user32", use_last_error=True)
         self._filter = _Filter(self._on_hotkey)
         app.installNativeEventFilter(self._filter)
@@ -105,6 +134,17 @@ class GlobalHotkey(QObject):
         if not self._user32.RegisterHotKey(None, _HOTKEY_ID, flags, hotkey.vk):
             raise HotkeyRegistrationError(f"hotkey in use (error {ctypes.get_last_error()})")
         self._registered = True
+        self._current = hotkey
+
+    def replace(self, hotkey: Hotkey) -> None:
+        """Switch to another hotkey. If it is taken, the old one stays registered."""
+        old = self._current if self._registered else None
+        try:
+            self.register(hotkey)
+        except HotkeyRegistrationError:
+            if old is not None:
+                self.register(old)
+            raise
 
     def unregister(self) -> None:
         if self._registered:
@@ -114,3 +154,7 @@ class GlobalHotkey(QObject):
     @property
     def registered(self) -> bool:
         return self._registered
+
+    @property
+    def current(self) -> Hotkey | None:
+        return self._current

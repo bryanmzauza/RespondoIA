@@ -90,6 +90,10 @@ class FakePanel(Recorder):
 class FakeTray(Recorder):
     pause_toggled = Signal(bool)
     quit_requested = Signal()
+    settings_requested = Signal()
+
+    def retranslate(self):
+        self.record("retranslate")
 
     def notify(self, key, /, **values):
         self.record("notify", key, values)
@@ -115,6 +119,12 @@ class FakeHotkey(Recorder):
     def unregister(self):
         self.registered = False
         self.record("unregister")
+
+    def replace(self, hotkey):
+        if self.taken:
+            raise HotkeyRegistrationError("taken")
+        self.registered = True
+        self.record("replace", hotkey)
 
 
 class Rig:
@@ -524,3 +534,45 @@ def test_worker_reports_a_choice_after_a_refusal(qapp):
     worker.choose(1, 0)
     assert seen.events[-1] == ("choose_failed", 1, "refused")
     assert fake.count("insert_text") == 0
+
+
+def test_apply_settings_with_a_taken_hotkey_saves_nothing(rig):
+    from dataclasses import replace
+
+    rig.hotkey.taken = True
+    assert rig.controller.apply_settings(replace(Settings(), hotkey="ctrl+alt+r")) is False
+    assert not rig.config_file.exists()
+    assert "set_settings" not in rig.worker.names()
+    assert rig.tray.calls[-1] == ("notify", "settings.hotkey_in_use", {"hotkey": "Ctrl+Alt+R"})
+
+
+def test_apply_settings_updates_file_worker_tray_and_autostart(rig, monkeypatch):
+    from dataclasses import replace
+
+    from respondoia.config import load_settings
+
+    switched = []
+    monkeypatch.setattr(app_module.autostart, "set_enabled", switched.append)
+    new = replace(Settings(), suggestion_count=2, language="en", start_with_windows=True)
+    assert rig.controller.apply_settings(new) is True
+    assert load_settings(rig.config_file) == new
+    assert ("set_settings", new) in rig.worker.calls
+    assert "retranslate" in rig.tray.names() and switched == [True]
+    assert "replace" not in rig.hotkey.names()  # same hotkey: nothing to change
+
+
+def test_apply_settings_closes_an_open_session_and_changes_the_hotkey(rig, monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr(app_module.autostart, "set_enabled", lambda enabled: None)
+    rig.open_panel()
+    assert rig.controller.apply_settings(replace(Settings(), hotkey="ctrl+alt+r")) is True
+    assert rig.panel.calls[-1] == ("dismiss",) or ("dismiss",) in rig.panel.calls
+    assert "close" in rig.worker.names() and "replace" in rig.hotkey.names()
+
+
+def test_settings_from_the_tray_open_the_window(rig, monkeypatch):
+    opened = []
+    monkeypatch.setattr(rig.controller, "open_settings", lambda: opened.append(True))
+    rig.tray.settings_requested.emit()
+    assert opened == [True]

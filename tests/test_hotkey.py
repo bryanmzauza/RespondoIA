@@ -77,3 +77,62 @@ def test_registered_hotkey_emits_and_blocks_a_second_registration(qapp):
     assert not first.registered
     second.register(hotkey)  # free again after unregister
     second.unregister()
+
+
+def test_text_from_keys():
+    from PySide6.QtCore import Qt
+
+    from respondoia.hotkey import text_from_keys
+
+    ctrl, alt, shift, meta = (
+        Qt.KeyboardModifier.ControlModifier,
+        Qt.KeyboardModifier.AltModifier,
+        Qt.KeyboardModifier.ShiftModifier,
+        Qt.KeyboardModifier.MetaModifier,
+    )
+    assert text_from_keys(ctrl | shift, Qt.Key.Key_Space) == "ctrl+shift+space"
+    assert text_from_keys(alt, Qt.Key.Key_F5) == "alt+f5"
+    assert text_from_keys(meta, Qt.Key.Key_R) == "win+r"
+    assert text_from_keys(ctrl | alt, Qt.Key.Key_7) == "ctrl+alt+7"
+    assert text_from_keys(ctrl, Qt.Key.Key_Control) is None  # still holding modifiers
+    assert text_from_keys(Qt.KeyboardModifier.NoModifier, Qt.Key.Key_A) is None
+    assert text_from_keys(ctrl, Qt.Key.Key_Return) is None  # not an accepted key
+
+
+@pytest.mark.desktop
+def test_failed_change_keeps_the_old_hotkey(qapp):
+    import subprocess
+    import sys
+
+    from respondoia.hotkey import GlobalHotkey, HotkeyRegistrationError
+
+    # Another program holds ctrl+alt+shift+f10 (0x79) while the test runs.
+    holder = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import ctypes, time; "
+                "ok = ctypes.windll.user32.RegisterHotKey(None, 1, 0x4007, 0x79); "
+                "print('held' if ok else 'failed', flush=True); "
+                "time.sleep(30)"
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    first = GlobalHotkey(qapp)
+    old, taken = parse_hotkey("ctrl+alt+shift+f11"), parse_hotkey("ctrl+alt+shift+f10")
+    try:
+        assert holder.stdout.readline().strip() == "held"
+        first.register(old)
+        with pytest.raises(HotkeyRegistrationError):
+            first.replace(taken)
+        assert first.registered and first.current == old
+        holder.kill()
+        holder.wait(5)
+        first.replace(taken)
+        assert first.registered and first.current == taken
+    finally:
+        first.unregister()
+        holder.kill()

@@ -47,7 +47,7 @@ def test_every_key_used_in_code_exists():
     used = set()
     for path in SRC.rglob("*.py"):
         source = path.read_text(encoding="utf-8")
-        used |= set(re.findall(r"""["']((?:panel|tray|notice|error)\.[a-z_]+)["']""", source))
+        used |= set(re.findall(r"""["']((?:panel|tray|notice|error|settings|instruction)\.[a-z_]+)["']""", source))
     assert used <= keys, used - keys
     assert {f"error.{code}" for code in LLM_ERROR_CODES} <= keys
     assert {"error.capture", "error.config", "error.no_api_key"} <= keys

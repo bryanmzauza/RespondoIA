@@ -55,3 +55,17 @@ def t(key: str, /, **values: object) -> str:
     # Positional-only, so a placeholder may itself be called "key".
     text = QCoreApplication.translate("ui", key)
     return text.format(**values) if values else text
+
+
+# Built-in quick instructions and their keys. Any other entry is the user's own text.
+_INSTRUCTION_KEYS = {
+    "shorter": "instruction.shorter",
+    "more_formal": "instruction.more_formal",
+    "decline_politely": "instruction.decline_politely",
+    "ask_for_time": "instruction.ask_for_time",
+}
+
+
+def instruction_label(entry: str) -> str:
+    key = _INSTRUCTION_KEYS.get(entry)
+    return t(key) if key else entry

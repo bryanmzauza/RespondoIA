@@ -33,11 +33,14 @@ def make_icon(paused: bool) -> QIcon:
 class Tray(QSystemTrayIcon):
     pause_toggled = Signal(bool)
     quit_requested = Signal()
+    settings_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
         self._paused = False
         self._menu = QMenu()
+        self.settings_action = self._menu.addAction(t("tray.settings"))
+        self.settings_action.triggered.connect(self.settings_requested)
         self.pause_action = self._menu.addAction(t("tray.pause"))
         self.pause_action.triggered.connect(self._toggle)
         self._menu.addSeparator()
@@ -51,6 +54,12 @@ class Tray(QSystemTrayIcon):
         self.setIcon(make_icon(paused))
         self.setToolTip(t("tray.tooltip_paused") if paused else t("tray.tooltip"))
         self.pause_action.setText(t("tray.resume") if paused else t("tray.pause"))
+
+    def retranslate(self) -> None:
+        """Apply a language change to the menu and the tooltip."""
+        self.settings_action.setText(t("tray.settings"))
+        self.quit_action.setText(t("tray.quit"))
+        self.set_paused(self._paused)
 
     def notify(self, key: str, /, **values: object) -> None:
         """Show the translated text for key as a balloon."""

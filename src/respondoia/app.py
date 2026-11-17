@@ -2,15 +2,15 @@
 
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QThread, Signal, Slot
+from PySide6.QtCore import QCoreApplication, QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import QApplication
 
-from respondoia import capture, config, i18n, paste, reader
+from respondoia import autostart, capture, config, i18n, paste, reader
 from respondoia.capture import CaptureError
 from respondoia.config import ConfigError, Settings
 from respondoia.domain import OpenChat
@@ -30,6 +30,7 @@ from respondoia.llm import (
 )
 from respondoia.session import ChooseResult, Ports, Session, StartResult, StartStatus
 from respondoia.ui.panel import SuggestionPanel
+from respondoia.ui.settings import SettingsWindow
 from respondoia.ui.tray import Tray
 
 logger = logging.getLogger("respondoia")
@@ -64,6 +65,10 @@ class Worker(QObject):
         self._ports = ports
         self._settings = settings
         self._session: Session | None = None
+
+    @property
+    def settings(self) -> Settings:
+        return self._settings
 
     @Slot(object)
     def set_settings(self, settings: Settings) -> None:
@@ -178,6 +183,7 @@ class Controller(QObject):
         self._hotkey = hotkey
         self._settings = settings
         self._config_file = config_file
+        self._settings_window: SettingsWindow | None = None
         self._generation = 0
         self._active = False
         self._chat: OpenChat | None = None
@@ -205,6 +211,7 @@ class Controller(QObject):
         panel.retry_requested.connect(self._on_retry)
         panel.closed.connect(self._end_session)
         tray.pause_toggled.connect(self._on_pause_toggled)
+        tray.settings_requested.connect(lambda: self.open_settings())
 
     def on_hotkey(self) -> None:
         if self._config_error:
@@ -328,6 +335,61 @@ class Controller(QObject):
         self._end_session()
         self._tray.notify("notice.private_added")
 
+    def open_settings(self) -> None:
+        if self._config_error:
+            # The window would start from defaults and could overwrite the private list.
+            self._tray.notify("error.config", key=self._config_error)
+            return
+        if self._settings_window is not None and self._settings_window.isVisible():
+            self._settings_window.raise_()
+            self._settings_window.activateWindow()
+            return
+        window = SettingsWindow(self._settings, bool(config.get_api_key()))
+        window.saved.connect(self.apply_settings)
+        window.api_key_entered.connect(config.set_api_key)
+        self._settings_window = window
+        window.show()
+
+    def apply_settings(self, new: Settings) -> bool:
+        """Apply and save new settings. False, with the reason shown, if nothing changed."""
+        old = self._settings
+        if self._active:
+            self._panel.dismiss()
+            self._end_session()
+        hotkey_changed = new.hotkey != old.hotkey and self._hotkey.registered
+        if hotkey_changed:
+            try:
+                self._hotkey.replace(parse_hotkey(new.hotkey))
+            except HotkeyRegistrationError:
+                shown = display_hotkey(new.hotkey)
+                self._settings_error("settings.hotkey_in_use", hotkey=shown)
+                return False
+        try:
+            config.save_settings(self._config_file or config.config_path(), new)
+        except ConfigError as exc:
+            if hotkey_changed:
+                self._hotkey.replace(parse_hotkey(old.hotkey))
+            self._settings_error("error.config", key=exc.key)
+            return False
+        self._settings = new
+        self.request_settings.emit(new)
+        if new.language != old.language:
+            language = i18n.pick_language(new.language, i18n.system_locale())
+            i18n.install(QCoreApplication.instance(), language)
+            self._tray.retranslate()
+        if new.start_with_windows != old.start_with_windows:
+            autostart.set_enabled(new.start_with_windows)
+        if self._settings_window is not None:
+            self._settings_window.close()
+        self._tray.notify("settings.saved")
+        return True
+
+    def _settings_error(self, key: str, **values: object) -> None:
+        if self._settings_window is not None and self._settings_window.isVisible():
+            self._settings_window.show_error(key, **values)
+        else:
+            self._tray.notify(key, **values)
+
     def _on_pause_toggled(self, paused: bool) -> None:
         if not paused:
             self.resume()
@@ -346,19 +408,21 @@ class Controller(QObject):
         self.request_close.emit()
 
 
-def build_ports(settings: Settings) -> Ports:
+def build_ports(current: Callable[[], Settings]) -> Ports:
+    """current() gives the settings in force, so a change in the window applies at once."""
+
     def suggest(request: SuggestRequest, on_preview: PreviewCallback | None) -> SuggestResult:
         key = config.get_api_key()
         if not key:
             raise LlmError("auth")
-        return AnthropicClient(key, settings.model).suggest(request, on_preview)
+        return AnthropicClient(key, current().model).suggest(request, on_preview)
 
     return Ports(
         foreground_window=capture.foreground_window,
         window_info=capture.window_info,
         read_open_chat=reader.read_open_chat,
         capture_chat=lambda hwnd, bounds: capture.capture_chat(
-            hwnd, bounds, settings.max_image_side
+            hwnd, bounds, current().max_image_side
         ),
         suggest=suggest,
         insert_text=paste.insert_text,
@@ -397,7 +461,8 @@ def run(argv: Sequence[str]) -> int:
     panel = SuggestionPanel()
     hotkey = GlobalHotkey(app)
     thread = QThread()
-    worker = Worker(build_ports(settings), settings)
+    # The ports read the worker's settings, which the controller updates on every save.
+    worker = Worker(build_ports(lambda: worker.settings), settings)
     worker.moveToThread(thread)
     thread.start()
     controller = Controller(worker, panel, tray, hotkey, settings, config_error=config_error)
