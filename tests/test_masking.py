@@ -60,3 +60,21 @@ def test_sender_and_quote_are_masked_too():
     assert masked.sender == "[PHONE]" and masked.quote == "cpf [CPF]" and masked.text == "ok"
     assert found == ("PHONE", "CPF")
     assert (masked.author, masked.time, masked.kind) == ("contact", "10:00", "text")
+
+
+def test_card_next_to_other_numbers_is_still_masked():
+    assert mask_text("4111 1111 1111 1111 12/28 cvv 123").text == "[CARD] 12/28 cvv 123"
+    assert mask_text("4111 1111 1111 1111 123").text == "[CARD] 123"
+    assert mask_text("4111111111111111 123").text == "[CARD] 123"
+    assert mask_text("cartao 1 4111 1111 1111 1111").text == "cartao 1 [CARD]"
+
+
+def test_password_after_e_and_colon():
+    assert mask_text("a senha é: abc123").text == "a senha é: [PASSWORD]"
+
+
+def test_phone_rules_keep_their_neighbours():
+    assert mask_text("+55 11 91234-5678. 2 caixas").text == "[PHONE]. 2 caixas"
+    assert mask_text("total 1234567890").text == "total 1234567890"
+    assert mask_text("11 91234-5678").text == "[PHONE]"
+    assert mask_text("11912345678").text == "[PHONE]"

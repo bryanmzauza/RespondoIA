@@ -39,7 +39,9 @@ class PasteDecision(Enum):
     COPY_ONLY = "copy_only"
 
 
-def check_before_paste(captured: ChatRef, current: ChatRef | None, insert_mode: str) -> PasteDecision:
+def check_before_paste(
+    captured: ChatRef, current: ChatRef | None, insert_mode: str
+) -> PasteDecision:
     if insert_mode != "paste" or current is None or current.hwnd != captured.hwnd:
         return PasteDecision.COPY_ONLY
     if normalize_name(current.title) != normalize_name(captured.title):
@@ -117,6 +119,24 @@ def _checked(kind: str, valid):
     return lambda m: _marker(kind) if valid(m.group(0)) else m.group(0)
 
 
+def _card(m: re.Match) -> str:
+    # The pattern can take in an expiry or a security code written next to the
+    # number: mask the longest run of whole digit groups that passes Luhn.
+    text = m.group(0)
+    groups = [(g.start(), g.end()) for g in re.finditer(r"\d+", text)]
+    best = None
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups) + 1):
+            start, end = groups[i][0], groups[j - 1][1]
+            if _luhn_ok(text[start:end]):
+                size = len(_digits(text[start:end]))
+                if best is None or size > best[0]:
+                    best = (size, start, end)
+    if best is None:
+        return text
+    return text[: best[1]] + _marker("CARD") + text[best[2] :]
+
+
 def _iban(m: re.Match) -> str:
     # The pattern can swallow a following word ("... 32 OK"): drop trailing groups
     # until what is left is a valid IBAN.
@@ -130,7 +150,10 @@ def _iban(m: re.Match) -> str:
 
 _RULES = [
     (
-        re.compile(r"(?i)\b(senha|password|pwd|pin|token|c[oó]digo)(\s*(?:[:=]|\bé\b)\s*)(\S+)"),
+        re.compile(
+            r"(?i)\b(senha|password|pwd|pin|token|c[oó]digo)"
+            r"(\s*(?:[:=]|\bé\b\s*[:=]?)\s*)(\S+)"
+        ),
         lambda m: m.group(1) + m.group(2) + _marker("PASSWORD"),
     ),
     (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), lambda m: _marker("EMAIL")),
@@ -147,12 +170,20 @@ _RULES = [
         _checked("CNPJ", _cnpj_ok),
     ),
     (re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)"), _checked("CPF", _cpf_ok)),
-    (re.compile(r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)"), _checked("CARD", _luhn_ok)),
-    (re.compile(r"(?<![\w+])\+\d[\d\s().-]{6,20}\d(?!\d)"), _checked("PHONE", _phone_ok)),
+    (re.compile(r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)"), _card),
+    # International: one separator at most between digits, so ". 2" after a
+    # number is left alone.
     (
-        re.compile(r"(?<!\d)(?:\(\d{2}\)\s?|\d{2}[\s.-]?)9?\d{4}[\s.-]?\d{4}(?!\d)"),
+        re.compile(r"(?<![\w+])\+\d(?:(?:\s?\(|\)\s?|[\s.-])?\d){7,14}(?!\d)"),
         _checked("PHONE", _phone_ok),
     ),
+    # Brazilian: area code in parentheses or followed by a separator, or a mobile
+    # number written solid. A bare run of 10 digits is not taken as a phone.
+    (
+        re.compile(r"(?<!\d)(?:\(\d{2}\)\s?|\d{2}[\s.-])9?\d{4}[\s.-]?\d{4}(?!\d)"),
+        _checked("PHONE", _phone_ok),
+    ),
+    (re.compile(r"(?<!\d)\d{2}9\d{8}(?!\d)"), lambda m: _marker("PHONE")),
 ]
 _SENTINEL = re.compile("\x00([A-Z]+)\x00")
 
