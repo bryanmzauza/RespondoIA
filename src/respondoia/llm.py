@@ -85,8 +85,8 @@ def build_params(request: SuggestRequest, model: str) -> dict:
     content = build_user_content(
         request.image_png, request.count, listed, request.selected_ids, request.instruction
     )
-    # No thinking or sampling keys: current models reject non-default values for them.
-    return {
+    # No sampling keys: current models reject non-default values for them.
+    params = {
         "model": model,
         "max_tokens": 8000,
         "system": SYSTEM_PROMPT,
@@ -94,6 +94,11 @@ def build_params(request: SuggestRequest, model: str) -> dict:
         "output_config": {"effort": "low"},
         "output_format": SuggestionReply,
     }
+    if model.startswith("claude-haiku"):
+        # Haiku thinks before writing even at low effort, which can take over 10 s.
+        # Sonnet 5.5 rejects "disabled", so the key is only sent to Haiku.
+        params["thinking"] = {"type": "disabled"}
+    return params
 
 
 def check_reply(reply: SuggestionReply, count: int) -> SuggestionReply:

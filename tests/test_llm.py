@@ -29,8 +29,8 @@ def make_reply(texts=("Oi!", "Olá, tudo bem?", "Oi, já te respondo"), ids=(1, 
     )
 
 
-def test_build_params_has_no_sampling_or_thinking_keys():
-    params = build_params(SuggestRequest(b"png", 3), "claude-haiku-5-5")
+def test_build_params_has_no_sampling_keys():
+    params = build_params(SuggestRequest(b"png", 3), "claude-sonnet-5-5")
     assert set(params) == {
         "model",
         "max_tokens",
@@ -39,11 +39,18 @@ def test_build_params_has_no_sampling_or_thinking_keys():
         "output_config",
         "output_format",
     }
-    assert params["model"] == "claude-haiku-5-5" and params["max_tokens"] == 8000
+    assert params["model"] == "claude-sonnet-5-5" and params["max_tokens"] == 8000
     assert params["system"] == SYSTEM_PROMPT
     assert params["output_config"] == {"effort": "low"}
     assert params["output_format"] is SuggestionReply
     assert [m["role"] for m in params["messages"]] == ["user"]
+
+
+def test_haiku_runs_without_thinking():
+    # Measured on a real chat: about 2,000 thinking tokens and 12 s before the options.
+    params = build_params(SuggestRequest(b"png", 3), "claude-haiku-5-5")
+    assert params["thinking"] == {"type": "disabled"}
+    assert not {"temperature", "top_p", "top_k"} & set(params)
 
 
 def test_build_params_sends_the_previous_messages_on_regenerate():
@@ -157,7 +164,8 @@ def test_suggest_asks_for_the_reply_schema_with_low_effort(monkeypatch):
     assert seen["output_config"]["effort"] == "low"
     assert seen["output_config"]["format"]["type"] == "json_schema"
     assert "suggestions" in seen["output_config"]["format"]["schema"]["properties"]
-    assert not {"output_format", "thinking", "temperature", "top_p", "top_k"} & set(seen)
+    assert not {"output_format", "temperature", "top_p", "top_k"} & set(seen)
+    assert seen["thinking"] == {"type": "disabled"}
 
 
 def test_suggestions_come_before_the_message_list():
