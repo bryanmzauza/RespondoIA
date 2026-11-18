@@ -138,7 +138,15 @@ def _read_row(row: UiNode) -> ChatLine | None:
     def texts_in(node: UiNode) -> list[UiNode]:
         return [n for n in _walk(node) if n.control_type == "Text" and n.name.strip()]
 
-    quote = next((n for n in nodes if n.control_type == "Button" and texts_in(n)), None)
+    def is_status(node: UiNode) -> bool:
+        # In the user's own bubbles the time sits in a button with the read receipt.
+        texts = texts_in(node)
+        return bool(texts) and all(TIME_RE.match(t.name.strip()) for t in texts)
+
+    buttons = [n for n in nodes if n.control_type == "Button" and texts_in(n)]
+    status = [n for n in buttons if is_status(n)]
+    in_status = {id(m) for n in status for m in _walk(n)}
+    quote = next((n for n in buttons if id(n) not in in_status), None)
     quoted = {id(n) for n in _walk(quote)} if quote else set()
     texts = [n for n in texts_in(bubble) if id(n) not in quoted]
     times = [n for n in texts if TIME_RE.match(n.name.strip())]
@@ -168,7 +176,7 @@ def _read_row(row: UiNode) -> ChatLine | None:
         kind = "text"
     else:
         kind = "other"
-    others = [n for n in nodes if id(n) not in quoted and n is not quote]
+    others = [n for n in nodes if id(n) not in quoted | in_status and n is not quote]
     plain = (
         len(body) == 1
         and not any(n.control_type in ("Hyperlink", "Button") for n in others)
