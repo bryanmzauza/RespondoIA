@@ -73,6 +73,7 @@ class SettingsWindow(QWidget):
     def __init__(self, settings: Settings, has_api_key: bool) -> None:
         super().__init__()
         self._settings = settings
+        self.delete_history_on_save = False  # the user agreed to delete it when turning off
         self.setWindowTitle(t("settings.title"))
 
         self.hotkey_edit = HotkeyEdit(settings.hotkey)
@@ -248,8 +249,8 @@ class SettingsWindow(QWidget):
 
     def _save(self) -> None:
         turned_off = self._settings.history_enabled and not self.history_check.isChecked()
-        if turned_off and self._ask("settings.history_off_confirm"):
-            self.delete_all_requested.emit()
+        # The controller deletes only if the save works: a failed save keeps history on.
+        self.delete_history_on_save = turned_off and self._ask("settings.history_off_confirm")
         key = self.api_key_edit.text().strip()
         if key:
             self.api_key_entered.emit(key)

@@ -869,9 +869,13 @@ class Controller(QObject):
     def _on_window_saved(self, new: Settings) -> None:
         # A contact marked private while the window was open is not in the window's
         # list. Apply only the removals made in the window to the current list.
+        window = self._settings_window
+        delete = window is not None and getattr(window, "delete_history_on_save", False)
         removed = set(self._window_base.private_contacts) - set(new.private_contacts)
         kept = tuple(c for c in self._settings.private_contacts if c not in removed)
-        self.apply_settings(replace(new, private_contacts=kept))
+        # History is deleted only once the settings that turn it off were saved.
+        if self.apply_settings(replace(new, private_contacts=kept)) and delete:
+            self._on_delete_all_history()
 
     def apply_settings(self, new: Settings) -> bool:
         """Apply and save new settings. False, with the reason shown, if nothing changed."""
@@ -903,6 +907,10 @@ class Controller(QObject):
             return False
         self._settings = new
         self.request_settings.emit(new)
+        # Nothing stays from a contact made private here, as from the panel.
+        for name in new.private_contacts:
+            if not is_private(name, old.private_contacts):
+                self.request_forget.emit(name)
         if self._pending_key:
             # Stored only now: a key typed in a window whose save failed is not kept.
             config.set_api_key(self._pending_key)

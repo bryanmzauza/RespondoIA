@@ -42,7 +42,9 @@ def test_turning_history_off_asks_to_delete(qtbot, monkeypatch, button, deleted)
     window.history_check.setChecked(False)
     with qtbot.waitSignal(window.saved) as signal:
         window.save_button.click()
-    assert not signal.args[0].history_enabled and bool(asked) is deleted
+    # The deletion waits for the save: the controller runs it only if the save works.
+    assert not signal.args[0].history_enabled and not asked
+    assert window.delete_history_on_save is deleted
 
 
 def test_delete_all_asks_first(qtbot, monkeypatch):

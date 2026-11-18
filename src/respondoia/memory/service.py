@@ -30,7 +30,7 @@ from respondoia.memory.recall import (
     plain_text,
     search_terms,
 )
-from respondoia.privacy import mask_text
+from respondoia.privacy import is_private, mask_text
 
 logger = logging.getLogger("respondoia")
 
@@ -283,7 +283,10 @@ class HistoryService:
         now = self._now()
 
         def due(conn):
-            if not self._settings().history_enabled or not _in_scope(conn, contact_id):
+            settings = self._settings()
+            if not settings.history_enabled or not _in_scope(
+                conn, contact_id, settings.private_contacts
+            ):
                 return None
             row = store.load_memory(conn, contact_id)
             if (
@@ -364,6 +367,6 @@ class HistoryService:
             return default
 
 
-def _in_scope(conn, contact_id: int) -> bool:
-    row = conn.execute("SELECT history FROM contact WHERE id = ?", (contact_id,)).fetchone()
-    return row is not None and row[0] != 0
+def _in_scope(conn, contact_id: int, private_contacts: Sequence[str]) -> bool:
+    row = conn.execute("SELECT name, history FROM contact WHERE id = ?", (contact_id,)).fetchone()
+    return row is not None and row[1] != 0 and not is_private(row[0], private_contacts)
