@@ -102,7 +102,9 @@ class AccessibleScroll:
             cache = uia.CreateCacheRequest()
             cache.TreeFilter = uia.RawViewCondition
             panel = uia.ElementFromHandle(hwnd).FindFirstBuildCache(
-                4, uia.CreatePropertyCondition(30011, "main"), cache  # descendants, AutomationId
+                4,
+                uia.CreatePropertyCondition(30011, "main"),
+                cache,  # descendants, AutomationId
             )
             if not panel:
                 return None
@@ -120,12 +122,26 @@ class AccessibleScroll:
         except (comtypes.COMError, OSError, ValueError):
             return None
 
+    def _settled(self, tries: int = 20) -> tuple[float, float]:
+        """Position and visible share once they stop changing. While older messages
+        arrive the list grows and both jump for a moment."""
+        last = None
+        for _ in range(tries):
+            now = (
+                self._pattern.CurrentVerticalScrollPercent,
+                self._pattern.CurrentVerticalViewSize,
+            )
+            if now == last:
+                return now
+            last = now
+            self._sleep(0.05)
+        return last
+
     def up(self, screens: float) -> None:
         """Towards older messages by this many screens (fractions too)."""
-        view = self._pattern.CurrentVerticalViewSize
-        here = self._pattern.CurrentVerticalScrollPercent
+        here, view = self._settled()
         step = 100.0 if view >= 100 else 100.0 * screens * view / (100.0 - view)
-        self._pattern.SetScrollPercent(-1, max(0.0, here - step))
+        self._pattern.SetScrollPercent(-1, max(0.0, min(100.0, here - step)))
 
     def bottom(self, tries: int = 20) -> None:
         """Back to the newest messages. The list grows while it loads, so check and repeat."""
@@ -164,6 +180,20 @@ def put_cursor(x: int, y: int) -> None:
 
 def minimized(hwnd: int) -> bool:
     return bool(ctypes.windll.user32.IsIconic(hwnd))
+
+
+def restore_behind(hwnd: int, settle_s: float = 0.4) -> bool:
+    """Restore a minimized window without activating it and put it behind every other
+    window: it draws again (scrolling needs that) without covering what the user sees."""
+    user32 = ctypes.windll.user32
+    user32.ShowWindow(hwnd, 4)  # SW_SHOWNOACTIVATE
+    user32.SetWindowPos(hwnd, 1, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)  # HWND_BOTTOM, keep
+    time.sleep(settle_s)  # let it draw before the first read
+    return not minimized(hwnd)
+
+
+def minimize(hwnd: int) -> None:
+    ctypes.windll.user32.ShowWindow(hwnd, 7)  # SW_SHOWMINNOACTIVE
 
 
 def foreground_window() -> int:
@@ -207,9 +237,7 @@ def _register(hwnd: int | None, remove: bool) -> bool:
         _RawInputDevice(_USAGE_PAGE_GENERIC, _USAGE_KEYBOARD, flags, target),
     )
     return bool(
-        ctypes.windll.user32.RegisterRawInputDevices(
-            devices, 2, ctypes.sizeof(_RawInputDevice)
-        )
+        ctypes.windll.user32.RegisterRawInputDevices(devices, 2, ctypes.sizeof(_RawInputDevice))
     )
 
 

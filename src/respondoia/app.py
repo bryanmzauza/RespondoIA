@@ -323,6 +323,15 @@ class Desktop:
     def put_cursor(self, x: int, y: int) -> None:
         scroll.put_cursor(x, y)
 
+    def minimized(self, hwnd: int) -> bool:
+        return scroll.minimized(hwnd)
+
+    def restore_behind(self, hwnd: int) -> bool:
+        return scroll.restore_behind(hwnd)
+
+    def minimize(self, hwnd: int) -> None:
+        scroll.minimize(hwnd)
+
 
 def real_loader_ports(guard) -> Callable[..., LoaderPorts]:
     def make(hwnd: int, scroller=None) -> LoaderPorts:
@@ -389,16 +398,24 @@ class HistoryWorker(QObject):
 
     @Slot(str, int, str, object)
     def load(self, purpose: str, hwnd: int, title: str, contact_id) -> None:
+        restored = False
         try:
-            outcome = self._load(purpose, hwnd, title, contact_id)
+            scroller = self._accessible(hwnd)
+            if scroller is not None and self._desktop.minimized(hwnd):
+                # A minimized window does not draw: bring it back behind everything,
+                # without the focus, and minimize it again at the end.
+                restored = self._desktop.restore_behind(hwnd)
+            outcome = self._load(purpose, hwnd, title, contact_id, scroller)
         except Exception as exc:  # noqa: BLE001 - a failed load must not end the app
             logger.error("load error type=%s", type(exc).__name__)
             outcome = LoadOutcome(purpose, "unreadable", 0, None, 0)
+        finally:
+            if restored:
+                self._desktop.minimize(hwnd)
         self.loaded.emit(outcome)
 
-    def _load(self, purpose: str, hwnd: int, title: str, contact_id) -> LoadOutcome:
+    def _load(self, purpose: str, hwnd: int, title: str, contact_id, scroller) -> LoadOutcome:
         settings = self._settings()
-        scroller = self._accessible(hwnd)
         ports = self._loader_ports(hwnd, scroller)
         view = ports.read()
         if view is None:

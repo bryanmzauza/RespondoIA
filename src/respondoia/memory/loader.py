@@ -223,9 +223,10 @@ def load(
             recovered = overlap is None
             if overlap is None:
                 # Too far: step back notch by notch until the screen joins the block again.
-                went = notches
+                # Older messages arriving can push the list further than one step: allow
+                # up to three steps back before giving up.
                 notches = MIN_NOTCHES
-                for _ in range(went):
+                for _ in range(3 * MAX_NOTCHES):
                     scroll(-1, *pace.notch)
                     screen = next_screen(last_seen)
                     last_seen = _signature(screen)

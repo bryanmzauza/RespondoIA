@@ -37,7 +37,7 @@ class FakeChat:
         self.reads += 1
         self.events.append(("read",))
         if self.jump_at_read == self.reads:
-            self.bottom = max(self.rows, self.bottom - 40)
+            self.bottom = max(self.rows, self.bottom - 80)
         if self.title_after_reads is not None and self.reads > self.title_after_reads:
             self.title = "Bia"
         top = max(0, self.bottom - self.rows)
@@ -355,6 +355,21 @@ def test_photo_stretches_do_not_lose_the_thread():
     shown = [i for i in range(300) if i not in hidden]
     assert report.reason == "start"
     assert texts(report) == [f"mensagem {i}" for i in shown]
+
+
+def test_older_messages_arriving_do_not_lose_the_thread():
+    # WhatsApp inserts older messages and the list jumps further than one step back.
+    chat = FakeChat()
+    original = chat.read
+
+    def read():
+        if chat.reads == 4:
+            chat.bottom = max(chat.rows, chat.bottom - 30)
+        return original()
+
+    chat.read = read
+    report = load(HWND, "Ana", LoadLimits(screens=12, months=0), background_ports(chat))
+    assert report.reason == "limit" and contiguous(report)
 
 
 def test_months_before():

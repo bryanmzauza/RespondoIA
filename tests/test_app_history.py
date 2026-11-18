@@ -261,9 +261,22 @@ def test_memory_work_runs_apart_from_loads_and_deletes(tmp_path):
 
 
 class FakeDesktop:
-    def __init__(self):
+    def __init__(self, minimized=False):
         self.cursor = (5, 5)
         self.calls = []
+        self.is_minimized = minimized
+
+    def minimized(self, hwnd):
+        return self.is_minimized
+
+    def restore_behind(self, hwnd):
+        self.calls.append(("restore_behind", hwnd))
+        self.is_minimized = False
+        return True
+
+    def minimize(self, hwnd):
+        self.calls.append(("minimize", hwnd))
+        self.is_minimized = True
 
     def focus(self, hwnd):
         self.calls.append(("focus", hwnd))
@@ -277,10 +290,10 @@ class FakeDesktop:
         self.cursor = (x, y)
 
 
-def make_worker(db, tmp_path, chat, settings=ON, scroller=None):
+def make_worker(db, tmp_path, chat, settings=ON, scroller=None, minimized=False):
     history = HistoryService(db, lambda: None, lambda: settings)
     style = StyleService(db, lambda: None, tmp_path / "knowledge.md")
-    desktop = FakeDesktop()
+    desktop = FakeDesktop(minimized)
     worker = HistoryWorker(
         history,
         style,
@@ -444,3 +457,20 @@ def test_wheel_load_says_so(qtbot, db, tmp_path):
     with qtbot.waitSignal(worker.loaded):
         worker.load("quick", 42, "Marina Duarte", None)
     assert modes == ["wheel"] and desktop.calls[0] == ("focus", 42)
+
+
+def test_minimized_whatsapp_is_restored_behind_and_minimized_again(qtbot, db, tmp_path):
+    chat = FakeChat(n=60, title="Marina Duarte")
+    worker, desktop = make_worker(db, tmp_path, chat, scroller=object(), minimized=True)
+    with qtbot.waitSignal(worker.loaded) as signal:
+        worker.load("full", 42, "Marina Duarte", None)
+    assert desktop.calls == [("restore_behind", 42), ("minimize", 42)]
+    assert signal.args[0].history.messages == 60
+
+
+def test_open_whatsapp_is_left_as_it_was(qtbot, db, tmp_path):
+    chat = FakeChat(n=60, title="Marina Duarte")
+    worker, desktop = make_worker(db, tmp_path, chat, scroller=object())
+    with qtbot.waitSignal(worker.loaded):
+        worker.load("full", 42, "Marina Duarte", None)
+    assert desktop.calls == []

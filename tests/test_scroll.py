@@ -95,7 +95,7 @@ def test_accessible_scroll_moves_up_by_part_of_a_screen():
 
 def test_accessible_scroll_stops_at_the_top():
     pattern = FakePattern(percent=1.0, view=25.0)
-    scroll.AccessibleScroll(pattern, sleep=lambda s: None).up(1.0)
+    scroll.AccessibleScroll(pattern, sleep=lambda s: None).up(0.3)
     assert pattern.calls[-1] == (-1, 0)
 
 
@@ -103,6 +103,36 @@ def test_accessible_scroll_reaches_the_bottom_even_when_the_list_grows():
     pattern = FakePattern(percent=40.0, grows=2)
     scroll.AccessibleScroll(pattern, sleep=lambda s: None).bottom()
     assert pattern.CurrentVerticalScrollPercent == 100 and len(pattern.calls) == 3
+
+
+class GrowingPattern(FakePattern):
+    """Older messages arriving: position and share move for a few readings, then settle.
+    Each reading of the position moves to the next pair."""
+
+    def __init__(self, readings):
+        super().__init__()
+        self._readings = list(readings)
+        self._current = self._readings[0]
+
+    def __getattribute__(self, name):
+        if name == "CurrentVerticalScrollPercent":
+            readings = object.__getattribute__(self, "_readings")
+            current = readings.pop(0) if len(readings) > 1 else readings[0]
+            object.__setattr__(self, "_current", current)
+            return current[0]
+        if name == "CurrentVerticalViewSize":
+            return object.__getattribute__(self, "_current")[1]
+        return object.__getattribute__(self, name)
+
+    def SetScrollPercent(self, horizontal, vertical):
+        self.calls.append((horizontal, vertical))
+
+
+def test_accessible_scroll_waits_for_the_list_to_settle():
+    pattern = GrowingPattern([(3.8, 8.4), (28.1, 10.8), (5.1, 9.8), (5.1, 9.8), (5.1, 9.8)])
+    scroll.AccessibleScroll(pattern, sleep=lambda s: None).up(0.3)
+    # Computed from the settled position and share, not from the first reading.
+    assert pattern.calls == [(-1, pytest.approx(5.1 - 30 * 9.8 / 90.2))]
 
 
 def test_pause_is_known_apart_from_real_input(qtbot, monkeypatch):
