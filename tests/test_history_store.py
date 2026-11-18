@@ -252,6 +252,22 @@ def test_deleted_words_leave_the_search_index(db):
             assert WORD.encode() not in index_bytes(conn), name
 
 
+def test_joining_segments_keeps_the_stored_rows(db):
+    # The memory reads rows above the last id it summarized: a join must not renew them.
+    base = msgs(40)
+    with db.transaction() as conn:
+        cid = contact(conn)
+        save(conn, cid, base[:10])
+        save(conn, cid, base[30:])
+        old = {i for s in store.segments(conn, cid) for i in s.ids}
+        last = max(old)
+        assert save(conn, cid, base[8:32]) == 20
+        (segment,) = store.segments(conn, cid)
+        assert [m.text for m in segment.messages] == [m.text for m in base]
+        assert old <= set(segment.ids)
+        assert len(store.rows_after(conn, cid, last, 100)) == 20
+
+
 def test_row_ids_are_never_reused(db):
     with db.transaction() as conn:
         cid = contact(conn)

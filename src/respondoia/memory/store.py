@@ -145,19 +145,45 @@ def save_merge(conn, contact_id: int, merge: Merge, now: str, current: Sequence[
         grown = _grow_in_place(conn, contact_id, current[merge.replaces[0]], merge.result, now)
         if grown is not None:
             return grown
-    absorbed = [current[k].id for k in merge.replaces]
-    for segment_id in absorbed:
-        conn.execute(
-            "DELETE FROM history_message WHERE contact_id = ? AND segment = ?",
-            (contact_id, segment_id),
-        )
+    # A new segment, or several joined into one. Stored rows keep their ids (the memory
+    # reads rows above the last id it summarized); they only move to the new segment.
     number = conn.execute(
         "SELECT coalesce(max(segment), 0) + 1 FROM history_message WHERE contact_id = ?",
         (contact_id,),
     ).fetchone()[0]
+    owner: dict[int, int] = {}  # position in the result -> stored row id
+    position = 0
+    for k in merge.replaces:
+        segment = current[k]
+        for row_id, stored in zip(segment.ids, segment.messages, strict=True):
+            while position < len(merge.result) and not _matches(stored, merge.result[position]):
+                position += 1
+            if position < len(merge.result):
+                owner[position] = row_id
+                position += 1
+    inserted = 0
     for i, message in enumerate(merge.result):
-        _insert(conn, contact_id, number, i * SPACING, message, now)
-    return len(merge.result) - sum(len(current[k].messages) for k in merge.replaces)
+        if i in owner:
+            conn.execute(
+                "UPDATE history_message SET segment = ?, ord = ?, sent_on = ?, text = ?,"
+                " quote = ?, fingerprint = ? WHERE id = ?",
+                (
+                    number,
+                    i * SPACING,
+                    message.sent_on,
+                    message.text,
+                    message.quote,
+                    fingerprint(message),
+                    owner[i],
+                ),
+            )
+        else:
+            _insert(conn, contact_id, number, i * SPACING, message, now)
+            inserted += 1
+    unmatched = {row for k in merge.replaces for row in current[k].ids} - set(owner.values())
+    for row_id in unmatched:  # cannot happen with a merge result; never leave stray rows
+        conn.execute("DELETE FROM history_message WHERE id = ?", (row_id,))
+    return inserted
 
 
 def count(conn, contact_id: int) -> int:
