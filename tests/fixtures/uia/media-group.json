@@ -1,0 +1,516 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  737
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    737
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": [
+        {
+         "control_type": "Button",
+         "name": "Dados do perfil",
+         "automation_id": "",
+         "aria_role": "button",
+         "rect": [
+          420,
+          0,
+          1391,
+          65
+         ],
+         "children": []
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          475,
+          10,
+          1359,
+          32
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "Turma do Vôlei",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            475,
+            11,
+            624,
+            31
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          475,
+          33,
+          1359,
+          54
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "Bia Rocha, Leandro Pires, Você",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            475,
+            34,
+            1084,
+            50
+           ],
+           "children": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      65,
+      1600,
+      677
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        70,
+        1590,
+        677
+       ],
+       "children": [
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          80,
+          1590,
+          374
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            80,
+            1590,
+            374
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              80,
+              818,
+              370
+             ],
+             "children": [
+              {
+               "control_type": "Button",
+               "name": "Bia Rocha",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                488,
+                84,
+                562,
+                107
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Abrir imagem",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                485,
+                110,
+                815,
+                330
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  110,
+                  815,
+                  441
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "Rede nova",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    110,
+                    815,
+                    441
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  110,
+                  815,
+                  330
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "Rede nova",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    110,
+                    815,
+                    330
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                491,
+                336,
+                808,
+                354
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "Rede nova",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  491,
+                  336,
+                  561,
+                  354
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                778,
+                352,
+                809,
+                368
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "20:11",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  778,
+                  353,
+                  809,
+                  367
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              828,
+              210,
+              854,
+              237
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          378,
+          1590,
+          657
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            378,
+            1590,
+            657
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              378,
+              728,
+              653
+             ],
+             "children": [
+              {
+               "control_type": "Button",
+               "name": "Abrir imagem",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                485,
+                381,
+                725,
+                650
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  381,
+                  725,
+                  650
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    381,
+                    725,
+                    652
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  381,
+                  725,
+                  650
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    381,
+                    725,
+                    650
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  621,
+                  725,
+                  650
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              738,
+              508,
+              764,
+              535
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      677,
+      1600,
+      737
+     ],
+     "children": []
+    }
+   ]
+  }
+ ]
+}

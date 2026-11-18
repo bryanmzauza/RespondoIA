@@ -1,0 +1,1638 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  1953
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    1953
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": [
+        {
+         "control_type": "Button",
+         "name": "Dados do perfil",
+         "automation_id": "",
+         "aria_role": "button",
+         "rect": [
+          420,
+          0,
+          1391,
+          65
+         ],
+         "children": []
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          475,
+          10,
+          1359,
+          32
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "Tânia Prado",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            475,
+            11,
+            624,
+            31
+           ],
+           "children": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      65,
+      1600,
+      1893
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        70,
+        1590,
+        1893
+       ],
+       "children": [
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          80,
+          1590,
+          117
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            80,
+            1590,
+            117
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              1328,
+              80,
+              1528,
+              115
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Você:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1328,
+                80,
+                1528,
+                115
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1334,
+                86,
+                1518,
+                107
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "manda as fotos do bolo",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  1334,
+                  87,
+                  1484,
+                  105
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1473,
+                99,
+                1522,
+                115
+               ],
+               "children": [
+                {
+                 "control_type": "Button",
+                 "name": "09:00 lida",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  1473,
+                  99,
+                  1522,
+                  115
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Text",
+                   "name": "09:00",
+                   "automation_id": "",
+                   "aria_role": "description",
+                   "rect": [
+                    1473,
+                    99,
+                    1503,
+                    114
+                   ],
+                   "children": []
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    1506,
+                    99,
+                    1522,
+                    116
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "ícone-de-leitura",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      1506,
+                      99,
+                      1522,
+                      116
+                     ],
+                     "children": []
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          120,
+          1590,
+          530
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            120,
+            1590,
+            530
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              120,
+              788,
+              526
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                120,
+                788,
+                526
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Abrir imagem",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                485,
+                123,
+                785,
+                523
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  123,
+                  785,
+                  525
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    123,
+                    785,
+                    525
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  123,
+                  785,
+                  523
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    123,
+                    785,
+                    523
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  494,
+                  785,
+                  523
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Text",
+                 "name": "09:01",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  747,
+                  505,
+                  777,
+                  520
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              798,
+              300,
+              824,
+              327
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          534,
+          1590,
+          798
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            534,
+            1590,
+            798
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              534,
+              818,
+              794
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                534,
+                818,
+                794
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Abrir imagem",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                485,
+                537,
+                815,
+                757
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  537,
+                  815,
+                  868
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "Olha o bolo pronto",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    537,
+                    815,
+                    868
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  537,
+                  815,
+                  757
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "Olha o bolo pronto",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    537,
+                    815,
+                    757
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                491,
+                762,
+                808,
+                780
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "Olha o bolo pronto",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  491,
+                  762,
+                  615,
+                  780
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                778,
+                776,
+                809,
+                792
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "09:02",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  778,
+                  777,
+                  809,
+                  791
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              828,
+              654,
+              854,
+              681
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          802,
+          1590,
+          982
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            802,
+            1590,
+            982
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              802,
+              788,
+              978
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                802,
+                788,
+                978
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Reproduzir vídeo",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                485,
+                805,
+                785,
+                975
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  805,
+                  785,
+                  975
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Image",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "img",
+                   "rect": [
+                    485,
+                    805,
+                    785,
+                    975
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  946,
+                  785,
+                  975
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Text",
+                 "name": "0:42",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  492,
+                  954,
+                  518,
+                  969
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Text",
+                 "name": "21:47",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  747,
+                  957,
+                  777,
+                  972
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              798,
+              872,
+              824,
+              899
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          986,
+          1590,
+          1410
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            986,
+            1590,
+            1410
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              986,
+              728,
+              1406
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                986,
+                728,
+                1406
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                485,
+                989,
+                725,
+                1316
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  485,
+                  989,
+                  724,
+                  1230
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Text",
+                 "name": "Bolo de cenoura fofinho em 40 minutos",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  491,
+                  1236,
+                  710,
+                  1272
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Text",
+                 "name": "receitas.example",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  491,
+                  1278,
+                  602,
+                  1293
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Hyperlink",
+               "name": "https://receitas.example/bolo-de-cenoura",
+               "automation_id": "",
+               "aria_role": "link",
+               "rect": [
+                491,
+                1322,
+                720,
+                1380
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "https://receitas.example/bolo-de-cenoura",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  491,
+                  1322,
+                  720,
+                  1380
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                688,
+                1386,
+                719,
+                1402
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "09:04",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  688,
+                  1387,
+                  719,
+                  1401
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              738,
+              1186,
+              764,
+              1213
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          1414,
+          1590,
+          1451
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            1414,
+            1590,
+            1451
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              1414,
+              712,
+              1449
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                1420,
+                672,
+                1441
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "a receita é do receitas.example",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  488,
+                  1421,
+                  668,
+                  1439
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                672,
+                1433,
+                703,
+                1449
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "09:05",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  672,
+                  1434,
+                  703,
+                  1448
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          1454,
+          1590,
+          1548
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            1454,
+            1590,
+            1548
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              1454,
+              818,
+              1544
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                1454,
+                818,
+                1544
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                488,
+                1460,
+                726,
+                1497
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  488,
+                  1460,
+                  522,
+                  1494
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Button",
+                   "name": "Reproduzir mensagem de voz",
+                   "automation_id": "",
+                   "aria_role": "button",
+                   "rect": [
+                    488,
+                    1460,
+                    522,
+                    1494
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  534,
+                  1465,
+                  726,
+                  1490
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Slider",
+                   "name": "Controle deslizante de áudio",
+                   "automation_id": "",
+                   "aria_role": "slider",
+                   "rect": [
+                    534,
+                    1465,
+                    726,
+                    1495
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                752,
+                1458,
+                807,
+                1514
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  752,
+                  1458,
+                  807,
+                  1514
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  752,
+                  1458,
+                  807,
+                  1514
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                778,
+                1526,
+                809,
+                1542
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "09:06",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  778,
+                  1527,
+                  809,
+                  1541
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          1552,
+          1590,
+          1761
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            1552,
+            1590,
+            1761
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              1552,
+              685,
+              1757
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                1552,
+                685,
+                1757
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                485,
+                1555,
+                675,
+                1750
+               ],
+               "children": [
+                {
+                 "control_type": "Button",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  485,
+                  1555,
+                  675,
+                  1750
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    1555,
+                    675,
+                    1746
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "Figurinha",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      485,
+                      1555,
+                      675,
+                      1746
+                     ],
+                     "children": []
+                    }
+                   ]
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                645,
+                1738,
+                676,
+                1754
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "09:07",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  645,
+                  1739,
+                  676,
+                  1753
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          1765,
+          1590,
+          1873
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            1765,
+            1590,
+            1873
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              1192,
+              1765,
+              1528,
+              1871
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Você:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                1192,
+                1765,
+                1528,
+                1871
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Button",
+               "name": "Orçamento cozinha 2 páginas 09:08",
+               "automation_id": "",
+               "aria_role": "button",
+               "rect": [
+                1192,
+                1765,
+                1528,
+                1871
+               ],
+               "children": [
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  1262,
+                  1785,
+                  1369,
+                  1805
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Text",
+                   "name": "Orçamento cozinha",
+                   "automation_id": "",
+                   "aria_role": "description",
+                   "rect": [
+                    1262,
+                    1785,
+                    1369,
+                    1805
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Text",
+                 "name": "2 páginas",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  1262,
+                  1810,
+                  1326,
+                  1828
+                 ],
+                 "children": []
+                },
+                {
+                 "control_type": "Group",
+                 "name": "",
+                 "automation_id": "",
+                 "aria_role": "group",
+                 "rect": [
+                  1488,
+                  1851,
+                  1519,
+                  1867
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Text",
+                   "name": "09:08",
+                   "automation_id": "",
+                   "aria_role": "description",
+                   "rect": [
+                    1488,
+                    1852,
+                    1518,
+                    1866
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      1893,
+      1600,
+      1953
+     ],
+     "children": []
+    }
+   ]
+  }
+ ]
+}

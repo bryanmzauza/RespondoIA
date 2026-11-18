@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from functools import lru_cache
 
-from respondoia.domain import ChatLine, ChatView, OpenChat, Rect
+from respondoia.domain import PICTURE_KINDS, ChatLine, ChatView, OpenChat, Rect
 
 PANEL_ID = "main"
 # The chat header sits in this many pixels at the top of the panel.
@@ -24,6 +24,10 @@ _SENDER_BAND = 30
 _PHOTO_SIDE = 80
 _EMOJI_SIDE = 32  # images smaller than this are emoji drawn inline
 _AVATAR_SIDE = 16  # a picture in the header at least this big is the contact's photo
+# A button this tall against its bubble is a card (a document), not a quote.
+_CARD_SHARE = 0.9
+# The site under a link preview. A data format, like the time.
+_DOMAIN_RE = re.compile(r"^(?:[a-z0-9-]+\.)+[a-z]{2,}$")
 
 # Day separators show a day as text: a value to read, like a date in an exported file.
 # The structure finds them (a centered text between the rows); these tables read them.
@@ -211,7 +215,11 @@ def find_open_chat(root: UiNode) -> OpenChat | None:
             continue
         if in_band(node):
             # The title is the first text in the header. Status lines come after it.
-            return OpenChat(node.name, panel.rect, avatar) if node.name.strip() else None
+            if not node.name.strip():
+                return None
+            top, bottom = _message_area(panel)
+            messages = Rect(panel.rect.left, top, panel.rect.right, bottom)
+            return OpenChat(node.name, panel.rect, avatar, messages)
     return None
 
 
@@ -269,45 +277,79 @@ def _read_row(row: UiNode) -> ChatLine | None:
     buttons = [n for n in nodes if n.control_type == "Button" and texts_in(n)]
     status = [n for n in buttons if is_status(n)]
     in_status = {id(m) for n in status for m in _walk(n)}
+    # A document card is a button as tall as its bubble. One that also holds the read
+    # receipt wraps a message the reader reads as text (seen in the 0.4 probe).
+    card = next(
+        (
+            n
+            for n in buttons
+            if n.rect.height >= _CARD_SHARE * bubble.rect.height
+            and not any(id(m) in in_status for m in _walk(n))
+        ),
+        None,
+    )
     # A button holding the status button wraps the whole message: it is not a quote.
     quote = next(
         (
             n
             for n in buttons
-            if id(n) not in in_status and not any(id(m) in in_status for m in _walk(n))
+            if id(n) not in in_status
+            and n is not card
+            and not any(id(m) in in_status for m in _walk(n))
         ),
         None,
     )
     quoted = {id(n) for n in _walk(quote)} if quote else set()
     texts = [n for n in texts_in(bubble) if id(n) not in quoted]
     times = [n for n in texts if TIME_RE.match(n.name.strip())]
-    time_node = times[-1] if times else None
-    body = [n for n in texts if n is not time_node]
+    # The time is the lowest one; a photo shows it over the picture, a video its length too.
+    time_node = max(times, key=lambda n: (n.rect.bottom, n.rect.right), default=None)
+
+    pictures = [
+        n
+        for n in nodes
+        if n.control_type == "Image"
+        and min(n.rect.width, n.rect.height) >= _PHOTO_SIDE
+        and id(n) not in quoted
+    ]
+    area = _picture_area(bubble, pictures)
+    length = next(
+        (n for n in times if n is not time_node and area and _inside(n.rect, area)), None
+    )
+    body = [n for n in texts if n is not time_node and n is not length]
 
     sender = ""
     if not is_user:
         first_text_top = min((n.rect.top for n in body), default=bubble.rect.bottom)
         for n in nodes:
             near_top = n.rect.top - bubble.rect.top <= _SENDER_BAND
-            # A name is a wide, short button; a play button is square.
-            wide = n.rect.width >= 1.5 * n.rect.height
+            # A name is a wide, short button; a play button is square, a picture tall.
+            wide = n.rect.width >= 1.5 * n.rect.height and n.rect.height <= _SENDER_BAND
             is_name = n.control_type == "Button" and n is not quote and n.name.strip()
             if is_name and near_top and wide:
                 if n.rect.top < first_text_top:
                     sender = n.name.strip()
                 break
 
+    others = [n for n in nodes if id(n) not in quoted | in_status and n is not quote]
+    site = ""
+    if any(n.control_type == "Hyperlink" for n in others):
+        site = next((n.name.strip() for n in body if _DOMAIN_RE.match(n.name.strip())), "")
     if any(n.control_type in ("Slider", "ProgressBar") for n in nodes):
         kind = "audio"
-    elif any(
-        n.control_type == "Image" and min(n.rect.width, n.rect.height) >= _PHOTO_SIDE for n in nodes
-    ):
-        kind = "image"
+    elif card is not None and not pictures:
+        kind = "document"
+    elif pictures:
+        # A sticker is one named picture alone; a photo has two unnamed ones, or a caption.
+        sticker = not body and len(pictures) == 1 and pictures[0].name.strip()
+        kind = "sticker" if sticker else "video" if length else "image"
+    elif site:
+        kind = "link"
     elif body:
         kind = "text"
     else:
         kind = "other"
-    others = [n for n in nodes if id(n) not in quoted | in_status and n is not quote]
+    is_picture = kind in PICTURE_KINDS and area is not None
     plain = (
         len(body) == 1
         and not any(n.control_type in ("Hyperlink", "Button") for n in others)
@@ -324,7 +366,43 @@ def _read_row(row: UiNode) -> ChatLine | None:
         text="\n".join(n.name.strip() for n in body),
         quote="\n".join(n.name.strip() for n in texts_in(quote)) if quote else "",
         plain=plain,
-        rect=bubble.rect,
+        rect=area if is_picture else bubble.rect,
+        duration=length.name.strip() if length else "",
+        site=site if kind == "link" else "",
+        shape=f"{area.height / area.width:.1f}" if is_picture else "",
+    )
+
+
+def _picture_area(bubble: UiNode, pictures: list[UiNode]) -> Rect | None:
+    """What shows the pictures: the button around each one, which can be smaller than the
+    image it clips. Several pictures (an album) give the box around them all."""
+    if not pictures:
+        return None
+    parent = {id(c): n for n in _walk(bubble) for c in n.children}
+
+    def shown(image: UiNode) -> Rect:
+        node = image
+        while id(node) in parent and parent[id(node)] is not bubble:
+            node = parent[id(node)]
+            if node.control_type == "Button":
+                return node.rect
+        return image.rect
+
+    rects = [shown(p) for p in pictures]
+    return Rect(
+        min(r.left for r in rects),
+        min(r.top for r in rects),
+        max(r.right for r in rects),
+        max(r.bottom for r in rects),
+    )
+
+
+def _inside(inner: Rect, outer: Rect) -> bool:
+    return (
+        outer.left <= inner.left
+        and inner.right <= outer.right
+        and outer.top <= inner.top
+        and inner.bottom <= outer.bottom
     )
 
 

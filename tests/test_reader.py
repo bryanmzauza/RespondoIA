@@ -21,7 +21,9 @@ def walk(node):
 
 def test_finds_title_and_bounds():
     chat = find_open_chat(load("chat-open-pt.json"))
-    assert chat == OpenChat("Marina Duarte", Rect(420, 0, 1600, 900))
+    assert chat == OpenChat(
+        "Marina Duarte", Rect(420, 0, 1600, 900), messages=Rect(420, 65, 1600, 836)
+    )
 
 
 def test_interface_language_does_not_matter():

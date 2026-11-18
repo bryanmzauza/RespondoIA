@@ -1,0 +1,583 @@
+{
+ "control_type": "Window",
+ "name": "WhatsApp",
+ "automation_id": "",
+ "aria_role": "",
+ "rect": [
+  0,
+  0,
+  1600,
+  476
+ ],
+ "children": [
+  {
+   "control_type": "Group",
+   "name": "",
+   "automation_id": "main",
+   "aria_role": "group",
+   "rect": [
+    420,
+    0,
+    1600,
+    476
+   ],
+   "children": [
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "banner",
+     "rect": [
+      420,
+      0,
+      1600,
+      65
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        0,
+        1391,
+        65
+       ],
+       "children": [
+        {
+         "control_type": "Button",
+         "name": "Dados do perfil",
+         "automation_id": "",
+         "aria_role": "button",
+         "rect": [
+          420,
+          0,
+          1391,
+          65
+         ],
+         "children": []
+        },
+        {
+         "control_type": "Group",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "group",
+         "rect": [
+          475,
+          10,
+          1359,
+          32
+         ],
+         "children": [
+          {
+           "control_type": "Text",
+           "name": "Tânia Prado",
+           "automation_id": "",
+           "aria_role": "description",
+           "rect": [
+            475,
+            11,
+            624,
+            31
+           ],
+           "children": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "group",
+     "rect": [
+      420,
+      65,
+      1600,
+      416
+     ],
+     "children": [
+      {
+       "control_type": "Group",
+       "name": "",
+       "automation_id": "",
+       "aria_role": "group",
+       "rect": [
+        420,
+        70,
+        1590,
+        416
+       ],
+       "children": [
+        {
+         "control_type": "DataItem",
+         "name": "",
+         "automation_id": "",
+         "aria_role": "row",
+         "rect": [
+          420,
+          80,
+          1590,
+          396
+         ],
+         "children": [
+          {
+           "control_type": "Group",
+           "name": "",
+           "automation_id": "",
+           "aria_role": "group",
+           "rect": [
+            420,
+            80,
+            1590,
+            396
+           ],
+           "children": [
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              482,
+              80,
+              794,
+              392
+             ],
+             "children": [
+              {
+               "control_type": "Group",
+               "name": "Tânia:",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                482,
+                80,
+                794,
+                392
+               ],
+               "children": []
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                485,
+                83,
+                791,
+                389
+               ],
+               "children": [
+                {
+                 "control_type": "Button",
+                 "name": "Abrir imagem",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  485,
+                  83,
+                  637,
+                  235
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    83,
+                    637,
+                    235
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      485,
+                      83,
+                      637,
+                      237
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    83,
+                    637,
+                    235
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      485,
+                      83,
+                      637,
+                      235
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    206,
+                    637,
+                    235
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Button",
+                 "name": "Abrir imagem",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  639,
+                  83,
+                  791,
+                  235
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    83,
+                    791,
+                    235
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      639,
+                      83,
+                      791,
+                      237
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    83,
+                    791,
+                    235
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      639,
+                      83,
+                      791,
+                      235
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    206,
+                    791,
+                    235
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Button",
+                 "name": "Abrir imagem",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  485,
+                  237,
+                  637,
+                  389
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    237,
+                    637,
+                    389
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      485,
+                      237,
+                      637,
+                      391
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    237,
+                    637,
+                    389
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      485,
+                      237,
+                      637,
+                      389
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    485,
+                    360,
+                    637,
+                    389
+                   ],
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "control_type": "Button",
+                 "name": "Abrir imagem",
+                 "automation_id": "",
+                 "aria_role": "button",
+                 "rect": [
+                  639,
+                  237,
+                  791,
+                  389
+                 ],
+                 "children": [
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    237,
+                    791,
+                    389
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      639,
+                      237,
+                      791,
+                      391
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    237,
+                    791,
+                    389
+                   ],
+                   "children": [
+                    {
+                     "control_type": "Image",
+                     "name": "",
+                     "automation_id": "",
+                     "aria_role": "img",
+                     "rect": [
+                      639,
+                      237,
+                      791,
+                      389
+                     ],
+                     "children": []
+                    }
+                   ]
+                  },
+                  {
+                   "control_type": "Group",
+                   "name": "",
+                   "automation_id": "",
+                   "aria_role": "group",
+                   "rect": [
+                    639,
+                    360,
+                    791,
+                    389
+                   ],
+                   "children": []
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "control_type": "Group",
+               "name": "",
+               "automation_id": "",
+               "aria_role": "group",
+               "rect": [
+                754,
+                372,
+                785,
+                388
+               ],
+               "children": [
+                {
+                 "control_type": "Text",
+                 "name": "10:15",
+                 "automation_id": "",
+                 "aria_role": "description",
+                 "rect": [
+                  754,
+                  373,
+                  785,
+                  387
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "control_type": "Group",
+             "name": "",
+             "automation_id": "",
+             "aria_role": "group",
+             "rect": [
+              0,
+              0,
+              0,
+              0
+             ],
+             "children": []
+            },
+            {
+             "control_type": "Button",
+             "name": "Encaminhar mídia",
+             "automation_id": "",
+             "aria_role": "button",
+             "rect": [
+              804,
+              220,
+              830,
+              247
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "control_type": "Group",
+     "name": "",
+     "automation_id": "",
+     "aria_role": "contentinfo",
+     "rect": [
+      420,
+      416,
+      1600,
+      476
+     ],
+     "children": []
+    }
+   ]
+  }
+ ]
+}

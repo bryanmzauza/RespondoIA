@@ -33,6 +33,7 @@ class OpenChat:
     title: str  # name at the top of the open chat, as displayed
     bounds: Rect  # open chat area in screen pixels
     avatar: Rect | None = None  # the contact's picture in the header, screen pixels
+    messages: Rect | None = None  # the message list, between the header and the message box
 
 
 @dataclass(frozen=True)
@@ -53,10 +54,10 @@ class ChatLine:
     # previews and cards carry other people's text, so only plain lines are learned.
     plain: bool = True
     day: str = ""  # ISO date from a day separator above it on this screen, "" if none
-    rect: Rect | None = None  # the bubble, in screen pixels
+    rect: Rect | None = None  # the bubble in screen pixels; the picture for an image or video
     duration: str = ""  # audio or video length as shown ("0:42"), "" if none
     site: str = ""  # domain shown in a link preview, "" if none
-    shape: str = ""  # height / width of a picture without text nodes, one decimal ("1.4")
+    shape: str = ""  # height / width of the picture of an image or video, one decimal ("1.4")
     transcript: bool = False  # text is WhatsApp's own transcript of an audio
 
 
