@@ -139,7 +139,13 @@ class AccessibleScroll:
 
     def up(self, screens: float) -> None:
         """Towards older messages by this many screens (fractions too)."""
-        here, view = self._settled()
+        here, view = (
+            self._pattern.CurrentVerticalScrollPercent,
+            self._pattern.CurrentVerticalViewSize,
+        )
+        if view != getattr(self, "_last_view", None):
+            here, view = self._settled()  # the list grew: wait until it holds still
+        self._last_view = view
         step = 100.0 if view >= 100 else 100.0 * screens * view / (100.0 - view)
         self._pattern.SetScrollPercent(-1, max(0.0, min(100.0, here - step)))
 
