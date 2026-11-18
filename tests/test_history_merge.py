@@ -1,13 +1,16 @@
+import hashlib
 import random
 from dataclasses import replace
 
-from respondoia.domain import ChatLine
+from respondoia.domain import ChatLine, family
 from respondoia.memory.merge import (
+    LOOK_DISTANCE,
     Stored,
     fill_days,
     find_overlap,
     fingerprint,
     from_lines,
+    look_distance,
     merge,
     normalize_time,
     stitch,
@@ -190,3 +193,101 @@ def test_masking_happens_in_from_lines():
     assert stored.text == "meu cpf é [CPF]"
     assert (stored.time, stored.sent_on) == ("21:15", "2026-11-12")
     assert from_lines([line], mask=False)[0].text.endswith("247-25")
+
+
+def photo(look="", time="", author="contact", shape="1.4"):
+    return Stored("", time, author, "", "image", "", "", shape=shape, look=look)
+
+
+def looks(n):
+    """Fictional looks 16 bits apart from each other."""
+    return [format(0xFF << (8 * i), "016x") for i in range(n)]
+
+
+def test_fingerprint_uses_the_family():
+    text = Stored("", "10:00", "contact", "", "text", "olha", "")
+    link = Stored("", "10:00", "contact", "", "link", "olha", "")
+    assert fingerprint(text) == fingerprint(link)
+    assert family("image") == family("video") == "media"
+
+
+def test_text_fingerprint_is_the_same_as_before():
+    # Rows stored by 0.4 keep their fingerprint: no shape, the same parts.
+    message = Stored("", "10:00", "contact", "", "text", "olha", "")
+    old = "contact\x1f\x1f10:00\x1ftext\x1folha\x1f"  # the parts 0.4 hashed
+    assert fingerprint(message) == hashlib.sha256(old.encode("utf-8")).hexdigest()
+
+
+def test_shape_is_part_of_the_fingerprint():
+    assert fingerprint(photo(shape="1.4")) != fingerprint(photo(shape="0.8"))
+
+
+def test_same_shape_pictures_align_by_look():
+    marks = looks(8)
+    older = [Stored("", "09:00", "user", "", "text", "manda as fotos", "")]
+    older += [photo(marks[i]) for i in range(6)]
+    newer = [photo(marks[i]) for i in range(3, 8)]
+    result = merge([older], newer)
+    assert result.replaces == (0,) and result.added == 2
+    assert [m.look for m in result.result[1:]] == marks
+
+
+def test_blurred_and_sharp_reads_are_the_same_picture():
+    sharp = "00000000000000ff"
+    blurred = format(0xFF ^ 0b1111111, "016x")  # 7 bits off
+    assert look_distance(sharp, blurred) == 7 <= LOOK_DISTANCE
+    older = [Stored("", "09:00", "user", "", "text", "olha", ""), photo(sharp)]
+    newer = [Stored("", "09:00", "user", "", "text", "olha", ""), photo(blurred)]
+    result = merge([older], newer)
+    assert result.added == 0 and len(result.result) == 2
+
+
+def test_pictures_far_apart_in_look_are_different():
+    a, b = "0000000000000000", format((1 << 30) - 1, "016x")
+    assert look_distance(a, b) == 30
+    older = [photo(a), photo(looks(3)[1])]
+    newer = [photo(b), photo(looks(3)[1])]
+    assert find_overlap(older, newer) is None
+
+
+def test_media_only_overlap_without_look_does_not_count():
+    pictures = [photo() for _ in range(5)]
+    assert find_overlap(pictures, pictures[2:] + [photo(), photo()]) is None
+    # A text among them makes it count again.
+    anchored = pictures[:3] + [Stored("", "09:00", "user", "", "text", "lindas", "")]
+    assert find_overlap(anchored, anchored[1:] + [photo()]) is not None
+
+
+def test_video_stored_as_text_is_updated_in_place():
+    ask = Stored("", "21:39", "user", "", "text", "gostou?", "")
+    hello = Stored("", "21:40", "user", "", "text", "me manda o vídeo", "")
+    old = Stored("", "21:47", "contact", "", "text", "0:42", "")
+    new = Stored("", "21:47", "contact", "", "video", "", "", shape="0.6")
+    result = merge([[ask, hello, old]], [ask, hello, new])
+    assert result.changed == 1 and result.added == 0
+    assert (result.result[2].kind, result.result[2].text, result.result[2].shape) == (
+        "video",
+        "",
+        "0.6",
+    )
+
+
+def test_reread_needs_a_time():
+    ask = Stored("", "21:39", "user", "", "text", "gostou?", "")
+    hello = Stored("", "21:40", "user", "", "text", "me manda o vídeo", "")
+    old = Stored("", "", "contact", "", "text", "0:42", "")
+    new = Stored("", "", "contact", "", "video", "", "", shape="0.6")
+    result = merge([[ask, hello, old]], [ask, hello, new])
+    assert result.gap or result.changed == 0
+    assert find_overlap([ask, hello, old], [ask, hello, new]) is None
+
+
+def test_from_lines_keeps_shape_and_looks():
+    lines = [
+        ChatLine("contact", "", "", "image", "", "", shape="1.4"),
+        ChatLine("contact", "", "10:00", "text", "oi", ""),
+    ]
+    stored = from_lines(lines, looks=("00000000000000ff", ""))
+    assert (stored[0].shape, stored[0].look) == ("1.4", "00000000000000ff")
+    assert (stored[1].shape, stored[1].look) == ("", "")
+    assert from_lines(lines)[0].look == ""

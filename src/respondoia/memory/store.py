@@ -8,10 +8,10 @@ Messages live in segments, each a run the app knows to be continuous, ordered in
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from respondoia.memory.merge import Merge, Stored, fingerprint
+from respondoia.memory.merge import Merge, Stored, fingerprint, same_message
 
 SPACING = 1024  # room between neighbours, so a run grows at both ends without renumbering
-_FIELDS = "sent_on, time, author, sender, kind, text, quote"
+_FIELDS = "sent_on, time, author, sender, kind, text, quote, shape, look"
 
 
 @dataclass(frozen=True)
@@ -80,7 +80,7 @@ def recent(conn, contact_id: int, limit: int = 300) -> tuple[Stored, ...]:
 def _insert(conn, contact_id: int, segment: int, order: int, message: Stored, now: str) -> None:
     conn.execute(
         f"INSERT INTO history_message (contact_id, segment, ord, {_FIELDS}, fingerprint, seen_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             contact_id,
             segment,
@@ -92,17 +92,27 @@ def _insert(conn, contact_id: int, segment: int, order: int, message: Stored, no
             message.kind,
             message.text,
             message.quote,
+            message.shape,
+            message.look,
             fingerprint(message),
             now,
         ),
     )
 
 
-def _matches(old: Stored, new: Stored) -> bool:
-    return fingerprint(old) == fingerprint(new) or (old.author, old.time, old.kind) == (
-        new.author,
-        new.time,
-        new.kind,
+# A stored row read again: the day filled in, the text edited, a media line read better.
+_REREAD = "sent_on = ?, kind = ?, text = ?, quote = ?, shape = ?, look = ?, fingerprint = ?"
+
+
+def _reread(message: Stored) -> tuple:
+    return (
+        message.sent_on,
+        message.kind,
+        message.text,
+        message.quote,
+        message.shape,
+        message.look,
+        fingerprint(message),
     )
 
 
@@ -111,16 +121,14 @@ def _grow_in_place(conn, contact_id: int, segment: Segment, result: Sequence[Sto
     None when the result is not shaped like that."""
     old = segment.messages
     for start in range(len(result) - len(old) + 1):
-        if all(_matches(o, result[start + i]) for i, o in enumerate(old)):
+        if all(same_message(o, result[start + i]) for i, o in enumerate(old)):
             break
     else:
         return None
     for i, (message, row_id) in enumerate(zip(result[start : start + len(old)], segment.ids)):
         if message != old[i]:
             conn.execute(
-                "UPDATE history_message SET sent_on = ?, text = ?, quote = ?, fingerprint = ?"
-                " WHERE id = ?",
-                (message.sent_on, message.text, message.quote, fingerprint(message), row_id),
+                f"UPDATE history_message SET {_REREAD} WHERE id = ?", (*_reread(message), row_id)
             )
     before, after = result[:start], result[start + len(old) :]
     for i, message in enumerate(before):
@@ -156,7 +164,7 @@ def save_merge(conn, contact_id: int, merge: Merge, now: str, current: Sequence[
     for k in merge.replaces:
         segment = current[k]
         for row_id, stored in zip(segment.ids, segment.messages, strict=True):
-            while position < len(merge.result) and not _matches(stored, merge.result[position]):
+            while position < len(merge.result) and not same_message(stored, merge.result[position]):
                 position += 1
             if position < len(merge.result):
                 owner[position] = row_id
@@ -165,17 +173,8 @@ def save_merge(conn, contact_id: int, merge: Merge, now: str, current: Sequence[
     for i, message in enumerate(merge.result):
         if i in owner:
             conn.execute(
-                "UPDATE history_message SET segment = ?, ord = ?, sent_on = ?, text = ?,"
-                " quote = ?, fingerprint = ? WHERE id = ?",
-                (
-                    number,
-                    i * SPACING,
-                    message.sent_on,
-                    message.text,
-                    message.quote,
-                    fingerprint(message),
-                    owner[i],
-                ),
+                f"UPDATE history_message SET segment = ?, ord = ?, {_REREAD} WHERE id = ?",
+                (number, i * SPACING, *_reread(message), owner[i]),
             )
         else:
             _insert(conn, contact_id, number, i * SPACING, message, now)

@@ -1,8 +1,10 @@
 """Merge what is read on screen into the stored history without duplicates, and detect gaps.
 
 Messages have no stable id, only what the screen shows. Two runs of messages are joined
-where a sequence of them is equal on both sides: same author, sender, time, kind, text and
-quote. Days come from the day separators and are passed down to the messages below them.
+where a sequence of them is equal on both sides: same author, sender, time, kind family,
+text, quote and picture shape. Pictures of one shape are told apart by a 64-bit hash of
+their thumbnail (`look`). Days come from the day separators and are passed down to the
+messages below them.
 """
 
 import hashlib
@@ -11,9 +13,10 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
-from respondoia.domain import ChatLine
+from respondoia.domain import ChatLine, family
 from respondoia.privacy import mask_text
 
+LOOK_DISTANCE = 10  # bits: the same picture read blurred and then sharp stays within this
 _TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s?([AaPp])?\.?\s?[Mm]?\.?$")
 
 
@@ -28,6 +31,8 @@ class Stored:
     kind: str
     text: str  # masked
     quote: str  # masked
+    shape: str = ""  # height / width of a picture without text, "" otherwise
+    look: str = ""  # 16 hex digits, hash of the picture's thumbnail; "" if not taken
 
 
 @dataclass(frozen=True)
@@ -66,14 +71,24 @@ def fingerprint(message: Stored) -> str:
         message.author,
         _plain(message.sender),
         message.time,
-        message.kind,
+        family(message.kind),
         _plain(message.text),
         _plain(message.quote),
     )
+    if message.shape:  # left out when empty: rows stored before shapes keep their value
+        parts += (message.shape,)
     return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
 
 
-def from_lines(lines: Sequence[ChatLine], mask: bool = True) -> tuple[Stored, ...]:
+def look_distance(a: str, b: str) -> int:
+    return (int(a, 16) ^ int(b, 16)).bit_count()
+
+
+def from_lines(
+    lines: Sequence[ChatLine], mask: bool = True, looks: Sequence[str] = ()
+) -> tuple[Stored, ...]:
+    """`looks` lines up with `lines`, "" where none was taken."""
+
     def clean(text: str) -> str:
         return mask_text(text).text if mask else text
 
@@ -86,18 +101,38 @@ def from_lines(lines: Sequence[ChatLine], mask: bool = True) -> tuple[Stored, ..
             kind=line.kind,
             text=clean(line.text),
             quote=clean(line.quote),
+            shape=line.shape,
+            look=looks[i] if i < len(looks) else "",
         )
-        for line in lines
+        for i, line in enumerate(lines)
     )
 
 
 def _same(a: Stored, b: Stored, fa: str, fb: str) -> bool:
-    return fa == fb and not (a.sent_on and b.sent_on and a.sent_on != b.sent_on)
+    if fa != fb or (a.sent_on and b.sent_on and a.sent_on != b.sent_on):
+        return False
+    return not (a.look and b.look) or look_distance(a.look, b.look) <= LOOK_DISTANCE
 
 
 def _edited(old: Stored, new: Stored) -> bool:
-    """Same message, text changed (edited or deleted): same author, time and kind."""
-    return (old.author, old.time, old.kind) == (new.author, new.time, new.kind)
+    """Same message, text changed (edited or deleted): same author, time and kind. A media
+    line read again may change kind (a video stored as text by an older reader): the same
+    author and the same time shown are enough then."""
+    if (old.author, old.time, old.kind) == (new.author, new.time, new.kind):
+        return True
+    media = "media" in (family(old.kind), family(new.kind))
+    return media and bool(old.time) and (old.author, old.time) == (new.author, new.time)
+
+
+def same_message(old: Stored, new: Stored) -> bool:
+    """The stored row `old` is where `new` belongs: equal, or `old` edited into `new`."""
+    return _same(old, new, fingerprint(old), fingerprint(new)) or _edited(old, new)
+
+
+def _bare(a: Stored, b: Stored) -> bool:
+    """An equal pair that says nothing about where it is: media without text, not both
+    hashed."""
+    return family(a.kind) == "media" and not a.text and not (a.look and b.look)
 
 
 def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | None:
@@ -139,6 +174,9 @@ def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | 
         return True
 
     def enough(run: Overlap) -> bool:
+        pairs = range(run.length)
+        if all(_bare(older[run.older_start + k], newer[run.newer_start + k]) for k in pairs):
+            return False  # pictures of one shape line up anywhere
         if run.length >= 2:
             return True
         last = len(newer) == 1 and run.older_start == len(older) - 1

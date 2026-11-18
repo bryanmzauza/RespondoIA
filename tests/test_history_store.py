@@ -287,3 +287,47 @@ def test_memory_round_trip_and_attempt(db):
         store.save_memory(conn, cid, "resumo", 7, NOW, edited=True)
         row = store.load_memory(conn, cid)
         assert (row.text, row.through_id, row.edited) == ("resumo", 7, True)
+
+
+def test_store_keeps_shape_and_look(db):
+    hello = Stored("2026-11-10", "10:00", "user", "", "text", "manda", "")
+    picture = Stored("", "", "contact", "", "image", "", "", shape="1.4", look="00000000000000ff")
+    with db.transaction() as conn:
+        cid = contact(conn)
+        save(conn, cid, [hello, picture])
+        (segment,) = store.segments(conn, cid)
+        assert (segment.messages[1].shape, segment.messages[1].look) == ("1.4", "00000000000000ff")
+
+
+def test_reread_media_line_is_updated_in_place(db):
+    ask = Stored("2026-11-10", "21:39", "user", "", "text", "gostou?", "")
+    hello = Stored("", "21:40", "user", "", "text", "me manda o vídeo", "")
+    old = Stored("", "21:47", "contact", "", "text", "0:42", "")
+    new = Stored("", "21:47", "contact", "", "video", "", "", shape="0.6", look="00000000000000ff")
+    with db.transaction() as conn:
+        cid = contact(conn)
+        save(conn, cid, [ask, hello, old])
+        before = ids(conn, cid)
+        assert save(conn, cid, [ask, hello, new]) == 0
+        assert ids(conn, cid) == before
+        stored = store.segments(conn, cid)[0].messages[2]
+        assert (stored.kind, stored.text, stored.shape, stored.look) == (
+            "video",
+            "",
+            "0.6",
+            "00000000000000ff",
+        )
+
+
+def test_photos_with_one_shape_grow_at_the_right_place(db):
+    marks = [format(0xFF << (8 * i), "016x") for i in range(8)]
+    pictures = [
+        Stored("", "", "contact", "", "image", "", "", shape="1.4", look=m) for m in marks
+    ]
+    hello = Stored("2026-11-10", "10:00", "user", "", "text", "manda", "")
+    with db.transaction() as conn:
+        cid = contact(conn)
+        save(conn, cid, [hello] + pictures[:6])
+        assert save(conn, cid, pictures[3:]) == 2
+        (segment,) = store.segments(conn, cid)
+        assert [m.look for m in segment.messages[1:]] == marks

@@ -201,6 +201,32 @@ def test_migration_two_from_version_one(tmp_path, monkeypatch):
         db.close()
 
 
+def test_migration_3_adds_shape_and_look(tmp_path, monkeypatch):
+    from respondoia import database
+
+    monkeypatch.setattr(database, "MIGRATIONS", MIGRATIONS[:2])
+    old = Database.open(tmp_path / "db", KEY)
+    with old.transaction() as conn:
+        conn.execute(
+            "INSERT INTO contact (name, name_key, first_seen, last_seen)"
+            " VALUES ('Ana', 'ana', 'x', 'x')"
+        )
+        conn.execute(
+            "INSERT INTO history_message (contact_id, segment, ord, author, kind, text,"
+            " fingerprint, seen_at) VALUES (1, 1, 0, 'contact', 'text', 'oi', 'f', 'x')"
+        )
+    old.close()
+    monkeypatch.setattr(database, "MIGRATIONS", MIGRATIONS)
+    db = Database.open(tmp_path / "db", KEY)
+    try:
+        assert db.version == len(MIGRATIONS) >= 3
+        with db.transaction() as conn:
+            row = conn.execute("SELECT text, shape, look FROM history_message").fetchone()
+        assert tuple(row) == ("oi", "", "")
+    finally:
+        db.close()
+
+
 def test_checkpoint_runs_outside_a_transaction(tmp_path):
     db = Database.open(tmp_path / "db", KEY)
     try:

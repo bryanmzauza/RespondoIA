@@ -156,6 +156,11 @@ MIGRATIONS: tuple[str, ...] = (
         reached_start INTEGER NOT NULL DEFAULT 0
     );
     """,
+    # 3: pictures in the history: their shape and a hash of the thumbnail, never pixels.
+    """
+    ALTER TABLE history_message ADD COLUMN shape TEXT NOT NULL DEFAULT '';
+    ALTER TABLE history_message ADD COLUMN look TEXT NOT NULL DEFAULT '';
+    """,
 )
 
 

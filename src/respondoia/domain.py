@@ -46,14 +46,30 @@ class ChatLine:
     author: str  # "user" or "contact"
     sender: str  # group sender as shown, "" in one-to-one chats and for the user
     time: str  # as shown ("21:47", "9:47 PM"), "" if not found
-    kind: str  # "text", "image", "audio" or "other"
-    text: str  # message text, "" for media without caption
+    kind: str  # "text", "link", "image", "video", "sticker", "document", "audio" or "other"
+    text: str  # message text or caption, an audio transcript; "" for media without any
     quote: str  # text of the quoted message, "" if none
     # One text and nothing else besides time and quote. Forwarded messages, link
     # previews and cards carry other people's text, so only plain lines are learned.
     plain: bool = True
     day: str = ""  # ISO date from a day separator above it on this screen, "" if none
     rect: Rect | None = None  # the bubble, in screen pixels
+    duration: str = ""  # audio or video length as shown ("0:42"), "" if none
+    site: str = ""  # domain shown in a link preview, "" if none
+    shape: str = ""  # height / width of a picture without text nodes, one decimal ("1.4")
+    transcript: bool = False  # text is WhatsApp's own transcript of an audio
+
+
+# Kinds a picture of the bubble can show: cropped for the request, hashed for the history.
+PICTURE_KINDS = ("image", "video")
+
+
+def family(kind: str) -> str:
+    """Kinds that can be the same message read twice: a link read as text before, a video
+    read as a bare picture."""
+    if kind in ("text", "link"):
+        return "text"
+    return "audio" if kind == "audio" else "media"
 
 
 @dataclass(frozen=True)
