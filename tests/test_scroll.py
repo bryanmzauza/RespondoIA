@@ -1,5 +1,7 @@
 import ctypes
 
+import pytest
+
 from respondoia.memory import scroll
 
 
@@ -63,6 +65,54 @@ def test_nothing_counts_while_disarmed(qtbot, monkeypatch):
 def test_arming_fails_when_raw_input_cannot_register(qtbot, monkeypatch):
     monkeypatch.setattr(scroll, "_register", lambda hwnd, remove: False)
     assert not scroll.InputGuard().arm()
+
+
+class FakePattern:
+    """The ScrollPattern of the message list: percent of the way down, view in percent."""
+
+    def __init__(self, percent=100.0, view=25.0, grows=0):
+        self.CurrentVerticalScrollPercent = percent
+        self.CurrentVerticalViewSize = view
+        self.calls = []
+        self.grows = grows  # times the list grows after reaching the bottom
+
+    def SetScrollPercent(self, horizontal, vertical):
+        self.calls.append((horizontal, vertical))
+        if vertical >= 100 and self.grows:
+            self.grows -= 1
+            self.CurrentVerticalScrollPercent = 90.0  # older messages loaded meanwhile
+        else:
+            self.CurrentVerticalScrollPercent = vertical
+
+
+def test_accessible_scroll_moves_up_by_part_of_a_screen():
+    pattern = FakePattern(percent=100.0, view=25.0)
+    scroller = scroll.AccessibleScroll(pattern, sleep=lambda s: None)
+    scroller.up(0.5)
+    # Half a screen of a list four screens long: 0.5 * 25 / 75 of the way, in percent.
+    assert pattern.calls == [(-1, pytest.approx(100 - 50 * 25 / 75))]
+
+
+def test_accessible_scroll_stops_at_the_top():
+    pattern = FakePattern(percent=1.0, view=25.0)
+    scroll.AccessibleScroll(pattern, sleep=lambda s: None).up(1.0)
+    assert pattern.calls[-1] == (-1, 0)
+
+
+def test_accessible_scroll_reaches_the_bottom_even_when_the_list_grows():
+    pattern = FakePattern(percent=40.0, grows=2)
+    scroll.AccessibleScroll(pattern, sleep=lambda s: None).bottom()
+    assert pattern.CurrentVerticalScrollPercent == 100 and len(pattern.calls) == 3
+
+
+def test_pause_is_known_apart_from_real_input(qtbot, monkeypatch):
+    monkeypatch.setattr(scroll, "_register", lambda hwnd, remove: True)
+    guard = scroll.InputGuard()
+    guard.arm(delay_s=0)
+    guard.on_device(1234)
+    assert guard.stopped() and not guard.paused()
+    guard.stop()
+    assert guard.paused()
 
 
 def test_pause_stops_too(qtbot, monkeypatch):

@@ -18,10 +18,23 @@ from respondoia.privacy import normalize_name
 
 SAME_TOP_READS = 4  # the top did not move this many times: the start of the chat
 MIN_NOTCHES, MAX_NOTCHES = 2, 6  # per step; more while screens overlap a lot
-NOTCH_PAUSE = (0.06, 0.15)  # seconds between wheel notches
-SCREEN_PAUSE = (0.35, 0.6)  # before reading a screen
 PATIENCE = (1.0, 1.5)  # when the top did not move: WhatsApp may still be loading
-BACK_PAUSE = (0.02, 0.05)  # scrolling back to the newest messages, nothing to read
+POLL_S = 0.03  # between reads while waiting for a screen to change
+POLL_LIMIT_S = 1.5  # a screen that has not changed by then counts as not moved
+
+
+@dataclass(frozen=True)
+class Pace:
+    notch: tuple[float, float]  # seconds between notches; (0, 0): none
+    screen: tuple[float, float]  # before reading a screen
+    back: tuple[float, float]  # between notches on the way back to the newest messages
+    poll: bool  # read again until the screen changes, instead of one read after a pause
+
+
+# Mouse wheel: the events go through the input queue and WhatsApp must keep up.
+WHEEL_PACE = Pace(notch=(0.06, 0.15), screen=(0.35, 0.6), back=(0.02, 0.05), poll=False)
+# Accessibility scrolling: no input events; the screen is read as soon as it changes.
+BACKGROUND_PACE = Pace(notch=(0.0, 0.0), screen=(0.0, 0.0), back=(0.0, 0.0), poll=True)
 
 
 @dataclass(frozen=True)
@@ -43,12 +56,16 @@ class LoaderPorts:
     today: Callable[[], date]
     # Wheel events go to the window under the cursor: it must be the chat's own window.
     under_cursor: Callable[[], bool] = lambda: True
+    pace: Pace = WHEEL_PACE
+    # A minimized window stops drawing: scrolls do nothing and the screen stays frozen.
+    visible: Callable[[], bool] = lambda: True
+    scroll_bottom: Callable[[], None] | None = None  # one call back to the newest messages
 
 
 @dataclass(frozen=True)
 class LoadReport:
-    # "limit", "months", "start", "joined", "user", "focus", "covered", "chat_changed",
-    # "private", "lost" or "unreadable"
+    # "limit", "months", "start", "joined", "user", "focus", "covered", "minimized",
+    # "chat_changed", "private", "lost" or "unreadable"
     reason: str
     screens: int
     lines: tuple[ChatLine, ...]  # everything read, stitched, oldest first; never another chat
@@ -105,9 +122,18 @@ def load(
             raise _Stop("focus")
         if not ports.under_cursor():
             raise _Stop("covered")
+        if not ports.visible():
+            raise _Stop("minimized")
 
-    def read() -> ChatView:
+    def read(retry: bool = False) -> ChatView:
         view = ports.read()
+        waited = 0.0
+        # While the list redraws a read can come back empty for a moment.
+        while view is None and retry and waited < POLL_LIMIT_S:
+            ports.sleep(POLL_S)
+            waited += POLL_S
+            check()
+            view = ports.read()
         if view is None:
             raise _Stop("unreadable")
         if normalize_name(view.chat.title) != normalize_name(title):
@@ -116,19 +142,42 @@ def load(
             raise _Stop("private")
         return view
 
+    def pause(low: float, high: float) -> None:
+        if high > 0:
+            ports.sleep(ports.random(low, high))
+
     def scroll(notches: int, low: float, high: float) -> None:
         nonlocal scrolled
         for _ in range(abs(notches)):
             check()
             ports.scroll(1 if notches > 0 else -1)
             scrolled += 1 if notches > 0 else -1
-            ports.sleep(ports.random(low, high))
+            pause(low, high)
+
+    def next_screen(top: str) -> tuple[ChatLine, ...]:
+        """The screen after a scroll. Polling: read until the top line changes."""
+        pause(*pace.screen)
+        check()
+        screen = read(retry=pace.poll).lines
+        if not pace.poll:
+            return screen
+        waited = 0.0
+        while waited < POLL_LIMIT_S:
+            stored = from_lines(screen[:1], mask=False)
+            if stored and fingerprint(stored[0]) != top:
+                return screen
+            ports.sleep(POLL_S)
+            waited += POLL_S
+            check()
+            screen = read(retry=True).lines
+        return screen
 
     def report(reason: str) -> LoadReport:
         lines = () if reason == "private" else tuple(block)
         ms = round((time.perf_counter() - started) * 1000)
         return LoadReport(reason, screens, lines, reason == "start", ms)
 
+    pace = ports.pace
     cutoff = months_before(ports.today(), limits.months) if limits.months else ""
     try:
         check()
@@ -144,10 +193,9 @@ def load(
                 raise _Stop("months")
             if limits.stop_on_join and joins(tuple(block)):
                 raise _Stop("joined")
-            scroll(notches, *NOTCH_PAUSE)
-            ports.sleep(ports.random(*SCREEN_PAUSE))
-            check()
-            screen = read().lines
+            scroll(notches, *pace.notch)
+            first = from_lines(block[:1], mask=False)
+            screen = next_screen(fingerprint(first[0]) if first else "")
             stored: Sequence[Stored] = from_lines(screen, mask=False)
             # A new screen overlaps the top of the block: no need to compare the rest.
             known = from_lines(block[: max(len(screen) * 3, 60)], mask=False)
@@ -161,7 +209,7 @@ def load(
             overlap = find_overlap(stored, known)
             if overlap is None:
                 notches = max(MIN_NOTCHES, notches - 1)
-                scroll(-1, *NOTCH_PAUSE)  # one notch back, in case the list jumped
+                scroll(-1, *pace.notch)  # one notch back, in case the list jumped
                 check()
                 screen = read().lines
                 stored = from_lines(screen, mask=False)
@@ -179,7 +227,11 @@ def load(
         reason = stop.reason
     if reason in ("limit", "months", "start", "joined", "lost") and scrolled > 0:
         try:
-            scroll(-scrolled, *BACK_PAUSE)  # back to the newest messages, still interruptible
+            if ports.scroll_bottom is not None:
+                check()
+                ports.scroll_bottom()
+            else:
+                scroll(-scrolled, *pace.back)  # back to the newest messages, interruptible
         except _Stop:
             pass
     return report(reason)

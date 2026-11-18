@@ -25,6 +25,7 @@ LOAD_REASONS = (
     "user",
     "focus",
     "covered",
+    "minimized",
     "chat_changed",
     "private",
     "lost",
@@ -34,6 +35,7 @@ LOAD_REASONS = (
 
 class FakeHistoryWorker(Recorder):
     loaded = Signal(object)
+    load_mode = Signal(str)
     memory_updated = Signal(int)
     memory_ready = Signal(int, str)
 
@@ -135,7 +137,10 @@ def test_load_closes_the_panel_and_arms_the_guard(tmp_path):
     assert ("dismiss",) in rig.panel.calls and rig.guard.calls == [("arm", 0.6)]
     assert rig.history.calls == [("load", "quick", 55, "Marina Duarte", 7)]
     assert ("set_loading", True) in rig.tray.calls
-    assert "notice.loading" in rig.tray.notices()
+    rig.history.load_mode.emit("wheel")
+    assert rig.tray.notices()[-1] == "notice.loading"
+    rig.history.load_mode.emit("background")
+    assert rig.tray.notices()[-1] == "notice.loading_background"
 
 
 def test_load_without_raw_input_does_not_start(tmp_path):
@@ -272,7 +277,7 @@ class FakeDesktop:
         self.cursor = (x, y)
 
 
-def make_worker(db, tmp_path, chat, settings=ON):
+def make_worker(db, tmp_path, chat, settings=ON, scroller=None):
     history = HistoryService(db, lambda: None, lambda: settings)
     style = StyleService(db, lambda: None, tmp_path / "knowledge.md")
     desktop = FakeDesktop()
@@ -280,9 +285,10 @@ def make_worker(db, tmp_path, chat, settings=ON):
         history,
         style,
         lambda: settings,
-        loader_ports=lambda hwnd: chat.ports(),
+        loader_ports=lambda hwnd, found=None: chat.ports(),
         desktop=desktop,
         avatar=lambda hwnd, rect: "",
+        accessible=lambda hwnd: scroller,
     )
     return worker, desktop
 
@@ -417,3 +423,24 @@ def test_style_window_load_requests_a_style_load(qtbot, tmp_path, monkeypatch):
     rig.controller._style_window.load_requested.emit()
     assert rig.history.calls[-1] == ("load", "style", 77, "", None)
     rig.controller._style_window.close()
+
+
+def test_background_load_leaves_the_mouse_and_the_focus_alone(qtbot, db, tmp_path):
+    chat = FakeChat(n=60, title="Marina Duarte")
+    worker, desktop = make_worker(db, tmp_path, chat, scroller=object())
+    modes = []
+    worker.load_mode.connect(modes.append)
+    with qtbot.waitSignal(worker.loaded) as signal:
+        worker.load("full", 42, "Marina Duarte", None)
+    assert modes == ["background"] and desktop.calls == []
+    assert signal.args[0].history.messages == 60
+
+
+def test_wheel_load_says_so(qtbot, db, tmp_path):
+    chat = FakeChat(n=30, title="Marina Duarte")
+    worker, desktop = make_worker(db, tmp_path, chat)
+    modes = []
+    worker.load_mode.connect(modes.append)
+    with qtbot.waitSignal(worker.loaded):
+        worker.load("quick", 42, "Marina Duarte", None)
+    assert modes == ["wheel"] and desktop.calls[0] == ("focus", 42)

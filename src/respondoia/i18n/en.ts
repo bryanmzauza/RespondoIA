@@ -655,10 +655,6 @@ Suggestions may quote anything written here. Only include what you would tell an
         <translation>History</translation>
     </message>
     <message>
-        <source>history.load_quick</source>
-        <translation>Load context (about 15 s)</translation>
-    </message>
-    <message>
         <source>history.load_full</source>
         <translation>Load more</translation>
     </message>
@@ -765,6 +761,18 @@ Suggestions may quote anything written here. Only include what you would tell an
     <message>
         <source>notice.load_covered</source>
         <translation>Loading stopped because another window covers the chat. {count} messages kept.</translation>
+    </message>
+    <message>
+        <source>notice.loading_background</source>
+        <translation>Loading the chat in the background. You can keep using the computer; leave WhatsApp open on this chat.</translation>
+    </message>
+    <message>
+        <source>history.load_quick</source>
+        <translation>Load context (a few seconds)</translation>
+    </message>
+    <message>
+        <source>notice.load_minimized</source>
+        <translation>Loading stopped because WhatsApp was minimized. Keep it open, even behind other windows. {count} messages kept.</translation>
     </message>
 </context>
 </TS>

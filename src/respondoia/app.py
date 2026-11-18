@@ -35,7 +35,7 @@ from respondoia.llm import (
     SuggestResult,
 )
 from respondoia.memory import scroll
-from respondoia.memory.loader import LoaderPorts, LoadLimits, load
+from respondoia.memory.loader import BACKGROUND_PACE, LoaderPorts, LoadLimits, load
 from respondoia.memory.service import HistoryContext, HistoryService
 from respondoia.privacy import is_private, normalize_name
 from respondoia.session import (
@@ -324,8 +324,23 @@ class Desktop:
         scroll.put_cursor(x, y)
 
 
-def real_loader_ports(guard) -> Callable[[int], LoaderPorts]:
-    def make(hwnd: int) -> LoaderPorts:
+def real_loader_ports(guard) -> Callable[..., LoaderPorts]:
+    def make(hwnd: int, scroller=None) -> LoaderPorts:
+        if scroller is not None:
+            # Accessibility scrolling: the user keeps the mouse, the keyboard and the focus.
+            # Only the tray's pause, a chat change or a lost thread stop it.
+            return LoaderPorts(
+                read=lambda: reader.read_chat_view(hwnd),
+                scroll=lambda notches: scroller.up(0.15 * notches),
+                foreground=lambda: hwnd,
+                stopped=guard.paused,
+                sleep=time.sleep,
+                random=random.uniform,
+                today=date.today,
+                pace=BACKGROUND_PACE,
+                scroll_bottom=scroller.bottom,
+                visible=lambda: not scroll.minimized(hwnd),
+            )
         return LoaderPorts(
             read=lambda: reader.read_chat_view(hwnd),
             scroll=scroll.wheel,
@@ -351,15 +366,17 @@ class HistoryWorker(QObject):
     """Runs the loader and the memory updates off the hotkey's thread."""
 
     loaded = Signal(object)  # LoadOutcome
+    load_mode = Signal(str)  # "background" (accessibility) or "wheel"
 
     def __init__(
         self,
         history: HistoryService,
         style: StyleService,
         settings: Callable[[], Settings],
-        loader_ports: Callable[[int], LoaderPorts],
+        loader_ports: Callable[..., LoaderPorts],
         desktop: Desktop | None = None,
         avatar: Callable[[int, object], str] = lambda hwnd, rect: "",
+        accessible: Callable[[int], object | None] = scroll.AccessibleScroll.find,
     ) -> None:
         super().__init__()
         self._history = history
@@ -368,6 +385,7 @@ class HistoryWorker(QObject):
         self._loader_ports = loader_ports
         self._desktop = desktop or Desktop()
         self._avatar = avatar
+        self._accessible = accessible
 
     @Slot(str, int, str, object)
     def load(self, purpose: str, hwnd: int, title: str, contact_id) -> None:
@@ -380,7 +398,8 @@ class HistoryWorker(QObject):
 
     def _load(self, purpose: str, hwnd: int, title: str, contact_id) -> LoadOutcome:
         settings = self._settings()
-        ports = self._loader_ports(hwnd)
+        scroller = self._accessible(hwnd)
+        ports = self._loader_ports(hwnd, scroller)
         view = ports.read()
         if view is None:
             return LoadOutcome(purpose, "unreadable", 0, None, 0)
@@ -390,13 +409,17 @@ class HistoryWorker(QObject):
             return LoadOutcome(purpose, "private", 0, None, 0)
         if normalize_name(view.chat.title) != normalize_name(title):
             return LoadOutcome(purpose, "chat_changed", 0, None, 0)
-        old_cursor = self._desktop.cursor_pos()
-        if not self._desktop.focus(hwnd):
-            return LoadOutcome(purpose, "focus", 0, None, 0)
-        bounds = view.chat.bounds
-        self._desktop.put_cursor(
-            (bounds.left + bounds.right) // 2, (bounds.top + bounds.bottom) // 2
-        )
+        self.load_mode.emit("background" if scroller is not None else "wheel")
+        old_cursor = None
+        if scroller is None:
+            # Wheel events go to the window under the cursor: WhatsApp in front, cursor on it.
+            old_cursor = self._desktop.cursor_pos()
+            if not self._desktop.focus(hwnd):
+                return LoadOutcome(purpose, "focus", 0, None, 0)
+            bounds = view.chat.bounds
+            self._desktop.put_cursor(
+                (bounds.left + bounds.right) // 2, (bounds.top + bounds.bottom) // 2
+            )
 
         def joins(block) -> bool:
             return purpose == "gap" and self._history.reaches_older(contact_id, block)
@@ -409,7 +432,7 @@ class HistoryWorker(QObject):
             joins,
             private=lambda name: is_private(name, private),
         )
-        if report.reason != "user":
+        if old_cursor is not None and report.reason != "user":
             self._desktop.put_cursor(*old_cursor)
         style_added = self._style.learn_loaded(title, report.lines)
         history = None
@@ -418,9 +441,7 @@ class HistoryWorker(QObject):
                 avatar = self._avatar(hwnd, view.chat.avatar)
             except Exception:  # noqa: BLE001 - no photo only weakens the identity
                 avatar = ""
-            history = self._history.store_loaded(
-                title, report.lines, report.reached_start, avatar
-            )
+            history = self._history.store_loaded(title, report.lines, report.reached_start, avatar)
             self._history.apply_retention()  # a long load can reach past the retention
         logger.info(
             "load stopped purpose=%s reason=%s screens=%d lines=%d ms=%d",
@@ -450,7 +471,6 @@ class HistoryWorker(QObject):
     @Slot(str, object, bool)
     def set_contact_history(self, title: str, contact_id, on: bool) -> None:
         self._history.set_contact_history(title, contact_id, on)
-
 
 
 class MemoryWorker(QObject):
@@ -589,6 +609,7 @@ class Controller(QObject):
             self.request_save_memory.connect(memory.save_memory)
             self.request_confirm.connect(worker.confirm_identity)
             history_worker.loaded.connect(self._on_loaded)
+            history_worker.load_mode.connect(self._on_load_mode)
             memory.memory_ready.connect(self._on_memory_ready)
             worker.history_changed.connect(self._on_history_changed)
             worker.history_grew.connect(self.request_memory_update)
@@ -985,8 +1006,11 @@ class Controller(QObject):
             self._end_session()
         self._loading = True
         self._tray.set_loading(True)
-        self._tray.notify("notice.loading")
         self.request_history_load.emit(purpose, hwnd, title, contact_id)
+
+    def _on_load_mode(self, mode: str) -> None:
+        """How the chat is scrolled decides what the user may do meanwhile."""
+        self._tray.notify("notice.loading_background" if mode == "background" else "notice.loading")
 
     def _on_loaded(self, outcome) -> None:
         self._guard_input.disarm()

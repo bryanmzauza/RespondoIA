@@ -2,7 +2,7 @@ import random
 from datetime import date
 
 from respondoia.domain import ChatLine, ChatView, OpenChat, Rect
-from respondoia.memory.loader import LoaderPorts, LoadLimits, load, months_before
+from respondoia.memory.loader import BACKGROUND_PACE, LoaderPorts, LoadLimits, load, months_before
 
 HWND = 42
 BOUNDS = Rect(0, 0, 800, 900)
@@ -243,6 +243,65 @@ def test_a_window_over_the_chat_stops_before_any_scroll():
     covered = LoaderPorts(**{**ports.__dict__, "under_cursor": lambda: False})
     report = load(HWND, "Ana", LoadLimits(screens=80, months=0), covered)
     assert report.reason == "covered" and chat.scrolled() == 0
+
+
+def background_ports(chat):
+    """Scrolling through accessibility: no wheel events, no pause per notch, the screen is
+    read as soon as it changes, and one call puts the list back at the bottom."""
+    ports = chat.ports()
+    chat.bottom_calls = 0
+
+    def bottom():
+        chat.bottom_calls += 1
+        chat.bottom = len(chat.messages)
+
+    return LoaderPorts(**{**ports.__dict__, "pace": BACKGROUND_PACE, "scroll_bottom": bottom})
+
+
+def test_background_loading_reads_as_soon_as_the_screen_changes():
+    chat = FakeChat()
+    report = load(HWND, "Ana", LoadLimits(screens=10, months=0), background_ports(chat))
+    assert report.reason == "limit" and contiguous(report)
+    sleeps = [event[1] for event in chat.events if event[0] == "sleep"]
+    assert all(s <= 0.05 for s in sleeps)
+    assert chat.bottom_calls == 1 and chat.bottom == 300
+
+
+def test_background_loading_waits_for_a_slow_screen():
+    chat = FakeChat()
+    chat.stall_reads = {2}
+    report = load(HWND, "Ana", LoadLimits(screens=6, months=0), background_ports(chat))
+    assert report.reason == "limit" and not report.reached_start and contiguous(report)
+
+
+def test_background_loading_reaches_the_start():
+    chat = FakeChat(n=60)
+    report = load(HWND, "Ana", LoadLimits(screens=80, months=0), background_ports(chat))
+    assert report.reason == "start" and len(report.lines) == 60 and chat.bottom_calls == 1
+
+
+def test_a_minimized_window_stops_the_background_load():
+    # Minimized, WhatsApp stops drawing: scrolls do nothing and the screen stays frozen.
+    chat = FakeChat()
+    ports = background_ports(chat)
+    ports = LoaderPorts(**{**ports.__dict__, "visible": lambda: chat.reads < 3})
+    report = load(HWND, "Ana", LoadLimits(screens=20, months=0), ports)
+    assert report.reason == "minimized" and contiguous(report)
+
+
+def test_a_momentary_empty_read_is_waited_out():
+    chat = FakeChat()
+    ports = background_ports(chat)
+    real_read = ports.read
+    empty_at = {3}
+
+    def flaky():
+        view = real_read()
+        return None if chat.reads in empty_at else view
+
+    ports = LoaderPorts(**{**ports.__dict__, "read": flaky})
+    report = load(HWND, "Ana", LoadLimits(screens=6, months=0), ports)
+    assert report.reason == "limit" and contiguous(report)
 
 
 def test_months_before():

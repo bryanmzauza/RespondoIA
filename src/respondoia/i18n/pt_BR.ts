@@ -655,10 +655,6 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <translation>Histórico</translation>
     </message>
     <message>
-        <source>history.load_quick</source>
-        <translation>Carregar contexto (≈15 s)</translation>
-    </message>
-    <message>
         <source>history.load_full</source>
         <translation>Carregar mais</translation>
     </message>
@@ -765,6 +761,18 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
     <message>
         <source>notice.load_covered</source>
         <translation>O carregamento parou porque outra janela cobre a conversa. {count} mensagens guardadas.</translation>
+    </message>
+    <message>
+        <source>notice.loading_background</source>
+        <translation>Carregando a conversa em segundo plano. Pode continuar usando o computador; deixe o WhatsApp aberto nesta conversa.</translation>
+    </message>
+    <message>
+        <source>history.load_quick</source>
+        <translation>Carregar contexto (alguns segundos)</translation>
+    </message>
+    <message>
+        <source>notice.load_minimized</source>
+        <translation>O carregamento parou porque o WhatsApp foi minimizado. Deixe-o aberto, mesmo atrás de outras janelas. {count} mensagens guardadas.</translation>
     </message>
 </context>
 </TS>

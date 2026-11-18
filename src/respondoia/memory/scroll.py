@@ -1,5 +1,6 @@
-"""Win32 side of the history loader: mouse wheel events, the cursor, and the guard that
-tells the app's own scrolling apart from the user's hand.
+"""Win32 side of the history loader: scrolling the message list through UI Automation
+(no input events at all), mouse wheel events as the fallback, the cursor, and the guard
+that tells the app's own wheel events apart from the user's hand.
 
 The guard listens to raw input from every mouse and keyboard while a load runs. Windows
 reports input made by SendInput with no device handle; anything with a device is a person.
@@ -73,6 +74,68 @@ class _RawInputHeader(ctypes.Structure):
     ]
 
 
+class AccessibleScroll:
+    """Scrolls the message list through UI Automation, as screen readers do: no mouse or
+    keyboard event, no cursor, and WhatsApp need not be in front (only not minimized)."""
+
+    def __init__(self, pattern, sleep=time.sleep) -> None:
+        self._pattern = pattern  # IUIAutomationScrollPattern of the message list
+        self._sleep = sleep
+
+    @classmethod
+    def find(cls, hwnd: int) -> "AccessibleScroll | None":
+        """The tallest vertically scrollable element in the open chat, or None."""
+        import comtypes
+        import comtypes.client
+
+        try:
+            comtypes.CoInitializeEx()
+        except OSError:
+            pass
+        try:
+            comtypes.client.GetModule("UIAutomationCore.dll")
+            from comtypes.gen import UIAutomationClient as uia_types
+
+            uia = comtypes.client.CreateObject(
+                uia_types.CUIAutomation, interface=uia_types.IUIAutomation
+            )
+            cache = uia.CreateCacheRequest()
+            cache.TreeFilter = uia.RawViewCondition
+            panel = uia.ElementFromHandle(hwnd).FindFirstBuildCache(
+                4, uia.CreatePropertyCondition(30011, "main"), cache  # descendants, AutomationId
+            )
+            if not panel:
+                return None
+            found = panel.FindAll(4, uia.CreatePropertyCondition(30034, True))  # scrollable
+            best, height = None, 0
+            for index in range(found.Length if found else 0):
+                element = found.GetElement(index)
+                pattern = element.GetCurrentPattern(10004).QueryInterface(  # ScrollPattern
+                    uia_types.IUIAutomationScrollPattern
+                )
+                rect = element.CurrentBoundingRectangle
+                if pattern.CurrentVerticallyScrollable and rect.bottom - rect.top > height:
+                    best, height = pattern, rect.bottom - rect.top
+            return cls(best) if best is not None else None
+        except (comtypes.COMError, OSError, ValueError):
+            return None
+
+    def up(self, screens: float) -> None:
+        """Towards older messages by this many screens (fractions too)."""
+        view = self._pattern.CurrentVerticalViewSize
+        here = self._pattern.CurrentVerticalScrollPercent
+        step = 100.0 if view >= 100 else 100.0 * screens * view / (100.0 - view)
+        self._pattern.SetScrollPercent(-1, max(0.0, here - step))
+
+    def bottom(self, tries: int = 20) -> None:
+        """Back to the newest messages. The list grows while it loads, so check and repeat."""
+        for _ in range(tries):
+            self._pattern.SetScrollPercent(-1, 100)
+            if self._pattern.CurrentVerticalScrollPercent >= 99.9:
+                return
+            self._sleep(0.15)
+
+
 def wheel_input(notches: int) -> _Input:
     """One wheel event. Positive notches scroll up, towards older messages."""
     event = _Input()
@@ -97,6 +160,10 @@ def cursor_pos() -> tuple[int, int]:
 def put_cursor(x: int, y: int) -> None:
     """Physical pixels: the process is DPI aware per monitor."""
     ctypes.windll.user32.SetCursorPos(int(x), int(y))
+
+
+def minimized(hwnd: int) -> bool:
+    return bool(ctypes.windll.user32.IsIconic(hwnd))
 
 
 def foreground_window() -> int:
@@ -168,6 +235,7 @@ class InputGuard(QObject):
         self._widget = QWidget()
         self.hwnd = int(self._widget.winId())  # a native window to receive raw input
         self._stop = threading.Event()
+        self._paused = threading.Event()  # the tray's pause, apart from a touch
         self._armed = False
         self._from = 0.0
         self.injected = 0  # counts, for the probe and the log
@@ -178,6 +246,7 @@ class InputGuard(QObject):
     def arm(self, delay_s: float = 0.3) -> bool:
         """Start listening. The delay lets the click that started the load settle."""
         self._stop.clear()
+        self._paused.clear()
         self.injected = self.real = 0
         self._from = time.monotonic() + delay_s
         self._armed = _register(self.hwnd, remove=False)
@@ -192,7 +261,12 @@ class InputGuard(QObject):
         return self._stop.is_set()
 
     def stop(self) -> None:
+        self._paused.set()
         self._stop.set()
+
+    def paused(self) -> bool:
+        """Only the tray's pause: a background load ignores the user's mouse and keys."""
+        return self._paused.is_set()
 
     def on_device(self, device: int | None) -> None:
         if not self._armed:
