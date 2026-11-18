@@ -462,3 +462,15 @@ def test_pictures_cut_by_the_message_area_get_no_look():
     chat.read = read
     load(HWND, "Ana", LoadLimits(screens=2, months=0), chat.ports())
     assert all(rect.top >= 100 for rects in chat.asked for rect in rects)
+
+
+def test_screens_of_two_tall_links_reach_the_start():
+    # Each screen shows two link previews; one notch moves one message.
+    chat = FakeChat(n=30, rows=2, step=1)
+    chat.messages = [
+        (day, ChatLine(**{**line.__dict__, "kind": "link",
+                          "text": f"{line.text} prévia longa de receita com descrição e site"}))
+        for day, line in chat.messages
+    ]
+    report = load(HWND, "Ana", LoadLimits(screens=200, months=0), background_ports(chat))
+    assert report.reason == "start" and len(report.lines) == 30

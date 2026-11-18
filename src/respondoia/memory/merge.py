@@ -17,6 +17,9 @@ from respondoia.domain import ChatLine, family
 from respondoia.privacy import mask_text
 
 LOOK_DISTANCE = 10  # bits: the same picture read blurred and then sharp stays within this
+# A screen this short (tall link previews) shares only one line with the next one.
+SEAM_LINES = 2
+SEAM_TEXT = 40  # characters: a line this long, with a time, is as good as unique
 _TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})\s?([AaPp])?\.?\s?[Mm]?\.?$")
 
 
@@ -135,7 +138,9 @@ def _bare(a: Stored, b: Stored) -> bool:
     return family(a.kind) == "media" and not a.text and not (a.look and b.look)
 
 
-def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | None:
+def find_overlap(
+    older: Sequence[Stored], newer: Sequence[Stored], seam: bool = False
+) -> Overlap | None:
     """Where the two runs line up, or None.
 
     The longest run of equal messages proposes an alignment; it holds only if every other
@@ -143,6 +148,10 @@ def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | 
     broadcast messages among different ones are not the same chat. A single equal message
     counts only when the newer run is that one message and it is the last of the older,
     or the older run is that one message.
+
+    `seam` (the loader, screen against block): a short screen may also join through its
+    last line alone when that line opens the block and has a time and a long text, or is a
+    picture hashed on both sides.
     """
     if not older or not newer:
         return None
@@ -180,7 +189,19 @@ def find_overlap(older: Sequence[Stored], newer: Sequence[Stored]) -> Overlap | 
         if run.length >= 2:
             return True
         last = len(newer) == 1 and run.older_start == len(older) - 1
-        return last or len(older) == 1
+        if last or len(older) == 1:
+            return True
+        line, other = older[run.older_start], newer[run.newer_start]
+        # Unique enough: a long text, or a picture hashed on both sides.
+        unique = len(_plain(line.text)) >= SEAM_TEXT or bool(line.look and other.look)
+        return (
+            seam
+            and len(older) <= SEAM_LINES
+            and run.older_start == len(older) - 1
+            and run.newer_start == 0
+            and bool(line.time)
+            and unique
+        )
 
     # Longer first; on a tie, the one closer to the end of the older run.
     for run in sorted(runs, key=lambda r: (r.length, r.older_start), reverse=True):

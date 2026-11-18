@@ -291,3 +291,39 @@ def test_from_lines_keeps_shape_and_looks():
     assert (stored[0].shape, stored[0].look) == ("1.4", "00000000000000ff")
     assert (stored[1].shape, stored[1].look) == ("", "")
     assert from_lines(lines)[0].look == ""
+
+
+LONG = "Bolo de cenoura fofinho em 40 minutos receitas.example https://receitas.example/bolo"
+
+
+def tall(text, time="09:04", author="contact"):
+    return Stored("", time, author, "", "link", text, "")
+
+
+def test_one_long_line_at_the_seam_joins_two_tall_screens():
+    # Link previews so tall that a screen holds two: the next screen shares only one.
+    older = [tall("Outra receita longa de torta de limão receitas.example/torta", "09:01"), tall(LONG)]
+    newer = [tall(LONG), tall("Mais uma receita longa de pudim de leite receitas.example/pudim", "09:07")]
+    assert find_overlap(older, newer) is None
+    assert find_overlap(older, newer, seam=True).length == 1
+
+
+def test_the_seam_needs_a_long_timed_line_on_a_short_screen():
+    newer_tail = tall("Mais uma receita longa de pudim de leite receitas.example/pudim", "09:07")
+    short = [tall("x", "09:01"), tall("ok")], [tall("ok"), newer_tail]
+    assert find_overlap(*short, seam=True) is None
+    untimed = [tall("a", "09:01"), tall(LONG, "")], [tall(LONG, ""), newer_tail]
+    assert find_overlap(*untimed, seam=True) is None
+    three = [tall("um texto qualquer", "08:59"), tall("x", "09:01"), tall(LONG)]
+    assert find_overlap(three, [tall(LONG), newer_tail], seam=True) is None
+
+
+def test_one_hashed_picture_at_the_seam_joins_two_tall_screens():
+    def photo(look, time="10:00", shape="1.4"):
+        return Stored("", time, "contact", "", "image", "", "", shape, look)
+
+    older = [photo("", shape="1.3"), photo("0f0f0f0f0f0f0f0f")]  # the top one is cut: no look
+    newer = [photo("0f0f0f0f0f0f0f0e"), tall(LONG)]
+    assert find_overlap(older, newer, seam=True).length == 1
+    unhashed = [photo("", shape="1.3"), photo("")], [photo("0f0f0f0f0f0f0f0f"), tall(LONG)]
+    assert find_overlap(*unhashed, seam=True) is None

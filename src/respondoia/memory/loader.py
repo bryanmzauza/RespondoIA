@@ -264,7 +264,7 @@ def load(
             stored: Sequence[Stored] = _stored(reads)
             # A new screen overlaps the top of the block: no need to compare the rest.
             known = _stored(block[: max(len(screen) * 3, 60)])
-            overlap = find_overlap(stored, known)
+            overlap = find_overlap(stored, known, seam=True)
             recovered = overlap is None
             if overlap is None:
                 # Too far: step back notch by notch until the screen joins the block again.
@@ -277,7 +277,7 @@ def load(
                     last_seen = _signature(screen)
                     reads = with_looks(screen)
                     stored = _stored(reads)
-                    overlap = find_overlap(stored, known)
+                    overlap = find_overlap(stored, known, seam=True)
                     if overlap is not None:
                         break
                 if overlap is None:
