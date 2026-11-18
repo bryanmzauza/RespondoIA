@@ -12,7 +12,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import date
 
-from respondoia.domain import ChatLine, ChatView
+from respondoia.domain import ChatLine, ChatView, Rect
 from respondoia.memory.merge import Overlap, Stored, find_overlap, fingerprint, from_lines
 from respondoia.privacy import normalize_name
 
@@ -62,6 +62,8 @@ class LoaderPorts:
     # A minimized window stops drawing: scrolls do nothing and the screen stays frozen.
     visible: Callable[[], bool] = lambda: True
     scroll_bottom: Callable[[], None] | None = None  # one call back to the newest messages
+    # Picture hashes for these screen rects, "" where none can be taken. One capture a call.
+    looks: Callable[[Sequence[Rect]], tuple[str, ...]] = lambda rects: ("",) * len(rects)
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,7 @@ class LoadReport:
     lines: tuple[ChatLine, ...]  # everything read, stitched, oldest first; never another chat
     reached_start: bool
     ms: int
+    looks: tuple[str, ...] = ()  # lines up with `lines`, "" where no picture hash was taken
 
 
 def months_before(today: date, months: int) -> str:
@@ -97,20 +100,38 @@ def _signature(lines: Sequence[ChatLine]) -> tuple:
     )
 
 
-def _stitch(
-    screen: Sequence[ChatLine], block: Sequence[ChatLine], overlap: Overlap
-) -> list[ChatLine]:
-    """Lay the block over the screen read above it. A day seen on either side is kept."""
+Read = tuple[ChatLine, str]  # a line and its picture hash, "" if none
+
+
+def _stitch(screen: Sequence[Read], block: Sequence[Read], overlap: Overlap) -> list[Read]:
+    """Lay the block over the screen read above it. A day or a hash seen on either side is
+    kept."""
     shift = overlap.older_start - overlap.newer_start  # screen index of block[0]
     out = []
     for position in range(min(0, shift), max(len(screen), len(block) + shift)):
         upper = screen[position] if 0 <= position < len(screen) else None
         lower = block[position - shift] if 0 <= position - shift < len(block) else None
-        line = lower or upper
-        if lower and upper and not lower.day and upper.day:
-            line = replace(lower, day=upper.day)
-        out.append(line)
+        if lower and upper:
+            line = lower[0]
+            if not line.day and upper[0].day:
+                line = replace(line, day=upper[0].day)
+            out.append((line, lower[1] or upper[1]))
+        else:
+            out.append(lower or upper)
     return out
+
+
+def _inside(inner: Rect, outer: Rect) -> bool:
+    return (
+        outer.left <= inner.left
+        and inner.right <= outer.right
+        and outer.top <= inner.top
+        and inner.bottom <= outer.bottom
+    )
+
+
+def _stored(reads: Sequence[Read]) -> tuple[Stored, ...]:
+    return from_lines([r[0] for r in reads], mask=False, looks=[r[1] for r in reads])
 
 
 def load(
@@ -122,9 +143,10 @@ def load(
     private: Callable[[str], bool] = lambda title: False,
 ) -> LoadReport:
     started = time.perf_counter()
-    block: list[ChatLine] = []
+    block: list[Read] = []
     screens = 0
     scrolled = 0
+    area: Rect | None = None  # the message list of the last read
 
     def check() -> None:
         if ports.stopped():
@@ -151,7 +173,27 @@ def load(
             raise _Stop("chat_changed")
         if private(view.chat.title):
             raise _Stop("private")
+        nonlocal area
+        area = view.chat.messages
         return view
+
+    def with_looks(lines: Sequence[ChatLine]) -> list[Read]:
+        """Hashes for the pictures without text, the only lines that cannot be told apart
+        otherwise. A picture cut by the header or the message box would hash differently."""
+        wanted = [
+            i
+            for i, line in enumerate(lines)
+            if line.shape
+            and not line.text
+            and line.rect is not None
+            and (area is None or _inside(line.rect, area))
+        ]
+        looks = [""] * len(lines)
+        if wanted:
+            found = ports.looks([lines[i].rect for i in wanted])
+            for i, look in zip(wanted, found, strict=False):
+                looks[i] = look
+        return list(zip(lines, looks, strict=True))
 
     def pause(low: float, high: float) -> None:
         if high > 0:
@@ -183,16 +225,18 @@ def load(
         return screen
 
     def report(reason: str) -> LoadReport:
-        lines = () if reason == "private" else tuple(block)
+        kept = () if reason == "private" else block
         ms = round((time.perf_counter() - started) * 1000)
-        return LoadReport(reason, screens, lines, reason == "start", ms)
+        lines = tuple(r[0] for r in kept)
+        return LoadReport(reason, screens, lines, reason == "start", ms, tuple(r[1] for r in kept))
 
     pace = ports.pace
     cutoff = months_before(ports.today(), limits.months) if limits.months else ""
     try:
         check()
-        block = list(read().lines)
-        last_seen = _signature(block)
+        first = read().lines
+        block = with_looks(first)
+        last_seen = _signature(first)
         screens = 1
         stuck = 0
         same_top = 0
@@ -200,16 +244,13 @@ def load(
         while True:
             if screens >= limits.screens:
                 raise _Stop("limit")
-            days = [line.day for line in block if line.day]
+            days = [line.day for line, _ in block if line.day]
             if cutoff and days and min(days) < cutoff:
                 raise _Stop("months")
-            if limits.stop_on_join and joins(tuple(block)):
+            if limits.stop_on_join and joins(tuple(line for line, _ in block)):
                 raise _Stop("joined")
             scroll(notches, *pace.notch)
             screen = next_screen(last_seen)
-            stored: Sequence[Stored] = from_lines(screen, mask=False)
-            # A new screen overlaps the top of the block: no need to compare the rest.
-            known = from_lines(block[: max(len(screen) * 3, 60)], mask=False)
             moved = _signature(screen) != last_seen
             last_seen = _signature(screen)
             if not moved:  # nothing moved: the start of the chat, or WhatsApp still loading
@@ -219,6 +260,10 @@ def load(
                 ports.sleep(ports.random(*PATIENCE))
                 continue
             same_top = 0
+            reads = with_looks(screen)
+            stored: Sequence[Stored] = _stored(reads)
+            # A new screen overlaps the top of the block: no need to compare the rest.
+            known = _stored(block[: max(len(screen) * 3, 60)])
             overlap = find_overlap(stored, known)
             recovered = overlap is None
             if overlap is None:
@@ -230,14 +275,15 @@ def load(
                     scroll(-1, *pace.notch)
                     screen = next_screen(last_seen)
                     last_seen = _signature(screen)
-                    stored = from_lines(screen, mask=False)
+                    reads = with_looks(screen)
+                    stored = _stored(reads)
                     overlap = find_overlap(stored, known)
                     if overlap is not None:
                         break
                 if overlap is None:
                     raise _Stop("lost")
             before = len(block)
-            block = _stitch(screen, block, overlap)
+            block = _stitch(reads, block, overlap)
             screens += 1
             # Stepping back and gaining nothing, again and again: no readable line survives
             # even the shortest step, so the thread cannot be followed.

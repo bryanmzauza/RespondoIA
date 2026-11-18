@@ -59,21 +59,11 @@ def is_blank(image: Image.Image) -> bool:
 AVATAR_COLOURS = 64  # fewer colours than this: a drawn default picture, not a photo
 
 
-def avatar_hash(image: Image.Image, window: Rect, avatar: Rect) -> str:
-    """A 64-bit difference hash of the contact's photo, "" for a default picture. The
-    pixels stay in memory; only the hash is kept."""
-    box = (
-        avatar.left - window.left,
-        avatar.top - window.top,
-        avatar.right - window.left,
-        avatar.bottom - window.top,
-    )
-    crop = image.crop(box).convert("RGB")
-    if crop.width < 8 or crop.height < 8:
-        return ""
-    colours = crop.resize((32, 32), Image.Resampling.BILINEAR).getcolors(maxcolors=32 * 32)
-    if colours is not None and len(colours) < AVATAR_COLOURS:
-        return ""
+FLAT_COLOURS = 8  # this many colours or fewer: nothing drawn yet, not a picture
+
+
+def dhash(crop: Image.Image) -> str:
+    """A 64-bit difference hash, 16 hex digits. It cannot be turned back into the image."""
     gray = crop.convert("L").resize((9, 8), Image.Resampling.LANCZOS)
     pixels = gray.load()
     value = 0
@@ -81,6 +71,38 @@ def avatar_hash(image: Image.Image, window: Rect, avatar: Rect) -> str:
         for x in range(8):
             value = value << 1 | (pixels[x, y] > pixels[x + 1, y])
     return f"{value:016x}"
+
+
+def _window_crop(image: Image.Image, window: Rect, rect: Rect) -> Image.Image:
+    box = (
+        rect.left - window.left,
+        rect.top - window.top,
+        rect.right - window.left,
+        rect.bottom - window.top,
+    )
+    return image.crop(box).convert("RGB")
+
+
+def _colours(crop: Image.Image) -> int:
+    found = crop.resize((32, 32), Image.Resampling.BILINEAR).getcolors(maxcolors=32 * 32)
+    return 32 * 32 + 1 if found is None else len(found)
+
+
+def avatar_hash(image: Image.Image, window: Rect, avatar: Rect) -> str:
+    """A 64-bit difference hash of the contact's photo, "" for a default picture. The
+    pixels stay in memory; only the hash is kept."""
+    crop = _window_crop(image, window, avatar)
+    if crop.width < 8 or crop.height < 8 or _colours(crop) < AVATAR_COLOURS:
+        return ""
+    return dhash(crop)
+
+
+def look_hash(image: Image.Image, window: Rect, rect: Rect) -> str:
+    """The `look` of a picture in the chat, "" when it is too small or still blank."""
+    crop = _window_crop(image, window, rect)
+    if crop.width < 8 or crop.height < 8 or _colours(crop) <= FLAT_COLOURS:
+        return ""
+    return dhash(crop)
 
 
 def prepare_image(image: Image.Image, window: Rect, chat_bounds: Rect, max_side: int) -> bytes:
@@ -220,6 +242,18 @@ def avatar_from_window(hwnd: int, avatar: Rect | None) -> str:
         return avatar_hash(grab_window(hwnd), info.rect, avatar)
     except CaptureError:
         return ""
+
+
+def looks_from_window(hwnd: int, rects: Sequence[Rect]) -> tuple[str, ...]:
+    """The `look` of each picture, from one capture; "" for all when the capture fails."""
+    info = window_info(hwnd)
+    if info is None or not rects:
+        return ("",) * len(rects)
+    try:
+        image = grab_window(hwnd)
+    except CaptureError:
+        return ("",) * len(rects)
+    return tuple(look_hash(image, info.rect, rect) for rect in rects)
 
 
 def capture_chat(hwnd: int, chat_bounds: Rect, max_side: int) -> bytes:

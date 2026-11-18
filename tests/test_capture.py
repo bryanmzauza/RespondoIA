@@ -91,3 +91,45 @@ def test_win32_errors_while_capturing_are_capture_errors(monkeypatch):
     monkeypatch.setattr(win32gui, "GetWindowDC", gone)
     with pytest.raises(CaptureError):
         capture.grab_window(5)
+
+
+def test_dhash_matches_the_avatar_hash():
+    from respondoia.capture import avatar_hash, dhash
+
+    image = noise((200, 200))
+    expected = avatar_hash(image, Rect(0, 0, 200, 200), Rect(10, 10, 90, 90))
+    assert expected and dhash(image.crop((10, 10, 90, 90))) == expected
+
+
+def test_look_hash_crops_in_window_pixels():
+    from respondoia.capture import dhash, look_hash
+
+    image = noise((300, 300))
+    window = Rect(100, 50, 400, 350)
+    look = look_hash(image, window, Rect(150, 100, 250, 220))
+    assert look == dhash(image.crop((50, 50, 150, 170))) and len(look) == 16
+
+
+def test_look_hash_of_a_tiny_or_flat_area_is_empty():
+    from respondoia.capture import look_hash
+
+    image = Image.new("RGB", (300, 300), "white")
+    assert look_hash(image, Rect(0, 0, 300, 300), Rect(10, 10, 15, 15)) == ""
+    assert look_hash(image, Rect(0, 0, 300, 300), Rect(10, 10, 200, 200)) == ""
+
+
+def test_looks_from_window_survive_a_failed_capture(monkeypatch):
+    from respondoia import capture
+
+    info = WindowInfo(5, "WhatsApp", "WhatsApp.Root.exe", Rect(0, 0, 800, 600), False)
+    monkeypatch.setattr(capture, "window_info", lambda hwnd: info)
+
+    def fail(hwnd):
+        raise CaptureError("capture came back blank")
+
+    monkeypatch.setattr(capture, "grab_window", fail)
+    assert capture.looks_from_window(5, [Rect(0, 0, 100, 100), Rect(0, 0, 90, 90)]) == ("", "")
+    calls = []
+    monkeypatch.setattr(capture, "grab_window", lambda hwnd: calls.append(hwnd) or noise((800, 600)))
+    looks = capture.looks_from_window(5, [Rect(0, 0, 100, 100), Rect(100, 0, 200, 100)])
+    assert len(calls) == 1 and all(len(look) == 16 for look in looks)

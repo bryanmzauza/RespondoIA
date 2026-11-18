@@ -365,3 +365,15 @@ def test_log_has_no_content(db, caplog, state):
     with caplog.at_level("INFO", logger="respondoia"):
         history.observe("ZZ-NAME", [line("ZZ-TEXT")], False, "")
     assert "ZZ-" not in caplog.text
+
+
+def test_observe_stores_looks(db):
+    history = service(db)
+    screen = lines("pedido", 3) + [ChatLine("contact", "", "", "image", "", "", shape="1.3")]
+    see(db, "Ana")
+    history.observe("Ana", screen, False, "", looks=("", "", "", "00ff00ff00ff00ff"))
+    with db.transaction() as conn:
+        (contact,) = contacts.candidates(conn, "Ana")
+        (segment,) = store.segments(conn, contact.id)
+    assert [m.look for m in segment.messages] == ["", "", "", "00ff00ff00ff00ff"]
+    assert segment.messages[-1].shape == "1.3"

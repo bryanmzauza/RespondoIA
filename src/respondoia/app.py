@@ -349,6 +349,7 @@ def real_loader_ports(guard) -> Callable[..., LoaderPorts]:
                 pace=BACKGROUND_PACE,
                 scroll_bottom=scroller.bottom,
                 visible=lambda: not scroll.minimized(hwnd),
+                looks=lambda rects: capture.looks_from_window(hwnd, rects),
             )
         return LoaderPorts(
             read=lambda: reader.read_chat_view(hwnd),
@@ -359,6 +360,7 @@ def real_loader_ports(guard) -> Callable[..., LoaderPorts]:
             random=random.uniform,
             today=date.today,
             under_cursor=lambda: scroll.window_under_cursor(hwnd),
+            looks=lambda rects: capture.looks_from_window(hwnd, rects),
         )
 
     return make
@@ -463,7 +465,9 @@ class HistoryWorker(QObject):
                 avatar = self._avatar(hwnd, view.chat.avatar)
             except Exception:  # noqa: BLE001 - no photo only weakens the identity
                 avatar = ""
-            history = self._history.store_loaded(title, report.lines, report.reached_start, avatar)
+            history = self._history.store_loaded(
+                title, report.lines, report.reached_start, avatar, report.looks
+            )
             self._history.apply_retention()  # a long load can reach past the retention
         logger.info(
             "load stopped purpose=%s reason=%s screens=%d lines=%d ms=%d",

@@ -79,10 +79,18 @@ class HistoryService:
     # The hotkey path.
 
     def observe(
-        self, title: str, lines: Sequence[ChatLine], is_group: bool, avatar: str
+        self,
+        title: str,
+        lines: Sequence[ChatLine],
+        is_group: bool,
+        avatar: str,
+        looks: Sequence[str] = (),
     ) -> HistoryContext:
+        """`looks` lines up with `lines`: picture hashes, "" where none was taken."""
         context = self._safely(
-            "observe", lambda conn: self._observe(conn, title, lines, is_group, avatar), UNAVAILABLE
+            "observe",
+            lambda conn: self._observe(conn, title, lines, is_group, avatar, looks=looks),
+            UNAVAILABLE,
         )
         logger.info(
             "history observe state=%s added=%d gap=%d snippets=%d memory=%d",
@@ -115,19 +123,27 @@ class HistoryService:
         return self._safely("confirm", answer, UNAVAILABLE)
 
     def store_loaded(
-        self, title: str, lines: Sequence[ChatLine], reached_start: bool, avatar: str
+        self,
+        title: str,
+        lines: Sequence[ChatLine],
+        reached_start: bool,
+        avatar: str,
+        looks: Sequence[str] = (),
     ) -> HistoryContext:
         """What the loader read. Same rules as a hotkey press."""
 
         def run(conn):
-            context = self._observe(conn, title, lines, any(line.sender for line in lines), avatar)
+            is_group = any(line.sender for line in lines)
+            context = self._observe(conn, title, lines, is_group, avatar, looks=looks)
             if context.state == "ready":
                 store.mark_loaded(conn, context.contact_id, reached_start, self._stamp())
             return context
 
         return self._safely("loaded", run, UNAVAILABLE)
 
-    def _observe(self, conn, title, lines, is_group, avatar, chosen=None) -> HistoryContext:
+    def _observe(
+        self, conn, title, lines, is_group, avatar, chosen=None, looks=()
+    ) -> HistoryContext:
         settings = self._settings()
         found = contacts.candidates(conn, title)
         if not settings.history_enabled:
@@ -136,7 +152,7 @@ class HistoryService:
             return OFF
         if (is_group or any(c.is_group for c in found)) and not settings.history_include_groups:
             return HistoryContext("group")
-        screen = from_lines(lines)
+        screen = from_lines(lines, looks=looks)
         candidates = []
         for c in found:
             memory = store.load_memory(conn, c.id)

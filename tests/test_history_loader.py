@@ -375,3 +375,90 @@ def test_older_messages_arriving_do_not_lose_the_thread():
 def test_months_before():
     assert months_before(date(2026, 11, 17), 6) == "2026-05-17"
     assert months_before(date(2026, 3, 31), 1) == "2026-02-28"
+
+
+class LookChat(FakeChat):
+    """Five texts, then forty photos of two shapes with no time and no text: the stretch
+    that stopped the 0.4 loader. Each photo has its own fictional look."""
+
+    def __init__(self):
+        super().__init__(n=45)
+        rng = random.Random(7)
+        self.look = {}
+        for i in range(5, 45):
+            while True:  # far from every other photo, as two real ones are (T0: 29 bits)
+                value = rng.getrandbits(64)
+                if all((value ^ int(o, 16)).bit_count() > 20 for o in self.look.values()):
+                    break
+            self.look[i] = f"{value:016x}"
+            line = ChatLine("contact", "", "", "image", "", "", shape="1.3" if i % 2 else "0.7")
+            self.messages[i] = (self.messages[i][0], line)
+        self.asked = []  # rects asked per call
+        self.asked_messages = []  # which messages they showed
+        self.on_screen = {}
+
+    def read(self):
+        view = super().read()
+        top = max(0, self.bottom - self.rows)
+        lines = []
+        self.on_screen = {}
+        for row, line in enumerate(view.lines):
+            rect = Rect(10, 40 * row, 310, 40 * row + 38)
+            self.on_screen[rect] = top + row
+            lines.append(ChatLine(**{**line.__dict__, "rect": rect}))
+        chat = OpenChat(self.title, BOUNDS, messages=Rect(0, 0, 800, 900))
+        return ChatView(chat, tuple(lines))
+
+    def looks(self, rects):
+        self.asked.append(tuple(rects))
+        self.asked_messages.extend(self.on_screen[r] for r in rects)
+        return tuple(self.look.get(self.on_screen[r], "") for r in rects)
+
+    def ports(self, rng=None, with_looks=True):
+        ports = super().ports(rng)
+        if not with_looks:
+            return ports
+        return LoaderPorts(**{**ports.__dict__, "looks": self.looks})
+
+
+def test_photo_stretch_loads_to_the_start():
+    chat = LookChat()
+    report = load(HWND, "Ana", LoadLimits(screens=80, months=0), chat.ports())
+    assert report.reason == "start" and len(report.lines) == 45
+    assert [line.text for line in report.lines[:5]] == [f"mensagem {i}" for i in range(5)]
+    assert report.looks[5:] == tuple(chat.look[i] for i in range(5, 45))
+    assert report.looks[:5] == ("",) * 5
+
+
+def test_photo_stretch_without_looks_stops_lost():
+    # The documented limit when looks cannot be taken: the loader stops, it never guesses.
+    chat = LookChat()
+    report = load(HWND, "Ana", LoadLimits(screens=80, months=0), chat.ports(with_looks=False))
+    assert report.reason == "lost"
+
+
+def test_looks_are_asked_only_for_screens_with_bare_media():
+    chat = LookChat()
+    chat.messages = chat.messages[:5] + [
+        (day, ChatLine(**{**line.__dict__, "text": "legenda"})) for day, line in chat.messages[5:]
+    ]
+    load(HWND, "Ana", LoadLimits(screens=5, months=0), chat.ports())
+    assert chat.asked == []
+    photos = LookChat()
+    load(HWND, "Ana", LoadLimits(screens=80, months=0), photos.ports())
+    # Every photo, never one of the five texts.
+    assert set(photos.asked_messages) == set(range(5, 45))
+
+
+def test_pictures_cut_by_the_message_area_get_no_look():
+    chat = LookChat()
+    original = chat.read
+
+    def read():
+        view = original()
+        area = Rect(0, 100, 800, 900)  # the first rows sit under the header
+        return ChatView(OpenChat(view.chat.title, BOUNDS, messages=area), view.lines)
+
+    chat.read = read
+    load(HWND, "Ana", LoadLimits(screens=2, months=0), chat.ports())
+    assert all(rect.top >= 100 for rects in chat.asked for rect in rects)
