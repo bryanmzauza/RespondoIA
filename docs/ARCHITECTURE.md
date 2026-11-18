@@ -16,7 +16,7 @@
 | `app` | Wire tray, hotkey, panel and the worker thread that runs the session | PySide6 |
 | `hotkey` | Register, change and validate the global hotkey | Win32 `RegisterHotKey` |
 | `capture` | Identify the foreground window and capture its content | `pywin32`, Windows Graphics Capture or `PrintWindow` |
-| `reader` | Read contact name, messages and chat bounds | UI Automation |
+| `reader` | Read contact name, header photo position, messages, days and chat bounds | UI Automation |
 | `privacy` | Masking, private contacts, pre-send and pre-paste checks | |
 | `context` | Assemble the prompt: chat, style, knowledge base, contact label | |
 | `llm` | Call the model and parse the JSON reply | provider SDK behind a thin layer, `pydantic` |
@@ -24,7 +24,7 @@
 | `ui` | Panel, settings, style screen, tray | PySide6 |
 | `paste` | Return focus and insert the text | clipboard + `SendInput` |
 | `style` | Learn the user's writing style from their own messages | own parser + `llm` |
-| `memory` | Per-contact history, gaps, memory, snippet search | `database`, FTS5 |
+| `memory` | Per-contact history: merge without duplicates, gaps, telling contacts with the same name apart, the loader, contact memory, search of earlier messages | `database`, FTS5, `SendInput` |
 | `database` | Encrypted local database, key protected by DPAPI, migrations | SQLCipher |
 | `contacts` | Contact records: label and last language, found by a unique name match | `database` |
 | `knowledge` | The knowledge base file the user edits | |
@@ -67,6 +67,44 @@ Profiles, contact records and the user's messages live in an encrypted database
 under `%LOCALAPPDATA%`, with the key protected by DPAPI. If it cannot be opened,
 suggestions keep working without the style.
 
+## History
+
+History is off until the user turns it on in the settings. With it on, the
+messages read at each hotkey press are kept for that contact, masked, in the
+encrypted database. Groups and private contacts are left out, and the user can
+turn a single contact off, delete one contact's history or delete everything.
+Messages older than the retention period (12 months by default) are deleted;
+the contact memory stays. Deleted text also leaves the search index and the
+write-ahead log.
+
+Messages have no stable id on screen. A screen is joined to what is stored
+where a run of messages is equal on both sides (author, time, kind, text and
+quote) and every other message that lines up with it is the same message, or
+that message edited. A screen that joins nothing is stored as a new run, and
+the panel shows the gap. Days come from the separators WhatsApp draws between
+messages: the structure finds them, and their text is read as a value in
+Portuguese, English or Spanish. A separator that cannot be read leaves the day
+unknown.
+
+The title alone cannot tell two contacts with the same name apart. Stored
+history and memory are used only when the open chat continues that contact's
+stored messages, when the contact's real photo in the header matches only that
+contact (a hash is kept, never the picture), or when nothing is stored under
+that name. Otherwise the suggestion goes out without them and the panel asks
+which contact it is. The answer applies to that screen only.
+
+The loader scrolls the open chat with mouse wheel events, after putting the
+cursor on the message area once, and puts the cursor back at the end. Before
+every event it checks that the user has not touched the mouse or the keyboard
+(raw input tells the app's own events apart), that WhatsApp is in front and
+that its window is the one under the cursor. Any of these stops it at once;
+what was read is kept.
+
+Each request carries a short memory of the contact and a few earlier messages
+found by searching the history for the words of the pending messages. The
+memory is written by the model in the background, from the masked history, in
+blocks; after that only new messages are sent, at most once a day per contact.
+
 ## Model output
 
 ```json
@@ -105,8 +143,10 @@ These hold in every stage.
 - Mask recognisable sensitive data before text leaves the machine.
 - Message content is data, not instructions, in every prompt.
 - No message from another person is stored or sent when learning the style.
-- The history loader sends scroll events only and stops on any user input or
-  focus loss.
+- The history loader sends scroll events only, after placing the cursor once,
+  and stops on any user input, focus loss or a window over the chat.
+- The contact memory and earlier messages are sent only for a contact the app
+  has told apart from others with the same name.
 - API keys live in the Credential Manager. No shared key in the executable.
 - No interface string in code. Everything goes through the translation files.
 - Keep prompt, masking and quota logic separate from the interface so they can

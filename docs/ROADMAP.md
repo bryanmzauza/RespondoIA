@@ -12,7 +12,10 @@ stage is done. `main` always holds the last finished stage.
 | 0.2 Local reading | `stage/0.2-local-reading` |
 | 0.3 Style and context | `stage/0.3-style-context` |
 | 0.4 History | `stage/0.4-history` |
-| 0.5 Release | `stage/0.5-release` |
+| 0.5 Media | `stage/0.5-media` (created when the stage starts) |
+| 0.6 Follow mode and automatic suggestions | `stage/0.6-follow` (created when the stage starts) |
+| 0.7 Local model | `stage/0.7-local-ai` (created when the stage starts) |
+| 0.8 Release | `stage/0.8-release` (created when the stage starts) |
 
 ## 0.1 Core
 
@@ -89,15 +92,17 @@ Exit criteria:
 
 ## 0.4 History
 
-- [ ] `memory/store`: history tables in the encrypted database, retention
-      period, delete per contact and delete all
-- [ ] `memory/loader`: one-click load by scrolling and reading, stops on user
-      input or focus loss. Also loads chats for the style screen
-- [ ] `memory/merge`: overlap stitching, no duplicates, gap detection
-- [ ] `memory/recall`: contact memory summary, snippet search (FTS5)
-- [ ] Follow mode for contacts already in scope, with tray indicator
-- [ ] Automatic suggestions for selected labels, with daily limit
-- [ ] `local_llm`: local model for background tasks
+- [x] `memory/store`: history tables in the encrypted database, full-text index,
+      retention period, delete per contact and delete all
+- [x] `memory/merge`: overlap stitching without duplicates, edited messages,
+      gap detection, days from the day separators
+- [x] `memory/identity`: tell contacts with the same name apart before any
+      memory is used
+- [x] `memory/loader`: one-click load by scrolling and reading, stops on any
+      user input, focus loss or a window over the chat. Also loads chats for the
+      style screen
+- [x] `memory/recall`: contact memory summary, earlier messages found by search
+- [x] History controls in the panel, the settings and the style screen
 
 Exit criteria:
 
@@ -105,7 +110,45 @@ Exit criteria:
 - memory never shows up on the wrong contact, including contacts with the
   same name
 
-## 0.5 Release
+## 0.5 Media
+
+- [ ] Pending photos and video thumbnails sent as images, cropped from the
+      WhatsApp window, one-to-one chats only, with a setting to turn it off
+- [ ] Link previews read from the screen and masked. Links are never opened
+- [ ] Audio and video length; WhatsApp's own transcript when it is on screen
+
+Exit criteria:
+
+- with fictional photos, links, videos and audio, suggestions never contradict
+  the media
+- no image leaves for a group, a private contact or a message that is not
+  pending
+
+## 0.6 Follow mode and automatic suggestions
+
+- [ ] Follow mode: read the chat when it opens, for contacts already in scope,
+      with a tray indicator
+- [ ] Automatic suggestions for selected labels or all contacts, with a daily
+      limit, without taking the focus
+
+Exit criteria:
+
+- automatic suggestions never fire for the user's own last message, private
+  contacts, groups or twice for the same message
+- an hour of use with follow mode on leaves no duplicate and reads no contact
+  out of scope
+
+## 0.7 Local model
+
+- [ ] `local_llm`: local engine and model download
+- [ ] Cloud, hybrid and local modes; background tasks on the local model
+
+Exit criteria:
+
+- with the network off, the app suggests and tries no external call
+- a contact memory is built on the machine on a PC with 8 GB of memory
+
+## 0.8 Release
 
 - [ ] `server/`: relay for product accounts, no content stored or logged,
       short-lived tokens, per-account quota

@@ -8,11 +8,13 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.3 works: suggestions follow a style
-learned from your own messages, as you use the hotkey or from an exported chat
-you import, and can use a knowledge base you write. The chat is read as text and
-masked before it is sent. It needs your own API key. The plan is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+**Status:** early development. Stage 0.4 works: with history turned on in the
+settings, the app keeps each contact's chat encrypted on your computer, can load
+older messages by scrolling the chat for you, and sends a short memory of the
+contact and a few earlier messages with each request. Suggestions follow a
+style learned from your own messages and can use a knowledge base you write.
+The chat is read as text and masked before it is sent. It needs your own API
+key. The plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it is meant to do
 
@@ -58,8 +60,11 @@ account before use.
 
 The style screen is in the tray menu (Learn my style) and in the panel.
 Settings has a button that opens the knowledge base, `knowledge.md`, in
-`%LOCALAPPDATA%\RespondoIA`. The style profile and contact labels are kept in
-an encrypted database in the same folder.
+`%LOCALAPPDATA%\RespondoIA`. The style profile, contact labels and, when
+history is on, each contact's messages and memory are kept in an encrypted
+database in the same folder. History is off until you turn it on in Settings;
+the History menu in the panel loads older messages, shows the contact memory
+and deletes a contact's history.
 
 `config.example.toml` lists every setting. Module responsibilities and the
 rules the code must follow are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

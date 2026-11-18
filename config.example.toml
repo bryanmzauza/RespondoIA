@@ -41,10 +41,10 @@ private_contacts = []
 
 [history]
 enabled = false                 # off until you turn it on; the first-run screen will ask
-scope = "used"                  # "used", "all" or "per_contact"
+scope = "used"                  # "used" (chats where you used the app); "all" comes with follow mode
 include_groups = false
 snippets_per_suggestion = 5
-follow = true
+follow = true                   # follow mode, not read yet
 quick_load_screens = 15
 max_load_screens = 80
 max_load_months = 6
