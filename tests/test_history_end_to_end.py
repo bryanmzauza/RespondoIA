@@ -6,7 +6,7 @@ from test_history_loader import FakeChat
 from test_session import FakePorts
 
 from respondoia.config import Settings
-from respondoia.domain import ChatLine
+from respondoia.domain import ChatLine, Look, Rect
 from respondoia.memory import store
 from respondoia.memory.loader import LoadLimits, load
 from respondoia.memory.service import HistoryService
@@ -23,7 +23,13 @@ def services(db, tmp_path):
 
 
 def press(fake, history, style, avatar=""):
-    ports = replace(fake.ports(), history=history, style=style, avatar=lambda h, r: avatar)
+    if avatar:  # a real photo in the header
+        fake.chat = replace(fake.chat, avatar=Rect(430, 10, 470, 50))
+
+    def look(hwnd, photo, crops, looks, area):
+        return Look(avatar, (None,) * len(crops), ("",) * len(looks))
+
+    ports = replace(fake.ports(), history=history, style=style, look=look)
     session = Session(ports, ON)
     result = session.start()
     assert result.status is StartStatus.STARTED

@@ -38,6 +38,8 @@ class Settings:
     private_contacts: tuple[str, ...] = ()
     input: str = "text"  # "text" (screenshot as fallback) or "screenshot"
     mask_sensitive_data: bool = True
+    # Pending photos from the contact go with the text request. Pixels cannot be masked.
+    send_pictures: bool = True
     panel_position: str = "bottom-right"
     start_with_windows: bool = False
     quick_instructions: tuple[str, ...] = DEFAULT_INSTRUCTIONS
@@ -93,6 +95,7 @@ _KEYS = {
     "private_contacts": ("privacy", "private_contacts", _is_str_list),
     "input": ("ai", "input", lambda v: v in ("text", "screenshot")),
     "mask_sensitive_data": ("privacy", "mask_sensitive_data", _is_bool),
+    "send_pictures": ("privacy", "send_pictures", _is_bool),
     "panel_position": ("general", "panel_position", lambda v: v in PANEL_POSITIONS),
     "start_with_windows": ("general", "start_with_windows", _is_bool),
     "quick_instructions": (

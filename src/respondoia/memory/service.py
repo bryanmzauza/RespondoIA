@@ -227,6 +227,17 @@ class HistoryService:
             )
         return pick_snippets(groups)
 
+    def known_group(self, title: str) -> bool:
+        """The stored contact for this title is a group, kept with history and style off.
+        True when the database cannot answer: photos never go to a group."""
+        if self._db is None:
+            return False
+
+        def run(conn):
+            return any(c.is_group for c in contacts.candidates(conn, title))
+
+        return self._safely("known_group", run, True)
+
     def reaches_older(self, contact_id: int | None, lines: Sequence[ChatLine]) -> bool:
         """True once what the loader read overlaps a stored segment before the newest one:
         the gap is filled."""

@@ -133,3 +133,79 @@ def test_looks_from_window_survive_a_failed_capture(monkeypatch):
     monkeypatch.setattr(capture, "grab_window", lambda hwnd: calls.append(hwnd) or noise((800, 600)))
     looks = capture.looks_from_window(5, [Rect(0, 0, 100, 100), Rect(100, 0, 200, 100)])
     assert len(calls) == 1 and all(len(look) == 16 for look in looks)
+
+
+WINDOW = Rect(0, 0, 1000, 800)
+AREA = Rect(0, 65, 1000, 740)
+
+
+def test_crop_is_jpeg_and_at_most_768():
+    from respondoia.capture import picture_crop
+
+    image = noise((1000, 800))
+    jpeg = picture_crop(image, WINDOW, Rect(100, 100, 900, 700), AREA)
+    out = Image.open(io.BytesIO(jpeg))
+    assert jpeg.startswith(b"\xff\xd8") and out.format == "JPEG"
+    assert max(out.size) == 768 and out.size == (768, 576)
+
+
+def test_small_crop_keeps_its_size():
+    from respondoia.capture import picture_crop
+
+    jpeg = picture_crop(noise((1000, 800)), WINDOW, Rect(100, 100, 400, 300), AREA)
+    assert Image.open(io.BytesIO(jpeg)).size == (300, 200)
+
+
+def test_partly_hidden_picture_is_not_sent():
+    from respondoia.capture import picture_crop
+
+    image = noise((1000, 800))
+    # Half of it under the header: 50% of the height inside the message area.
+    assert picture_crop(image, WINDOW, Rect(100, -35, 400, 165), AREA) is None
+    # 70% inside: the visible part goes.
+    jpeg = picture_crop(image, WINDOW, Rect(100, 5, 400, 205), AREA)
+    assert Image.open(io.BytesIO(jpeg)).size == (300, 140)
+
+
+def test_tiny_or_outside_picture_is_not_sent():
+    from respondoia.capture import picture_crop
+
+    image = noise((1000, 800))
+    assert picture_crop(image, WINDOW, Rect(100, 100, 140, 300), AREA) is None
+    assert picture_crop(image, WINDOW, Rect(1100, 100, 1400, 300), AREA) is None
+
+
+def test_blank_crop_is_not_sent():
+    from respondoia.capture import picture_crop
+
+    image = Image.new("RGB", (1000, 800), "white")
+    assert picture_crop(image, WINDOW, Rect(100, 100, 400, 300), AREA) is None
+
+
+def test_one_capture_serves_avatar_pictures_and_looks(monkeypatch):
+    from respondoia import capture
+
+    info = WindowInfo(5, "WhatsApp", "WhatsApp.Root.exe", WINDOW, False)
+    monkeypatch.setattr(capture, "window_info", lambda hwnd: info)
+    calls = []
+    monkeypatch.setattr(capture, "grab_window", lambda hwnd: calls.append(hwnd) or noise((1000, 800)))
+    look = capture.look_from_window(
+        5, Rect(20, 10, 60, 50), [Rect(100, 100, 400, 300)], [Rect(500, 100, 800, 300)], AREA
+    )
+    assert len(calls) == 1
+    assert len(look.avatar) == 16 and look.pictures[0].startswith(b"\xff\xd8")
+    assert len(look.looks) == 1 and len(look.looks[0]) == 16
+
+
+def test_failed_capture_gives_an_empty_look(monkeypatch):
+    from respondoia import capture
+
+    info = WindowInfo(5, "WhatsApp", "WhatsApp.Root.exe", WINDOW, False)
+    monkeypatch.setattr(capture, "window_info", lambda hwnd: info)
+
+    def fail(hwnd):
+        raise CaptureError("capture came back blank")
+
+    monkeypatch.setattr(capture, "grab_window", fail)
+    look = capture.look_from_window(5, None, [Rect(100, 100, 400, 300)], [Rect(0, 0, 9, 9)], AREA)
+    assert look.avatar == "" and look.pictures == (None,) and look.looks == ("",)

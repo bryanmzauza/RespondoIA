@@ -15,9 +15,11 @@ from respondoia.capture import CaptureError, is_allowed_window
 from respondoia.config import Settings
 from respondoia.domain import (
     LABELS,
+    PICTURE_KINDS,
     ChatLine,
     ChatRef,
     ChatView,
+    Look,
     OpenChat,
     Rect,
     UserContext,
@@ -33,6 +35,7 @@ from respondoia.llm import (
     SuggestResult,
     check_reply,
 )
+from respondoia.media import hashable, may_send_pictures, pending_pictures
 from respondoia.memory.recall import snippet_rows
 from respondoia.memory.service import HistoryContext
 from respondoia.privacy import (
@@ -88,7 +91,12 @@ class HistoryPort(Protocol):
     """The history service as the session sees it. It never raises."""
 
     def observe(
-        self, title: str, lines: Sequence[ChatLine], is_group: bool, avatar: str
+        self,
+        title: str,
+        lines: Sequence[ChatLine],
+        is_group: bool,
+        avatar: str,
+        looks: Sequence[str] = (),
     ) -> HistoryContext: ...
     def confirm(
         self, title: str, lines: Sequence[ChatLine], contact_id: int | None
@@ -98,7 +106,7 @@ class HistoryPort(Protocol):
 class NoHistory:
     """History off: nothing stored, nothing attached."""
 
-    def observe(self, title, lines, is_group, avatar):
+    def observe(self, title, lines, is_group, avatar, looks=()):
         return HistoryContext("off")
 
     def confirm(self, title, lines, contact_id):
@@ -108,8 +116,10 @@ class NoHistory:
 NO_HISTORY = NoHistory()
 
 
-def _no_avatar(hwnd: int, rect: Rect | None) -> str:
-    return ""
+def _no_look(
+    hwnd: int, avatar: Rect | None, crops: Sequence[Rect], looks: Sequence[Rect], area
+) -> Look:
+    return Look("", (None,) * len(crops), ("",) * len(looks))
 
 
 @dataclass(frozen=True)
@@ -123,8 +133,13 @@ class Ports:
     copy_text: Callable[[str], None]
     style: StylePort = NO_STYLE
     history: HistoryPort = NO_HISTORY
-    # Hash of the contact's real photo in the header, "" without one. Pixels stay in memory.
-    avatar: Callable[[int, Rect | None], str] = _no_avatar
+    # One capture: hwnd, the contact's photo, photos to send, photos to hash, message
+    # list. Pixels stay in memory.
+    look: Callable[
+        [int, Rect | None, Sequence[Rect], Sequence[Rect], Rect | None], Look
+    ] = _no_look
+    # The stored contact for this title is a group. Photos never go to a group.
+    known_group: Callable[[str], bool] = lambda title: False
 
 
 class StartStatus(Enum):
@@ -142,6 +157,7 @@ class StartResult:
     context: UserContext | None = None
     history: HistoryContext | None = None
     hwnd: int = 0  # the WhatsApp window, for the history loader
+    pictures: int = 0  # photos that will go with the request
 
 
 class ChooseResult(Enum):
@@ -168,6 +184,8 @@ class Session:
         self._context: UserContext | None = None
         self._label_guessed = False
         self._history: HistoryContext | None = None
+        # (line id, JPEG) of the pending photos, kept until close; never on disk.
+        self._pictures: tuple[tuple[int, bytes], ...] = ()
 
     @property
     def chat(self) -> ChatRef | None:
@@ -198,19 +216,64 @@ class Session:
         is_group = any(line.sender for line in view.lines)
         language = self._ports.style.learn(chat.title, view.lines, is_group)
         self._context = self._ports.style.context(chat.title, language, is_group)
-        try:
-            avatar = self._ports.avatar(window.hwnd, chat.avatar)
-        except Exception as exc:  # noqa: BLE001 - a missing photo only weakens the identity
-            logger.info("avatar failed type=%s", type(exc).__name__)
-            avatar = ""
-        self._use_history(self._ports.history.observe(chat.title, view.lines, is_group, avatar))
+        avatar, looks = self._look(window.hwnd, chat, view.lines)
+        self._use_history(
+            self._ports.history.observe(chat.title, view.lines, is_group, avatar, looks)
+        )
         logger.info(
             "start ok style=%d knowledge=%d label=%d",
             bool(self._context.style),
             bool(self._context.knowledge),
             bool(self._context.label),
         )
-        return StartResult(StartStatus.STARTED, chat, self._context, self._history, window.hwnd)
+        return StartResult(
+            StartStatus.STARTED,
+            chat,
+            self._context,
+            self._history,
+            window.hwnd,
+            len(self._pictures),
+        )
+
+    def _look(
+        self, hwnd: int, chat: OpenChat, lines: Sequence[ChatLine]
+    ) -> tuple[str, tuple[str, ...]]:
+        """One capture, only when something needs it. Keeps the photos to send; returns the
+        contact's photo hash and the hashes lined up with `lines`."""
+        try:
+            known_group = self._ports.known_group(chat.title)
+        except Exception:  # noqa: BLE001 - unsure: treat it as a group
+            known_group = True
+        allowed = may_send_pictures(self._settings, chat, lines, known_group)
+        pending = pending_pictures(lines) if allowed else ()
+        hashed = hashable(lines, chat.messages)
+        if chat.avatar is None and not pending and not hashed:
+            return "", ()
+        started = time.perf_counter()
+        try:
+            look = self._ports.look(
+                hwnd,
+                chat.avatar,
+                [lines[i].rect for i in pending],
+                [lines[i].rect for i in hashed],
+                chat.messages,
+            )
+        except Exception as exc:  # noqa: BLE001 - no capture only means no photos
+            logger.info("look failed type=%s", type(exc).__name__)
+            return "", ()
+        self._pictures = tuple(
+            (i + 1, jpeg) for i, jpeg in zip(pending, look.pictures, strict=False) if jpeg
+        )
+        looks = [""] * len(lines)
+        for i, value in zip(hashed, look.looks, strict=False):
+            looks[i] = value
+        logger.info(
+            "start pictures found=%d sent=%d ms=%d",
+            len(pending),
+            len(self._pictures),
+            round((time.perf_counter() - started) * 1000),
+        )
+        return look.avatar, tuple(looks) if hashed else ()
 
     def confirm_identity(self, contact_id: int | None) -> HistoryContext:
         """The user's answer to "same person?". The next request uses the result."""
@@ -237,7 +300,9 @@ class Session:
         """Send the chat as masked text, or capture it once when there is no text."""
         chat = self._open_chat()
         has_text = any(line.text.strip() for line in self._lines)
-        if self._settings.input == "text" and has_text:
+        # Photos and voice messages alone still go as text: cheaper, and the text is masked.
+        has_media = any(line.kind in (*PICTURE_KINDS, "audio") for line in self._lines)
+        if self._settings.input == "text" and (has_text or has_media):
             if self._masked is None:
                 found: tuple[str, ...] = ()
                 masked = self._lines
@@ -247,7 +312,11 @@ class Session:
                 self._masked = masked
                 logger.info("suggest input=text lines=%d masked=%d", len(self._lines), len(found))
             request = SuggestRequest(
-                None, self._settings.suggestion_count, lines=self._masked, context=self._context
+                None,
+                self._settings.suggestion_count,
+                lines=self._masked,
+                context=self._context,
+                pictures=self._pictures,
             )
             return self._ask("suggest", request, on_preview)
         self._fell_back = self._settings.input == "text"
@@ -279,6 +348,7 @@ class Session:
                 instruction=instruction,
                 lines=self._masked,
                 context=self._context,
+                pictures=self._pictures,
             )
             return self._ask("regenerate", request, on_preview)
         if self._image is None or self._reply is None:
@@ -335,6 +405,7 @@ class Session:
         self._bounds = None
         self._context = None
         self._history = None
+        self._pictures = ()
 
     def _check_chat_again(self, captured: ChatRef) -> None:
         """Before a retried capture: same window, same chat, still allowed, new bounds."""

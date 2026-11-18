@@ -5,7 +5,7 @@ import pytest
 
 from respondoia.capture import CaptureError
 from respondoia.config import Settings
-from respondoia.domain import ChatLine, ChatRef, ChatView, OpenChat, Rect, WindowInfo
+from respondoia.domain import ChatLine, ChatRef, ChatView, Look, OpenChat, Rect, WindowInfo
 from respondoia.llm import (
     ChatMessage,
     LlmError,
@@ -481,12 +481,22 @@ def test_logs_carry_no_content_in_text_mode(caplog):
     assert "input=text" in caplog.text
 
 
-def test_lines_without_any_text_fall_back_to_the_screenshot():
+def test_media_without_any_text_goes_as_text():
+    # Stage 0.5: photos and voice messages alone are sent as lines, not as a screenshot.
     fake = FakePorts()
     fake.lines = [
         ChatLine("contact", "", "09:10", "audio", "", ""),
         ChatLine("contact", "", "09:11", "image", "", ""),
     ]
+    session = started(fake)
+    session.suggest()
+    assert fake.count("capture_chat") == 0 and len(fake.calls[-1][1].lines) == 2
+    assert session.fell_back is False
+
+
+def test_lines_without_text_or_media_fall_back_to_the_screenshot():
+    fake = FakePorts()
+    fake.lines = [ChatLine("contact", "", "09:10", "other", "", "")]
     session = started(fake)
     session.suggest()
     assert fake.count("capture_chat") == 1 and fake.calls[-1][1].lines == ()
@@ -657,8 +667,8 @@ class FakeHistory:
         self.calls = []
         self.context = context
 
-    def observe(self, title, lines, is_group, avatar):
-        self.calls.append(("observe", title, tuple(lines), is_group, avatar))
+    def observe(self, title, lines, is_group, avatar, looks=()):
+        self.calls.append(("observe", title, tuple(lines), is_group, avatar, tuple(looks)))
         return self.context
 
     def confirm(self, title, lines, contact_id):
@@ -667,7 +677,13 @@ class FakeHistory:
 
 
 def historied(fake, history, style=None, settings=None, avatar=""):
-    ports = replace(fake.ports(), history=history, avatar=lambda hwnd, rect: avatar)
+    if avatar:  # a real photo in the header
+        fake.chat = replace(fake.chat, avatar=Rect(430, 10, 470, 50))
+
+    def look(hwnd, photo, crops, looks, area):
+        return Look(avatar, (None,) * len(crops), ("",) * len(looks))
+
+    ports = replace(fake.ports(), history=history, look=look)
     if style is not None:
         ports = replace(ports, style=style)
     session = Session(ports, settings or Settings())
@@ -679,7 +695,7 @@ def test_history_is_observed_after_style_and_before_the_request():
     fake.lines = TEXT_LINES
     _, result = historied(fake, history, style, avatar="ab12")
     assert style.names() == ["learn", "context"]
-    assert history.calls == [("observe", "Marina Duarte", tuple(TEXT_LINES), False, "ab12")]
+    assert history.calls == [("observe", "Marina Duarte", tuple(TEXT_LINES), False, "ab12", ())]
     assert result.history is READY and fake.count("suggest") == 0
 
 
@@ -742,3 +758,112 @@ def test_deleted_history_is_not_sent_on_regenerate():
     session.regenerate((), "")
     context = fake.calls[-1][1].context
     assert context.memory == "" and context.snippets == () and context.style == "ZZ-STYLE"
+
+
+# Pictures (stage 0.5). Everything fictional; the JPEG bytes are a stand-in.
+
+JPEG = b"\xff\xd8fictional"
+AREA = Rect(420, 65, 1600, 840)
+PHOTO_RECT = Rect(485, 300, 785, 500)
+
+
+def photo_lines():
+    return [
+        ChatLine("user", "", "09:00", "text", "manda a foto do bolo", ""),
+        ChatLine("contact", "", "09:01", "image", "", "", rect=PHOTO_RECT, shape="0.7"),
+    ]
+
+
+class LookPort:
+    def __init__(self, fail=False):
+        self.calls = []
+        self.fail = fail
+
+    def __call__(self, hwnd, avatar, crops, looks, area):
+        self.calls.append((hwnd, avatar, tuple(crops), tuple(looks), area))
+        if self.fail:
+            raise CaptureError("capture came back blank")
+        return Look("ab12", tuple(JPEG for _ in crops), tuple("0f0f0f0f0f0f0f0f" for _ in looks))
+
+
+def pictured(fake, look=None, settings=None, known_group=False, history=None):
+    fake.chat = OpenChat(fake.chat.title, BOUNDS, messages=AREA)
+    fake.lines = fake.lines or photo_lines()
+    ports = replace(fake.ports(), look=look or LookPort(), known_group=lambda title: known_group)
+    if history is not None:
+        ports = replace(ports, history=history)
+    session = Session(ports, settings or Settings())
+    return session, session.start()
+
+
+def test_one_capture_serves_avatar_pictures_and_looks():
+    fake, look = FakePorts(), LookPort()
+    _, result = pictured(fake, look)
+    assert len(look.calls) == 1
+    assert look.calls[0] == (HWND, None, (PHOTO_RECT,), (PHOTO_RECT,), AREA)
+    assert result.pictures == 1
+
+
+def test_pictures_live_until_close():
+    fake = FakePorts()
+    session, _ = pictured(fake)
+    session.suggest()
+    assert fake.calls[-1][1].pictures == ((2, JPEG),)
+    session.regenerate((), "mais curto")
+    assert fake.calls[-1][1].pictures == ((2, JPEG),)
+    session.close()
+    assert session._pictures == ()
+
+
+def test_known_group_crops_nothing():
+    fake, look = FakePorts(), LookPort()
+    session, result = pictured(fake, look, known_group=True)
+    assert look.calls[0][2] == () and result.pictures == 0
+    session.suggest()
+    assert fake.calls[-1][1].pictures == ()
+
+
+def test_switch_off_crops_nothing():
+    fake, look = FakePorts(), LookPort()
+    _, result = pictured(fake, look, settings=Settings(send_pictures=False))
+    assert look.calls[0][2] == () and result.pictures == 0
+
+
+def test_no_photo_no_avatar_no_capture():
+    fake, look = FakePorts(), LookPort()
+    fake.lines = TEXT_LINES
+    pictured(fake, look)
+    assert look.calls == []
+
+
+def test_failed_capture_does_not_stop_the_hotkey():
+    fake = FakePorts()
+    session, result = pictured(fake, LookPort(fail=True))
+    assert result.status is StartStatus.STARTED and result.pictures == 0
+    session.suggest()
+    assert fake.calls[-1][1].pictures == ()
+
+
+def test_chat_with_only_pictures_goes_as_text():
+    fake = FakePorts()
+    fake.lines = photo_lines()[1:]
+    session, _ = pictured(fake)
+    session.suggest()
+    request = fake.calls[-1][1]
+    assert fake.count("capture_chat") == 0 and session.fell_back is False
+    assert request.image_png is None and len(request.lines) == 1 and request.pictures == ((1, JPEG),)
+
+
+def test_looks_reach_the_history():
+    fake, history = FakePorts(), FakeHistory()
+    pictured(fake, history=history)
+    assert history.calls[0][-1] == ("", "0f0f0f0f0f0f0f0f")
+
+
+def test_logs_carry_no_picture_content(caplog):
+    fake = FakePorts()
+    with caplog.at_level(logging.INFO, logger="respondoia"):
+        session, _ = pictured(fake)
+        session.suggest()
+    assert "start pictures found=1 sent=1" in caplog.text
+    assert "fictional" not in caplog.text and "0f0f" not in caplog.text

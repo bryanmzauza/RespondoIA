@@ -74,6 +74,15 @@ def family(kind: str) -> str:
 
 
 @dataclass(frozen=True)
+class Look:
+    """What one capture of the window gives the hotkey. Pixels never leave memory."""
+
+    avatar: str  # hash of the contact's photo, "" without one
+    pictures: tuple[bytes | None, ...]  # JPEG per bubble asked, None if it could not go
+    looks: tuple[str, ...]  # hash per picture asked, "" if none
+
+
+@dataclass(frozen=True)
 class ChatView:
     chat: OpenChat
     lines: tuple[ChatLine, ...]  # visible messages, oldest first

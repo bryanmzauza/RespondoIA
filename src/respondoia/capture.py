@@ -5,7 +5,7 @@ from collections.abc import Sequence
 
 from PIL import Image
 
-from respondoia.domain import Rect, WindowInfo
+from respondoia.domain import Look, Rect, WindowInfo
 
 MIN_CHAT_SIDE = 200
 PW_RENDERFULLCONTENT = 2
@@ -103,6 +103,38 @@ def look_hash(image: Image.Image, window: Rect, rect: Rect) -> str:
     if crop.width < 8 or crop.height < 8 or _colours(crop) <= FLAT_COLOURS:
         return ""
     return dhash(crop)
+
+
+VISIBLE_SHARE = 0.6  # less of the picture's height on screen: it would mislead
+PICTURE_MIN_SIDE = 48  # pixels
+
+
+def encode_jpeg(image: Image.Image, quality: int = 85) -> bytes:
+    buffer = io.BytesIO()
+    image.convert("RGB").save(buffer, format="JPEG", quality=quality)
+    return buffer.getvalue()
+
+
+def _intersect(a: Rect, b: Rect) -> Rect | None:
+    found = Rect(max(a.left, b.left), max(a.top, b.top), min(a.right, b.right), min(a.bottom, b.bottom))
+    return found if found.width > 0 and found.height > 0 else None
+
+
+def picture_crop(
+    image: Image.Image, window: Rect, bubble: Rect, area: Rect, max_side: int = 768
+) -> bytes | None:
+    """The part of a photo inside the message list, as JPEG. None when too little of it
+    shows, when it is too small, or when it is still blank."""
+    visible = _intersect(bubble, area)
+    visible = _intersect(visible, window) if visible else None
+    if visible is None or visible.height < VISIBLE_SHARE * bubble.height:
+        return None
+    if min(visible.width, visible.height) < PICTURE_MIN_SIDE:
+        return None
+    crop = _window_crop(image, window, visible)
+    if _colours(crop) <= FLAT_COLOURS:
+        return None
+    return encode_jpeg(downscale(crop, max_side))
 
 
 def prepare_image(image: Image.Image, window: Rect, chat_bounds: Rect, max_side: int) -> bytes:
@@ -254,6 +286,33 @@ def looks_from_window(hwnd: int, rects: Sequence[Rect]) -> tuple[str, ...]:
     except CaptureError:
         return ("",) * len(rects)
     return tuple(look_hash(image, info.rect, rect) for rect in rects)
+
+
+def look_from_window(
+    hwnd: int,
+    avatar: Rect | None,
+    crops: Sequence[Rect],
+    looks: Sequence[Rect],
+    area: Rect | None,
+) -> Look:
+    """One capture for the hotkey: the contact's photo hash, the photos to send and the
+    hashes for the history. A failed capture gives an empty result, never an error."""
+    empty = Look("", (None,) * len(crops), ("",) * len(looks))
+    info = window_info(hwnd)
+    if info is None:
+        return empty
+    try:
+        image = grab_window(hwnd)
+    except CaptureError:
+        return empty
+    return Look(
+        avatar_hash(image, info.rect, avatar) if avatar is not None else "",
+        tuple(
+            picture_crop(image, info.rect, rect, area) if area is not None else None
+            for rect in crops
+        ),
+        tuple(look_hash(image, info.rect, rect) for rect in looks),
+    )
 
 
 def capture_chat(hwnd: int, chat_bounds: Rect, max_side: int) -> bytes:

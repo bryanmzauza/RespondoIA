@@ -258,3 +258,11 @@ def test_history_keys_validate(tmp_path, body, key):
     with pytest.raises(ConfigError) as err:
         load_settings(path)
     assert err.value.key == key
+
+
+def test_send_pictures_round_trip(tmp_path):
+    path = tmp_path / "config.toml"
+    assert Settings().send_pictures is True
+    save_settings(path, Settings(send_pictures=False))
+    assert load_settings(path).send_pictures is False
+    assert "send_pictures = false" in path.read_text(encoding="utf-8")

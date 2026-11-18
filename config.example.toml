@@ -37,6 +37,7 @@ save_screenshots = false
 log_content = false
 crop_to_chat = true
 mask_sensitive_data = true
+send_pictures = true
 private_contacts = []
 
 [history]

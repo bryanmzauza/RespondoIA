@@ -377,3 +377,20 @@ def test_observe_stores_looks(db):
         (segment,) = store.segments(conn, contact.id)
     assert [m.look for m in segment.messages] == ["", "", "", "00ff00ff00ff00ff"]
     assert segment.messages[-1].shape == "1.3"
+
+
+def test_known_group_reads_the_stored_contact(db):
+    history = service(db, Settings())  # history off: the contact is still kept
+    see(db, "Turma do Vôlei", is_group=True)
+    see(db, "Ana")
+    assert history.known_group("Turma do Vôlei") is True
+    assert history.known_group("Ana") is False and history.known_group("Ninguém") is False
+
+
+def test_known_group_is_unsure_on_errors(db):
+    class Broken:
+        def transaction(self):
+            raise RuntimeError("disk")
+
+    assert HistoryService(Broken(), lambda: None, lambda: ON).known_group("Ana") is True
+    assert HistoryService(None, lambda: None, lambda: ON).known_group("Ana") is False

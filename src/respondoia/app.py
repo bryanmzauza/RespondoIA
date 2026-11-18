@@ -1168,7 +1168,10 @@ def model_client(current: Callable[[], Settings]) -> AnthropicClient | None:
 
 
 def build_ports(
-    current: Callable[[], Settings], style: StylePort = NO_STYLE, history: HistoryPort = NO_HISTORY
+    current: Callable[[], Settings],
+    style: StylePort = NO_STYLE,
+    history: HistoryPort = NO_HISTORY,
+    known_group: Callable[[str], bool] = lambda title: False,
 ) -> Ports:
     """current() gives the settings in force, so a change in the window applies at once."""
 
@@ -1190,7 +1193,8 @@ def build_ports(
         copy_text=lambda text: paste.copy_text(paste.prepare_text(text)),
         style=style,
         history=history,
-        avatar=capture.avatar_from_window,
+        look=capture.look_from_window,
+        known_group=known_group,
     )
 
 
@@ -1233,7 +1237,9 @@ def run(argv: Sequence[str]) -> int:
     guard = scroll.InputGuard(app)
     thread = QThread()
     # The ports read the worker's settings, which the controller updates on every save.
-    worker = Worker(build_ports(lambda: worker.settings, style, history), settings)
+    worker = Worker(
+        build_ports(lambda: worker.settings, style, history, history.known_group), settings
+    )
     worker.moveToThread(thread)
     thread.start()
     style_thread = QThread()
