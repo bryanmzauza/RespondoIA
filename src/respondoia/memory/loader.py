@@ -17,7 +17,9 @@ from respondoia.memory.merge import Overlap, Stored, find_overlap, fingerprint, 
 from respondoia.privacy import normalize_name
 
 SAME_TOP_READS = 4  # the top did not move this many times: the start of the chat
-MIN_NOTCHES, MAX_NOTCHES = 2, 6  # per step; more while screens overlap a lot
+MIN_NOTCHES, MAX_NOTCHES = 1, 6  # per step; more while screens overlap a lot
+FEW_LINES = 8  # a screen with fewer readable lines (photos fill it) gets short steps
+STUCK_LIMIT = 3  # steps in a row that gained nothing after stepping back
 PATIENCE = (1.0, 1.5)  # when the top did not move: WhatsApp may still be loading
 POLL_S = 0.03  # between reads while waiting for a screen to change
 POLL_LIMIT_S = 1.5  # a screen that has not changed by then counts as not moved
@@ -84,6 +86,15 @@ class _Stop(Exception):
     def __init__(self, reason: str) -> None:
         super().__init__(reason)
         self.reason = reason
+
+
+def _signature(lines: Sequence[ChatLine]) -> tuple:
+    """What is on screen and where. It changes when the list moves, even when the readable
+    lines stay the same (photos the reader cannot see can fill the top)."""
+    return tuple(
+        (fingerprint(stored), line.rect)
+        for stored, line in zip(from_lines(lines, mask=False), lines)
+    )
 
 
 def _stitch(
@@ -154,8 +165,8 @@ def load(
             scrolled += 1 if notches > 0 else -1
             pause(low, high)
 
-    def next_screen(top: str) -> tuple[ChatLine, ...]:
-        """The screen after a scroll. Polling: read until the top line changes."""
+    def next_screen(before: tuple) -> tuple[ChatLine, ...]:
+        """The screen after a scroll. Polling: read until the screen moves."""
         pause(*pace.screen)
         check()
         screen = read(retry=pace.poll).lines
@@ -163,8 +174,7 @@ def load(
             return screen
         waited = 0.0
         while waited < POLL_LIMIT_S:
-            stored = from_lines(screen[:1], mask=False)
-            if stored and fingerprint(stored[0]) != top:
+            if _signature(screen) != before:
                 return screen
             ports.sleep(POLL_S)
             waited += POLL_S
@@ -182,7 +192,9 @@ def load(
     try:
         check()
         block = list(read().lines)
+        last_seen = _signature(block)
         screens = 1
+        stuck = 0
         same_top = 0
         notches = limits.notches
         while True:
@@ -194,12 +206,13 @@ def load(
             if limits.stop_on_join and joins(tuple(block)):
                 raise _Stop("joined")
             scroll(notches, *pace.notch)
-            first = from_lines(block[:1], mask=False)
-            screen = next_screen(fingerprint(first[0]) if first else "")
+            screen = next_screen(last_seen)
             stored: Sequence[Stored] = from_lines(screen, mask=False)
             # A new screen overlaps the top of the block: no need to compare the rest.
             known = from_lines(block[: max(len(screen) * 3, 60)], mask=False)
-            if stored and known and fingerprint(stored[0]) == fingerprint(known[0]):
+            moved = _signature(screen) != last_seen
+            last_seen = _signature(screen)
+            if not moved:  # nothing moved: the start of the chat, or WhatsApp still loading
                 same_top += 1
                 if same_top >= SAME_TOP_READS:
                     raise _Stop("start")
@@ -207,17 +220,35 @@ def load(
                 continue
             same_top = 0
             overlap = find_overlap(stored, known)
+            recovered = overlap is None
             if overlap is None:
-                notches = max(MIN_NOTCHES, notches - 1)
-                scroll(-1, *pace.notch)  # one notch back, in case the list jumped
-                check()
-                screen = read().lines
-                stored = from_lines(screen, mask=False)
-                overlap = find_overlap(stored, known)
+                # Too far: step back notch by notch until the screen joins the block again.
+                went = notches
+                notches = MIN_NOTCHES
+                for _ in range(went):
+                    scroll(-1, *pace.notch)
+                    screen = next_screen(last_seen)
+                    last_seen = _signature(screen)
+                    stored = from_lines(screen, mask=False)
+                    overlap = find_overlap(stored, known)
+                    if overlap is not None:
+                        break
                 if overlap is None:
                     raise _Stop("lost")
+            before = len(block)
             block = _stitch(screen, block, overlap)
             screens += 1
+            # Stepping back and gaining nothing, again and again: no readable line survives
+            # even the shortest step, so the thread cannot be followed.
+            if len(block) > before:
+                stuck = 0
+            elif recovered:
+                stuck += 1
+                if stuck >= STUCK_LIMIT:
+                    raise _Stop("lost")
+            if len(screen) < FEW_LINES:
+                notches = MIN_NOTCHES
+                continue
             # Many lines in common: the step can be longer. Few: shorter, so none is skipped.
             if overlap.length >= 0.6 * len(screen):
                 notches = min(MAX_NOTCHES, notches + 1)

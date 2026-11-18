@@ -12,9 +12,7 @@ class FakeChat:
     """A fictional chat of `n` messages over several days. The window shows `rows` lines;
     each notch moves it by two messages."""
 
-    def __init__(
-        self, n=300, rows=20, title="Ana", per_day=25, first_day=date(2026, 9, 1), step=2
-    ):
+    def __init__(self, n=300, rows=20, title="Ana", per_day=25, first_day=date(2026, 9, 1), step=2):
         self.title = title
         self.messages = []
         for i in range(n):
@@ -302,6 +300,61 @@ def test_a_momentary_empty_read_is_waited_out():
     ports = LoaderPorts(**{**ports.__dict__, "read": flaky})
     report = load(HWND, "Ana", LoadLimits(screens=6, months=0), ports)
     assert report.reason == "limit" and contiguous(report)
+
+
+class PixelChat(FakeChat):
+    """Each notch moves the list 10 px; a new message shows up only every 4 notches, as
+    when photos the reader cannot see fill the top of the screen."""
+
+    def __init__(self):
+        super().__init__(n=200, rows=10)
+        self.offset = 0
+
+    def scroll(self, notches):
+        self.events.append(("scroll", notches))
+        self.offset = max(0, self.offset + 10 * notches)
+
+    def read(self):
+        self.reads += 1
+        self.events.append(("read",))
+        shift = self.offset // 40
+        bottom = max(self.rows, len(self.messages) - shift)
+        lines = []
+        for k in range(bottom - self.rows, bottom):
+            _, line = self.messages[k]
+            top = 100 + (k - bottom + self.rows) * 40 + self.offset % 40
+            lines.append(ChatLine(**{**line.__dict__, "rect": Rect(500, top, 900, top + 35)}))
+        return ChatView(OpenChat(self.title, BOUNDS), tuple(lines))
+
+
+def test_a_screen_that_moved_is_read_at_once_even_with_the_same_first_line():
+    chat = PixelChat()
+    ports = background_ports(chat)
+    load(HWND, "Ana", LoadLimits(screens=6, months=0), ports)
+    waits = [e[1] for e in chat.events if e[0] == "sleep"]
+    assert sum(waits) < 0.5  # never the 1.5 s wait for a screen that did move
+
+
+class PhotoChat(FakeChat):
+    """Stretches of photos the reader cannot see: only some rows have readable lines."""
+
+    def __init__(self, hidden):
+        super().__init__(n=300, rows=20)
+        self.hidden = hidden
+
+    def read(self):
+        view = super().read()
+        lines = tuple(line for line in view.lines if int(line.text.split()[-1]) not in self.hidden)
+        return ChatView(view.chat, lines)
+
+
+def test_photo_stretches_do_not_lose_the_thread():
+    hidden = {i for i in range(300) if 200 <= i < 216 or 120 <= i < 135}
+    chat = PhotoChat(hidden)
+    report = load(HWND, "Ana", LoadLimits(screens=200, months=0), background_ports(chat))
+    shown = [i for i in range(300) if i not in hidden]
+    assert report.reason == "start"
+    assert texts(report) == [f"mensagem {i}" for i in shown]
 
 
 def test_months_before():
