@@ -774,5 +774,21 @@ Suggestions may quote anything written here. Only include what you would tell an
         <source>notice.load_minimized</source>
         <translation>Loading stopped because WhatsApp was minimized. Keep it open, even behind other windows. {count} messages kept.</translation>
     </message>
+    <message>
+        <source>settings.send_pictures</source>
+        <translation>Send the AI the photos the contact sent that you have not answered yet</translation>
+    </message>
+    <message>
+        <source>settings.send_pictures_hint</source>
+        <translation>One-to-one chats only. Photos cannot be masked: documents and faces in them go as they are.</translation>
+    </message>
+    <message>
+        <source>panel.pictures_sent_one</source>
+        <translation>1 photo sent to the AI</translation>
+    </message>
+    <message>
+        <source>panel.pictures_sent_many</source>
+        <translation>{count} photos sent to the AI</translation>
+    </message>
 </context>
 </TS>

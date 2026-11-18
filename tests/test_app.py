@@ -1,6 +1,7 @@
 import logging
 import time
 import tomllib
+from dataclasses import replace
 
 import pytest
 from PySide6.QtCore import QObject, Signal
@@ -92,6 +93,9 @@ class FakePanel(Recorder):
 
     def show_loading(self, title, bounds):
         self.record("show_loading", title, bounds)
+
+    def show_pictures(self, count):
+        self.record("show_pictures", count)
 
     def show_reply(self, reply):
         self.record("show_reply", reply)
@@ -208,7 +212,10 @@ def test_hotkey_starts_a_session_and_fills_the_panel(rig, caplog):
         assert rig.worker.calls == [("start", 1)]
         assert rig.panel.calls == []  # nothing on screen before the chat is accepted
         rig.worker.started.emit(1, STARTED)
-        assert rig.panel.calls == [("show_loading", "Marina Duarte", CHAT.bounds)]
+        assert rig.panel.calls == [
+            ("show_loading", "Marina Duarte", CHAT.bounds),
+            ("show_pictures", 0),
+        ]
         assert rig.worker.calls[-1] == ("suggest", 1)
         reply = make_reply()
         rig.worker.replied.emit(1, reply)
@@ -1070,3 +1077,19 @@ def test_knowledge_file_that_cannot_be_created_is_reported(rig, tmp_path, monkey
     monkeypatch.setattr(app_module, "create_knowledge", broken)
     rig.controller.open_knowledge()
     assert rig.tray.notices()[-1] == "error.save_failed"
+
+
+def test_app_builds_look_port_with_one_capture():
+    from respondoia import capture
+    from respondoia.app import build_ports
+
+    ports = build_ports(lambda: Settings(), known_group=lambda title: title == "Turma")
+    assert ports.look is capture.look_from_window
+    assert ports.known_group("Turma") and not ports.known_group("Ana")
+
+
+def test_started_with_pictures_shows_the_line(rig):
+    rig.press()
+    rig.worker.started.emit(1, replace(STARTED, pictures=2))
+    loading = [c[0] for c in rig.panel.calls].index("show_loading")
+    assert rig.panel.calls[loading + 1] == ("show_pictures", 2)

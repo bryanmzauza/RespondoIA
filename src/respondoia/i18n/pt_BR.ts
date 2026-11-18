@@ -774,5 +774,21 @@ As sugestões podem citar qualquer coisa escrita aqui. Coloque só o que você d
         <source>notice.load_minimized</source>
         <translation>O carregamento parou porque o WhatsApp foi minimizado. Deixe-o aberto, mesmo atrás de outras janelas. {count} mensagens guardadas.</translation>
     </message>
+    <message>
+        <source>settings.send_pictures</source>
+        <translation>Enviar à IA as fotos que o contato mandou e você ainda não respondeu</translation>
+    </message>
+    <message>
+        <source>settings.send_pictures_hint</source>
+        <translation>Só em conversas individuais. Fotos não podem ser mascaradas: documentos e rostos nelas vão como estão.</translation>
+    </message>
+    <message>
+        <source>panel.pictures_sent_one</source>
+        <translation>1 foto enviada à IA</translation>
+    </message>
+    <message>
+        <source>panel.pictures_sent_many</source>
+        <translation>{count} fotos enviadas à IA</translation>
+    </message>
 </context>
 </TS>

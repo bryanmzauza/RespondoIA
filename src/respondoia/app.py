@@ -720,6 +720,7 @@ class Controller(QObject):
             self._fill_new_gap(result.history, result.hwnd, result.chat.title)
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
+        self._panel.show_pictures(result.pictures)
         if result.context is not None:
             context = result.context
             self._panel.set_label(

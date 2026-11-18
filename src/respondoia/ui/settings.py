@@ -107,6 +107,10 @@ class SettingsWindow(QWidget):
         )
         self.mask_check = QCheckBox(t("settings.mask"))
         self.mask_check.setChecked(settings.mask_sensitive_data)
+        self.pictures_check = QCheckBox(t("settings.send_pictures"))
+        self.pictures_check.setChecked(settings.send_pictures)
+        self.pictures_hint = QLabel(t("settings.send_pictures_hint"))
+        self.pictures_hint.setWordWrap(True)
         self.model_box = self._combo(
             [
                 (t("settings.model_haiku"), "claude-haiku-5-5"),
@@ -170,6 +174,8 @@ class SettingsWindow(QWidget):
         form.addRow(t("settings.language"), self.language_box)
         form.addRow(t("settings.input"), self.input_box)
         form.addRow(self.mask_check)
+        form.addRow(self.pictures_check)
+        form.addRow(self.pictures_hint)
         form.addRow(t("settings.model"), self.model_box)
         key_row = QHBoxLayout()
         key_row.addWidget(self.api_key_edit, 1)
@@ -269,6 +275,7 @@ class SettingsWindow(QWidget):
                 language=self.language_box.currentData(),
                 input=self.input_box.currentData(),
                 mask_sensitive_data=self.mask_check.isChecked(),
+                send_pictures=self.pictures_check.isChecked(),
                 model=self.model_box.currentData(),
                 start_with_windows=self.autostart_check.isChecked(),
                 quick_instructions=values(self.instructions_list),

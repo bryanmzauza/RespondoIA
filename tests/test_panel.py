@@ -360,3 +360,23 @@ def test_style_button_emits(qtbot, reply3):
     assert panel.style_button.text() == "Estilo"
     with qtbot.waitSignal(panel.style_requested):
         qtbot.mouseClick(panel.style_button, Qt.MouseButton.LeftButton)
+
+
+def test_panel_shows_pictures_sent(qtbot):
+    panel = loading_panel(qtbot)
+    panel.show_pictures(1)
+    assert panel.pictures_label.isVisibleTo(panel)
+    assert panel.pictures_label.text() == "1 foto enviada à IA"
+    panel.show_pictures(2)
+    assert panel.pictures_label.text() == "2 fotos enviadas à IA"
+
+
+def test_panel_hides_pictures_line_without_pictures(qtbot):
+    panel = loading_panel(qtbot)
+    assert not panel.pictures_label.isVisibleTo(panel)
+    panel.show_pictures(1)
+    panel.show_pictures(0)
+    assert not panel.pictures_label.isVisibleTo(panel)
+    panel.show_pictures(2)
+    panel.show_loading("Marina Duarte", CHAT)  # regenerate: the same photos go again
+    assert panel.pictures_label.isVisibleTo(panel)

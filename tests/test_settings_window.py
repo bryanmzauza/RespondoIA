@@ -131,3 +131,19 @@ def test_knowledge_button_emits(qtbot):
     window = make(qtbot)
     with qtbot.waitSignal(window.knowledge_requested):
         window.knowledge_button.click()
+
+
+def test_pictures_switch_round_trip(qtbot):
+    window = make(qtbot, Settings(send_pictures=False))
+    assert not window.pictures_check.isChecked()
+    window.pictures_check.setChecked(True)
+    with qtbot.waitSignal(window.saved) as sig:
+        qtbot.mouseClick(window.save_button, Qt.MouseButton.LeftButton)
+    assert sig.args[0].send_pictures is True
+
+
+def test_pictures_hint_text(qtbot):
+    window = make(qtbot)
+    assert window.pictures_check.isChecked()
+    assert window.pictures_check.text() == t("settings.send_pictures")
+    assert window.pictures_hint.text() == t("settings.send_pictures_hint")

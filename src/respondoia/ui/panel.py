@@ -138,6 +138,10 @@ class SuggestionPanel(QWidget):
         self.history_label.setWordWrap(True)
         self.history_label.setTextFormat(Qt.TextFormat.PlainText)
         self.history_label.hide()
+        # How many photos went with the request: pixels left the machine.
+        self.pictures_label = QLabel()
+        self.pictures_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.pictures_label.hide()
         self.history_button = QPushButton()
         self.history_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.history_button.setMenu(QMenu(self.history_button))
@@ -216,6 +220,7 @@ class SuggestionPanel(QWidget):
         layout.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
         layout.addLayout(header)
         layout.addWidget(self.history_label)
+        layout.addWidget(self.pictures_label)
         layout.addWidget(self.ask_box)
         layout.addWidget(self.status_label)
         layout.addWidget(self.retry_button)
@@ -250,6 +255,15 @@ class SuggestionPanel(QWidget):
         self._place()
         self.show()
         self.bring_to_front()
+
+    def show_pictures(self, count: int) -> None:
+        """Photos sent with this session's requests; hidden when none went."""
+        if count == 1:
+            self.pictures_label.setText(t("panel.pictures_sent_one"))
+        elif count > 1:
+            self.pictures_label.setText(t("panel.pictures_sent_many", count=count))
+        self.pictures_label.setVisible(count > 0)
+        self._place()
 
     def show_preview(self, preview: SuggestionPreview) -> None:
         """Summary and options while the message list is still arriving."""
