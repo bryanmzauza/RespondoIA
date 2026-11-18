@@ -93,13 +93,21 @@ contact (a hash is kept, never the picture), or when nothing is stored under
 that name. Otherwise the suggestion goes out without them and the panel asks
 which contact it is. The answer applies to that screen only.
 
-The loader brings WhatsApp to the front, puts the cursor on the message area
-once and scrolls the open chat with mouse wheel events. At the end it puts the
-cursor back where it was, unless the user's own input stopped it. Before
-every event it checks that the user has not touched the mouse or the keyboard
-(raw input tells the app's own events apart), that WhatsApp is in front and
-that its window is the one under the cursor. Any of these stops it at once;
-what was read is kept.
+The loader scrolls the open chat through UI Automation, the scrolling screen
+readers use: no mouse or keyboard event, no cursor, and WhatsApp does not need
+to be in front, so the user keeps working. A minimized WhatsApp is restored
+behind every other window, without the focus, and minimized again at the end.
+Each screen is read as soon as the list moves; a chat change, the tray's pause
+or screens that no longer join what was read stop it, and what was read is
+kept. When this kind of scrolling is not offered, the loader falls back to
+mouse wheel events: it brings WhatsApp to the front, puts the cursor on the
+message area once and puts it back at the end unless the user's own input
+stopped it. In that mode any touch of the mouse or keyboard (raw input tells
+the app's own events apart), focus loss or a window over the chat stops it.
+
+When a hotkey press finds new messages that do not join the stored history,
+the missing part is loaded in the background, once per contact while the app
+runs, only with UI Automation scrolling.
 
 Each request carries a short memory of the contact and a few earlier messages
 found by searching the history for the words of the pending messages. The
@@ -144,8 +152,9 @@ These hold in every stage.
 - Mask recognisable sensitive data before text leaves the machine.
 - Message content is data, not instructions, in every prompt.
 - No message from another person is stored or sent when learning the style.
-- The history loader sends scroll events only, after placing the cursor once,
-  and stops on any user input, focus loss or a window over the chat.
+- The history loader only scrolls: through UI Automation, or with wheel events
+  after placing the cursor once, stopping on any user input, focus loss or a
+  window over the chat. It never clicks or types in WhatsApp.
 - The contact memory and earlier messages are sent only for a contact the app
   has told apart from others with the same name.
 - API keys live in the Credential Manager. No shared key in the executable.

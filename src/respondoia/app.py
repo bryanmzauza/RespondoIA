@@ -367,7 +367,7 @@ def real_loader_ports(guard) -> Callable[..., LoaderPorts]:
 def _limits(purpose: str, settings: Settings) -> LoadLimits:
     if purpose == "quick":
         return LoadLimits(settings.quick_load_screens, settings.max_load_months)
-    gap = purpose == "gap"
+    gap = purpose in ("gap", "auto_gap")
     return LoadLimits(settings.max_load_screens, settings.max_load_months, stop_on_join=gap)
 
 
@@ -401,6 +401,11 @@ class HistoryWorker(QObject):
         restored = False
         try:
             scroller = self._accessible(hwnd)
+            if scroller is None and purpose == "auto_gap":
+                # Without accessibility scrolling a load needs the user's mouse: never on
+                # its own.
+                self.loaded.emit(LoadOutcome(purpose, "skipped", 0, None, 0))
+                return
             if scroller is not None and self._desktop.minimized(hwnd):
                 # A minimized window does not draw: bring it back behind everything,
                 # without the focus, and minimize it again at the end.
@@ -567,6 +572,8 @@ class Controller(QObject):
         self._hwnd = 0
         self._history: HistoryContext | None = None
         self._loading = False
+        self._load_purpose = ""
+        self._auto_filled: set[int] = set()  # contacts whose gap was tried on its own
         # With an invalid config.toml the private list is unknown, so nothing is read.
         self._config_error = config_error
         self._last_request: tuple = ("suggest",)
@@ -706,6 +713,7 @@ class Controller(QObject):
         self._history = result.history
         if self._history_worker is not None:
             self._panel.set_history(result.history)
+            self._fill_new_gap(result)
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         if result.context is not None:
@@ -999,6 +1007,31 @@ class Controller(QObject):
         if self._history_worker is not None:
             self.request_history_startup.emit(tuple(self._settings.private_contacts))
 
+    def _fill_new_gap(self, result) -> None:
+        """New messages this press could not join to what is stored: load the missing part
+        in the background, once per contact while the app runs. The panel stays open."""
+        history = result.history
+        if (
+            history is None
+            or history.state != "ready"
+            or not history.gap_since
+            or history.added <= 0
+            or history.contact_id in self._auto_filled
+            or self._loading
+            or self._guard_input is None
+            or not result.hwnd
+        ):
+            return
+        if not self._guard_input.arm(delay_s=0.6):
+            return
+        self._auto_filled.add(history.contact_id)
+        self._loading = True
+        self._load_purpose = "auto_gap"
+        self._tray.set_loading(True)
+        self.request_history_load.emit(
+            "auto_gap", result.hwnd, result.chat.title, history.contact_id
+        )
+
     def request_load(self, purpose: str) -> None:
         """Scroll the open chat and read it. The panel closes: WhatsApp needs the focus."""
         if self._history_worker is None or self._guard_input is None or self._loading:
@@ -1022,11 +1055,14 @@ class Controller(QObject):
             self._panel.dismiss()
             self._end_session()
         self._loading = True
+        self._load_purpose = purpose
         self._tray.set_loading(True)
         self.request_history_load.emit(purpose, hwnd, title, contact_id)
 
     def _on_load_mode(self, mode: str) -> None:
         """How the chat is scrolled decides what the user may do meanwhile."""
+        if self._load_purpose == "auto_gap":
+            return  # silent: the user is reading the suggestions
         self._tray.notify("notice.loading_background" if mode == "background" else "notice.loading")
 
     def _on_loaded(self, outcome) -> None:
@@ -1034,7 +1070,9 @@ class Controller(QObject):
         self._loading = False
         self._tray.set_loading(False)
         history = outcome.history
-        if history is not None and history.state == "ask":
+        if outcome.purpose == "auto_gap":
+            pass  # silent; the panel line shows the history the next time
+        elif history is not None and history.state == "ask":
             self._tray.notify("notice.load_ask")
         else:
             self._tray.notify(f"notice.load_{outcome.reason}", count=outcome.read)

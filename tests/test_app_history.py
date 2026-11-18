@@ -474,3 +474,47 @@ def test_open_whatsapp_is_left_as_it_was(qtbot, db, tmp_path):
     with qtbot.waitSignal(worker.loaded):
         worker.load("full", 42, "Marina Duarte", None)
     assert desktop.calls == []
+
+
+# Filling a gap on its own at the hotkey.
+
+GAP = HistoryContext("ready", 7, "Marina Duarte", messages=40, gap_since="2026-11-03", added=5)
+
+
+def test_a_new_gap_is_filled_in_the_background_at_the_hotkey(tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel(GAP)
+    assert rig.history.calls == [("load", "auto_gap", 55, "Marina Duarte", 7)]
+    assert ("dismiss",) not in rig.panel.calls  # the panel stays open
+    rig.history.load_mode.emit("background")
+    rig.history.loaded.emit(LoadOutcome("auto_gap", "joined", 30, GAP, 0))
+    assert "notice.loading_background" not in rig.tray.notices()
+    assert not any(n.startswith("notice.load_") for n in rig.tray.notices())
+
+
+def test_the_gap_is_tried_once_per_contact(tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel(GAP)
+    rig.history.loaded.emit(LoadOutcome("auto_gap", "lost", 3, GAP, 0))
+    rig.panel.closed.emit()
+    rig.open_panel(GAP)
+    assert [c for c in rig.history.calls if c[0] == "load"] == [
+        ("load", "auto_gap", 55, "Marina Duarte", 7)
+    ]
+
+
+def test_no_gap_or_nothing_new_loads_nothing(tmp_path):
+    rig = HistoryRig(tmp_path)
+    rig.open_panel(READY)
+    rig.panel.closed.emit()
+    rig.open_panel(HistoryContext("ready", 7, "Marina Duarte", gap_since="2026-11-03", added=0))
+    assert rig.history.calls == []
+
+
+def test_the_automatic_load_never_takes_the_mouse(qtbot, db, tmp_path):
+    chat = FakeChat(n=60, title="Marina Duarte")
+    worker, desktop = make_worker(db, tmp_path, chat)  # no accessibility scrolling
+    with qtbot.waitSignal(worker.loaded) as signal:
+        worker.load("auto_gap", 42, "Marina Duarte", 7)
+    assert signal.args[0].reason == "skipped" and desktop.calls == []
+    assert not any(event[0] == "scroll" for event in chat.events)
