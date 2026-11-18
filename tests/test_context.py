@@ -117,8 +117,8 @@ def test_system_prompt_covers_both_inputs_and_markers():
 
 def test_text_turn_names_the_lines_that_cannot_be_read():
     text = build_user_content(None, 3, lines=LINES)[0]["text"]
-    assert "Not readable as text (audio, image or other media): [4]" in text
-    assert "Not readable" not in build_user_content(None, 3, lines=LINES[:3])[0]["text"]
+    assert "Media without content (say so in note): [4]" in text
+    assert "Media without" not in build_user_content(None, 3, lines=LINES[:3])[0]["text"]
 
 
 CTX = UserContext("pt", None, False, True, "Typical length: 30 characters", "Pão: R$ 18")
@@ -228,3 +228,65 @@ def test_system_prompt_history_rules():
 def test_screenshot_request_carries_the_memory_too():
     text = build_user_content(b"png", 3, context=HISTORY)[1]["text"]
     assert text.index("Contact memory (") < text.index("Number of suggestions")
+
+
+JPEG = b"\xff\xd8fictional jpeg"
+MEDIA = (
+    ChatLine("user", "", "09:00", "text", "me manda as fotos", ""),
+    ChatLine("contact", "", "09:01", "link", "Bolo de cenoura receitas.example", "", site="receitas.example"),
+    ChatLine("contact", "", "09:02", "audio", "posso passar amanhã?", "", duration="0:12", transcript=True),
+    ChatLine("contact", "", "09:03", "audio", "", "", duration="0:40"),
+    ChatLine("contact", "", "", "image", "", "", shape="1.4"),
+    ChatLine("contact", "", "09:05", "video", "", "", duration="0:42", shape="0.6"),
+)
+
+
+def test_pictures_come_before_the_chat_with_their_ids():
+    blocks = build_user_content(None, 3, lines=MEDIA, pictures=((5, JPEG),))
+    assert [b["type"] for b in blocks] == ["text", "image", "text"]
+    assert blocks[0]["text"] == "Picture in message 5:"
+    assert blocks[1]["source"]["media_type"] == "image/jpeg"
+    assert base64.standard_b64decode(blocks[1]["source"]["data"]) == JPEG
+    assert blocks[2]["text"].startswith("Chat (JSON): [")
+
+
+def test_line_with_picture_is_marked():
+    rows = number_lines(MEDIA, pictures=(5,))
+    assert rows[4]["picture"] is True
+    assert all("picture" not in r for i, r in enumerate(rows) if i != 4)
+
+
+def test_media_row_lists_only_media_without_content():
+    text = build_user_content(None, 3, lines=MEDIA, pictures=((5, JPEG),))[-1]["text"]
+    assert "Media without content (say so in note): [4, 6]" in text
+
+
+def test_link_and_audio_fields_are_sent():
+    rows = number_lines(MEDIA)
+    assert rows[1]["site"] == "receitas.example"
+    assert (rows[2]["duration"], rows[2]["transcript"]) == ("0:12", True)
+    assert "transcript" not in rows[3] and rows[3]["duration"] == "0:40"
+    assert "site" not in rows[2] and "duration" not in rows[1]
+
+
+def test_old_lines_render_as_before():
+    assert set(number_lines(LINES)[3]) == {
+        "id", "author", "sender", "time", "kind", "text", "quote", "pending"
+    }
+
+
+def test_request_without_pictures_has_no_image_block():
+    blocks = build_user_content(None, 3, lines=MEDIA)
+    assert [b["type"] for b in blocks] == ["text"]
+    assert "Picture in message" not in blocks[0]["text"]
+
+
+def test_prompt_marks_pictures_previews_and_transcripts_as_data():
+    for phrase in (
+        "Picture in message",
+        "never guess",
+        "page was not opened",
+        "pictures, link previews and transcripts",
+        '"transcript": true',
+    ):
+        assert phrase in SYSTEM_PROMPT, phrase

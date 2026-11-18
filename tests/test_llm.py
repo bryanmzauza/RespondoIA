@@ -366,3 +366,16 @@ def test_extract_maps_errors_like_suggest(monkeypatch):
         with pytest.raises(LlmError) as err:
             client.extract("s", "t", Traits)
         assert err.value.code == code
+
+
+def test_regenerate_sends_the_same_pictures():
+    lines = (
+        ChatLine("user", "", "09:00", "text", "manda", ""),
+        ChatLine("contact", "", "", "image", "", "", shape="1.4"),
+    )
+    request = SuggestRequest(
+        None, 3, previous=make_reply(), lines=lines, pictures=((2, b"\xff\xd8jpeg"),)
+    )
+    content = build_params(request, "claude-haiku-5-5")["messages"][0]["content"]
+    assert [b["type"] for b in content] == ["text", "image", "text"]
+    assert content[0]["text"] == "Picture in message 2:"

@@ -71,6 +71,7 @@ class SuggestRequest:
     instruction: str = ""
     lines: tuple[ChatLine, ...] = ()  # text input; when set, image_png is None
     context: UserContext | None = None  # style, knowledge base and contact label
+    pictures: tuple[tuple[int, bytes], ...] = ()  # (message id, JPEG), text input only
 
 
 @dataclass(frozen=True)
@@ -125,6 +126,7 @@ def build_params(request: SuggestRequest, model: str) -> dict:
         request.instruction,
         request.lines,
         request.context,
+        request.pictures,
     )
     # No sampling keys: current models reject non-default values for them.
     params = {
