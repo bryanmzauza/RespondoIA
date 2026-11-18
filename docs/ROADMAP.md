@@ -116,6 +116,8 @@ Exit criteria:
       WhatsApp window, one-to-one chats only, with a setting to turn it off
 - [ ] Link previews read from the screen and masked. Links are never opened
 - [ ] Audio and video length; WhatsApp's own transcript when it is on screen
+- [ ] Photos and other media read as lines, so long history loads keep their
+      thread through stretches of photos
 
 Exit criteria:
 
