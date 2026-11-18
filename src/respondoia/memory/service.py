@@ -229,9 +229,8 @@ class HistoryService:
 
     def known_group(self, title: str) -> bool:
         """The stored contact for this title is a group, kept with history and style off.
-        True when the database cannot answer: photos never go to a group."""
-        if self._db is None:
-            return False
+        True when the database cannot answer, or there is none: photos never go to a
+        group."""
 
         def run(conn):
             return any(c.is_group for c in contacts.candidates(conn, title))

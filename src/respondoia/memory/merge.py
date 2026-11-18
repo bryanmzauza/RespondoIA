@@ -2,7 +2,7 @@
 
 Messages have no stable id, only what the screen shows. Two runs of messages are joined
 where a sequence of them is equal on both sides: same author, sender, time, kind family,
-text, quote and picture shape. Pictures of one shape are told apart by a 64-bit hash of
+text, quote, and picture shape when both sides have one. Pictures of one shape are told apart by a 64-bit hash of
 their thumbnail (`look`). Days come from the day separators and are passed down to the
 messages below them.
 """
@@ -78,8 +78,8 @@ def fingerprint(message: Stored) -> str:
         _plain(message.text),
         _plain(message.quote),
     )
-    if message.shape:  # left out when empty: rows stored before shapes keep their value
-        parts += (message.shape,)
+    # No shape here: photos stored by 0.4 have none and must still match their re-read.
+    # `_same` compares shapes when both sides have one.
     return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
 
 
@@ -113,6 +113,8 @@ def from_lines(
 
 def _same(a: Stored, b: Stored, fa: str, fb: str) -> bool:
     if fa != fb or (a.sent_on and b.sent_on and a.sent_on != b.sent_on):
+        return False
+    if a.shape and b.shape and a.shape != b.shape:
         return False
     return not (a.look and b.look) or look_distance(a.look, b.look) <= LOOK_DISTANCE
 

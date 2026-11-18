@@ -333,8 +333,19 @@ def _read_row(row: UiNode) -> ChatLine | None:
 
     others = [n for n in nodes if id(n) not in quoted | in_status and n is not quote]
     site = ""
-    if any(n.control_type == "Hyperlink" for n in others):
-        site = next((n.name.strip() for n in body if _DOMAIN_RE.match(n.name.strip())), "")
+    links = [n for n in others if n.control_type == "Hyperlink"]
+    if links:
+        # The site sits under the preview, outside the link. A domain WhatsApp links inside
+        # the contact's own text is not a preview.
+        linked = {id(m) for n in links for m in _walk(n)}
+        site = next(
+            (
+                n.name.strip()
+                for n in body
+                if id(n) not in linked and _DOMAIN_RE.match(n.name.strip())
+            ),
+            "",
+        )
     if any(n.control_type in ("Slider", "ProgressBar") for n in nodes):
         kind = "audio"
     elif card is not None and not pictures:

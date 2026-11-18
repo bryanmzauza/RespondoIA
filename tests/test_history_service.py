@@ -393,4 +393,8 @@ def test_known_group_is_unsure_on_errors(db):
             raise RuntimeError("disk")
 
     assert HistoryService(Broken(), lambda: None, lambda: ON).known_group("Ana") is True
-    assert HistoryService(None, lambda: None, lambda: ON).known_group("Ana") is False
+
+
+
+def test_without_a_database_photos_never_go():
+    assert HistoryService(None, lambda: None, lambda: ON).known_group("Ana") is True

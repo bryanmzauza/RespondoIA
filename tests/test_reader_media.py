@@ -175,3 +175,28 @@ def test_old_fixtures_read_the_same():
         ]
         assert got == expected, name
     assert lines_of("msgs-en.json") == lines_of("msgs-pt.json")
+
+
+def test_a_domain_linked_in_the_contact_text_is_not_a_preview():
+    # Mid-review: WhatsApp links a bare domain inside the message; the site is only the
+    # text outside the link, under a preview.
+    data = json.loads((FIXTURES / "media-self.json").read_text(encoding="utf-8"))
+    rows = [n for n in walk_dicts(data) if n.get("aria_role") == "row"]
+    bubble = rows[DOMAIN]["children"][0]["children"][0]
+    body = bubble["children"][0]
+    l, t, _, b = body["children"][0]["rect"]
+    body["children"].append({
+        "control_type": "Hyperlink", "name": "loja.example", "automation_id": "",
+        "aria_role": "link", "rect": [l, t, l + 80, b],
+        "children": [{"control_type": "Text", "name": "loja.example", "automation_id": "",
+                      "aria_role": "description", "rect": [l, t, l + 80, b], "children": []}],
+    })
+    panel = next(n for n in walk(node_from_dict(data)) if n.automation_id == "main")
+    line = read_lines(panel)[DOMAIN]
+    assert (line.kind, line.site) == ("text", "")
+
+
+def walk_dicts(node):
+    yield node
+    for child in node.get("children", []):
+        yield from walk_dicts(child)

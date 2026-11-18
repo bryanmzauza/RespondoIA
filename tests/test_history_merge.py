@@ -218,8 +218,26 @@ def test_text_fingerprint_is_the_same_as_before():
     assert fingerprint(message) == hashlib.sha256(old.encode("utf-8")).hexdigest()
 
 
-def test_shape_is_part_of_the_fingerprint():
-    assert fingerprint(photo(shape="1.4")) != fingerprint(photo(shape="0.8"))
+def test_shape_tells_pictures_apart():
+    def run(middle):
+        return [Stored("", "10:00", "contact", "", "text", "olha", ""), middle,
+                Stored("", "10:02", "contact", "", "text", "gostou?", "")]
+
+    assert find_overlap(run(photo(shape="1.4")), run(photo(shape="0.8"))) is None
+    assert find_overlap(run(photo(shape="1.4")), run(photo(shape="1.4"))).length == 3
+
+
+def test_photos_stored_by_0_4_join_their_reread():
+    # Mid-review: 0.4 stored photos without a shape; 0.5 reads them with one.
+    def text(value, time):
+        return Stored("", time, "contact", "", "text", value, "")
+
+    old = [text("tem azul?", "10:01"), photo(time="10:02", shape=""), text("e esse", "10:03"),
+           photo(time="10:04", shape=""), text("quanto?", "10:05")]
+    new = [text("tem azul?", "10:01"), photo(time="10:02"), text("e esse", "10:03"),
+           photo(time="10:04"), text("quanto?", "10:05"), text("oi", "10:06")]
+    result = merge([old], new)
+    assert (result.gap, result.replaces, result.added) == (False, (0,), 1)
 
 
 def test_same_shape_pictures_align_by_look():
