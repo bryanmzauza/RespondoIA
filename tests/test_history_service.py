@@ -132,10 +132,11 @@ def test_confirm_same_person_attaches_memory(db):
     first = observe(history, db, "Ana", lines("pedido", 6))
     with db.transaction() as conn:
         store.save_memory(conn, first.contact_id, "Cliente fiel.", 6, "2026-11-17T10:00:00")
-    result = history.confirm("Ana", [line("oi de novo", time="12:00")], first.contact_id)
+    shown = [line("oi de novo", time="12:00"), line("tudo certo?", time="12:01")]
+    result = history.confirm("Ana", shown, first.contact_id)
     assert result.state == "ready" and result.memory == "Cliente fiel."
-    # The next press shows the confirmed message again: the messages decide from now on.
-    again = [line("oi de novo", time="12:00"), line("e aí?", time="12:30")]
+    # The next press shows the confirmed messages again: the messages decide from now on.
+    again = [*shown, line("e aí?", time="12:30")]
     assert history.observe("Ana", again, False, "").state == "ready"
 
 

@@ -81,6 +81,25 @@ def test_shared_broadcast_messages_do_not_identify():
     assert identity.reason == "ambiguous" and identity.contact_id is None
 
 
+def test_user_broadcast_at_the_tail_does_not_identify():
+    # The user sent the same two messages to two people named Ana; the first has not
+    # replied. The second Ana's screen shows those two messages and her own reply.
+    promo = tuple(
+        Stored("", "18:00", "user", "", "text", f"promoção de natal {i}", "") for i in range(2)
+    )
+    stored = run("pedido do bolo", 4) + promo
+    screen = promo + (Stored("", "18:05", "contact", "", "text", "quero saber mais", ""),)
+    identity = identify([candidate(1, stored, memory=True)], screen, "")
+    assert identity.reason == "ambiguous" and identity.contact_id is None
+
+
+def test_one_stored_message_does_not_identify():
+    single = (Stored("", "10:00", "contact", "", "text", "Oi", ""),)
+    screen = single + (Stored("", "10:01", "contact", "", "text", "tudo bem?", ""),)
+    identity = identify([candidate(1, single, memory=True)], screen, "")
+    assert identity.reason == "ambiguous"
+
+
 def test_memory_without_messages_still_needs_evidence():
     identity = identify([candidate(1, memory=True)], run("x"), "")
     assert identity.reason == "ambiguous"

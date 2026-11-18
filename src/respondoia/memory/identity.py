@@ -27,6 +27,17 @@ class Identity:
     candidates: tuple[int, ...]  # for the question in the panel
 
 
+def _continues(recent: Sequence[Stored], screen: Sequence[Stored]) -> bool:
+    """The screen continues this stored chat: at least two messages line up, one of them
+    written by the other person. The user's own messages prove nothing about who is on the
+    other side: the same text may have gone to several people."""
+    overlap = find_overlap(recent, screen) if recent else None
+    if overlap is None or overlap.length < 2:
+        return False
+    run = recent[overlap.older_start : overlap.older_start + overlap.length]
+    return any(message.author == "contact" for message in run)
+
+
 def identify(candidates: Sequence[Candidate], screen: Sequence[Stored], avatar: str) -> Identity:
     ids = tuple(c.contact_id for c in candidates)
 
@@ -38,7 +49,7 @@ def identify(candidates: Sequence[Candidate], screen: Sequence[Stored], avatar: 
 
     if not candidates:
         return Identity(None, "new", ())
-    continuing = [c for c in candidates if c.recent and find_overlap(c.recent, screen)]
+    continuing = [c for c in candidates if _continues(c.recent, screen)]
     if len(continuing) == 1:
         return decided(continuing[0], "overlap")
     if continuing:
