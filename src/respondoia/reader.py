@@ -269,7 +269,15 @@ def _read_row(row: UiNode) -> ChatLine | None:
     buttons = [n for n in nodes if n.control_type == "Button" and texts_in(n)]
     status = [n for n in buttons if is_status(n)]
     in_status = {id(m) for n in status for m in _walk(n)}
-    quote = next((n for n in buttons if id(n) not in in_status), None)
+    # A button holding the status button wraps the whole message: it is not a quote.
+    quote = next(
+        (
+            n
+            for n in buttons
+            if id(n) not in in_status and not any(id(m) in in_status for m in _walk(n))
+        ),
+        None,
+    )
     quoted = {id(n) for n in _walk(quote)} if quote else set()
     texts = [n for n in texts_in(bubble) if id(n) not in quoted]
     times = [n for n in texts if TIME_RE.match(n.name.strip())]
