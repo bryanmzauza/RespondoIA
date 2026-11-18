@@ -1,9 +1,12 @@
 """Accessibility reader: contact name, message text and chat bounds."""
 
+import ctypes
 import re
 import time
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
+from functools import lru_cache
 
 from respondoia.domain import ChatLine, ChatView, OpenChat, Rect
 
@@ -20,6 +23,48 @@ _SENDER_BAND = 30
 # Smaller pictures inside a bubble are avatars, not photos.
 _PHOTO_SIDE = 80
 _EMOJI_SIDE = 32  # images smaller than this are emoji drawn inline
+_AVATAR_SIDE = 16  # a picture in the header at least this big is the contact's photo
+
+# Day separators show a day as text: a value to read, like a date in an exported file.
+# The structure finds them (a centered text between the rows); these tables read them.
+_TODAY = {"hoje", "today", "hoy"}
+_YESTERDAY = {"ontem", "yesterday", "ayer"}
+_WEEKDAYS = {
+    "segunda": 0,
+    "terça": 1,
+    "terca": 1,
+    "quarta": 2,
+    "quinta": 3,
+    "sexta": 4,
+    "sábado": 5,
+    "sabado": 5,
+    "domingo": 6,
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+    "lunes": 0,
+    "martes": 1,
+    "miércoles": 2,
+    "miercoles": 2,
+    "jueves": 3,
+    "viernes": 4,
+}
+_MONTHS = {
+    name: number
+    for names in (
+        "janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro",
+        "january february march april may june july august september october november december",
+        "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre",
+    )
+    for number, name in enumerate(names.split(), 1)
+}
+_NUMERIC_DAY = re.compile(r"^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4}|\d{2})$")
+_DAY_MONTH = re.compile(r"^(\d{1,2})(?: de)? ([^\d\s,]+)(?:,? (?:de )?(\d{4}))?$")
+_MONTH_DAY = re.compile(r"^([^\d\s,]+) (\d{1,2})(?:,? (\d{4}))?$")
 
 # UI Automation ids: properties, tree scopes and the control types the tree uses.
 _P_RECT, _P_TYPE, _P_NAME, _P_AUTOMATION_ID, _P_ARIA_ROLE = 30001, 30003, 30005, 30011, 30101
@@ -56,6 +101,70 @@ class UiNode:
     children: tuple["UiNode", ...]
 
 
+@lru_cache(maxsize=1)
+def system_month_first() -> bool:
+    """True when the Windows short date starts with the month, as in the US."""
+    try:
+        buffer = ctypes.create_unicode_buffer(80)
+        if not ctypes.windll.kernel32.GetLocaleInfoEx(None, 0x1F, buffer, 80):  # SSHORTDATE
+            return False
+        pattern = buffer.value.casefold()
+        return pattern.find("m") < pattern.find("d")
+    except (AttributeError, OSError):
+        return False
+
+
+def _month(name: str) -> int | None:
+    name = name.strip(".")
+    if name in _MONTHS:
+        return _MONTHS[name]
+    return next(
+        (n for full, n in _MONTHS.items() if len(name) >= 3 and full.startswith(name)), None
+    )
+
+
+def _iso(year: int, month: int, day: int) -> str | None:
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def parse_day(text: str, today: date) -> str | None:
+    """The ISO date a day separator stands for, or None if it is not one."""
+    plain = " ".join(text.casefold().split()).strip(" ,.")
+    if not plain:
+        return None
+    if plain in _TODAY:
+        return today.isoformat()
+    if plain in _YESTERDAY:
+        return (today - timedelta(days=1)).isoformat()
+    weekday = _WEEKDAYS.get(plain.replace("-feira", "").replace(" feira", ""))
+    if weekday is not None:
+        for back in range(1, 7):
+            day = today - timedelta(days=back)
+            if day.weekday() == weekday:
+                return day.isoformat()
+    if match := _NUMERIC_DAY.match(plain):
+        first, second, year = (int(part) for part in match.groups())
+        year += 2000 if year < 100 else 0
+        month_first = second > 12 or (first <= 12 and system_month_first())
+        month, day = (first, second) if month_first else (second, first)
+        return _iso(year, month, day)
+    for pattern, order in ((_DAY_MONTH, "dmy"), (_MONTH_DAY, "mdy")):
+        if match := pattern.match(plain):
+            parts = dict(zip(order, match.groups(), strict=True))
+            month = _month(parts["m"])
+            if month is None:
+                continue
+            year = int(parts["y"]) if parts["y"] else today.year
+            found = _iso(year, month, int(parts["d"]))
+            if found and not parts["y"] and found > today.isoformat():
+                found = _iso(year - 1, month, int(parts["d"]))  # a day of last year
+            return found
+    return None
+
+
 def node_from_dict(data: Mapping) -> UiNode:
     return UiNode(
         control_type=data["control_type"],
@@ -83,12 +192,26 @@ def find_open_chat(root: UiNode) -> OpenChat | None:
     if panel is None:
         return None
     band_bottom = panel.rect.top + HEADER_BAND
+
+    def in_band(node: UiNode) -> bool:
+        return node.rect.top >= panel.rect.top and node.rect.bottom <= band_bottom
+
+    avatar = next(
+        (
+            n.rect
+            for n in _walk(panel)
+            if n.control_type == "Image"
+            and in_band(n)
+            and min(n.rect.width, n.rect.height) >= _AVATAR_SIDE
+        ),
+        None,
+    )
     for node in _walk(panel):
         if node is panel or node.control_type != "Text":
             continue
-        if node.rect.top >= panel.rect.top and node.rect.bottom <= band_bottom:
+        if in_band(node):
             # The title is the first text in the header. Status lines come after it.
-            return OpenChat(node.name, panel.rect) if node.name.strip() else None
+            return OpenChat(node.name, panel.rect, avatar) if node.name.strip() else None
     return None
 
 
@@ -193,21 +316,45 @@ def _read_row(row: UiNode) -> ChatLine | None:
         text="\n".join(n.name.strip() for n in body),
         quote="\n".join(n.name.strip() for n in texts_in(quote)) if quote else "",
         plain=plain,
+        rect=bubble.rect,
     )
 
 
-def read_lines(panel: UiNode) -> tuple[ChatLine, ...]:
-    """Visible messages of the open chat, oldest first, by structure and position only."""
+def _rows_and_texts(node: UiNode) -> Iterator[UiNode]:
+    """Rows, and the texts outside rows, in document order."""
+    if node.aria_role == "row":
+        yield node
+        return
+    if node.control_type == "Text" and node.name.strip():
+        yield node
+    for child in node.children:
+        yield from _rows_and_texts(child)
+
+
+def read_lines(panel: UiNode, today: date | None = None) -> tuple[ChatLine, ...]:
+    """Visible messages of the open chat, oldest first, by structure and position only.
+
+    A centered text between rows that reads as a day dates the rows after it. The floating
+    one above the list comes first in document order and dates the topmost rows.
+    """
+    today = today or date.today()
     top, bottom = _message_area(panel)
-    lines = []
-    for row in _walk(panel):
-        if row.aria_role != "row":
+    middle = (panel.rect.left + panel.rect.right) / 2
+    lines, day = [], ""
+    for item in _rows_and_texts(panel):
+        if item.aria_role != "row":
+            centered = (
+                abs((item.rect.left + item.rect.right) / 2 - middle) <= 0.05 * panel.rect.width
+            )
+            narrow = item.rect.width <= 0.3 * panel.rect.width
+            found = parse_day(item.name, today) if centered and narrow else None
+            day = found or day
             continue
-        if not top <= (row.rect.top + row.rect.bottom) / 2 <= bottom:
+        if not top <= (item.rect.top + item.rect.bottom) / 2 <= bottom:
             continue  # scrolled out, or hidden under the header
-        line = _read_row(row)
+        line = _read_row(item)
         if line is not None:
-            lines.append(line)
+            lines.append(replace(line, day=day))
     return tuple(lines)
 
 

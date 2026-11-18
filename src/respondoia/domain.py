@@ -53,6 +53,7 @@ class ChatLine:
     # previews and cards carry other people's text, so only plain lines are learned.
     plain: bool = True
     day: str = ""  # ISO date from a day separator above it on this screen, "" if none
+    rect: Rect | None = None  # the bubble, in screen pixels
 
 
 @dataclass(frozen=True)

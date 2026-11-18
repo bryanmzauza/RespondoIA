@@ -1099,6 +1099,7 @@ def build_ports(
         copy_text=lambda text: paste.copy_text(paste.prepare_text(text)),
         style=style,
         history=history,
+        avatar=capture.avatar_from_window,
     )
 
 
@@ -1150,7 +1151,11 @@ def run(argv: Sequence[str]) -> int:
     style_thread.start()
     history_thread = QThread()
     history_worker = HistoryWorker(
-        history, style, lambda: worker.settings, real_loader_ports(guard)
+        history,
+        style,
+        lambda: worker.settings,
+        real_loader_ports(guard),
+        avatar=capture.avatar_from_window,
     )
     history_worker.moveToThread(history_thread)
     history_thread.start()

@@ -1,4 +1,6 @@
 import json
+from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 from respondoia.domain import ChatLine
@@ -78,7 +80,12 @@ def test_no_rows_is_an_empty_tuple():
 def test_chat_view_combines_title_and_lines():
     view = find_chat_view(load("msgs-pt.json"))
     assert view.chat.title == "Marina Duarte" and len(view.lines) == 5
-    assert view.lines[0] == ChatLine("contact", "", "09:10", "text", "Oi! Tudo bem?", "")
+    first = view.lines[0]
+    assert replace(first, day="", rect=None) == ChatLine(
+        "contact", "", "09:10", "text", "Oi! Tudo bem?", ""
+    )
+    # The fixture shows the "HOJE" separator above the messages.
+    assert first.day == date.today().isoformat() and first.rect is not None
 
 
 def test_chat_view_without_a_title_is_none():

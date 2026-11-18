@@ -56,6 +56,33 @@ def is_blank(image: Image.Image) -> bool:
     return len(colors) <= 8
 
 
+AVATAR_COLOURS = 64  # fewer colours than this: a drawn default picture, not a photo
+
+
+def avatar_hash(image: Image.Image, window: Rect, avatar: Rect) -> str:
+    """A 64-bit difference hash of the contact's photo, "" for a default picture. The
+    pixels stay in memory; only the hash is kept."""
+    box = (
+        avatar.left - window.left,
+        avatar.top - window.top,
+        avatar.right - window.left,
+        avatar.bottom - window.top,
+    )
+    crop = image.crop(box).convert("RGB")
+    if crop.width < 8 or crop.height < 8:
+        return ""
+    colours = crop.resize((32, 32), Image.Resampling.BILINEAR).getcolors(maxcolors=32 * 32)
+    if colours is not None and len(colours) < AVATAR_COLOURS:
+        return ""
+    gray = crop.convert("L").resize((9, 8), Image.Resampling.LANCZOS)
+    pixels = gray.load()
+    value = 0
+    for y in range(8):
+        for x in range(8):
+            value = value << 1 | (pixels[x, y] > pixels[x + 1, y])
+    return f"{value:016x}"
+
+
 def prepare_image(image: Image.Image, window: Rect, chat_bounds: Rect, max_side: int) -> bytes:
     cropped = image.crop(crop_box(window, image.size, chat_bounds))
     return encode_png(downscale(cropped, max_side))
@@ -182,6 +209,17 @@ def grab_window(hwnd: int) -> Image.Image:
     if is_blank(image):
         raise CaptureError("capture came back blank")
     return image
+
+
+def avatar_from_window(hwnd: int, avatar: Rect | None) -> str:
+    """The photo hash of the open chat, "" without a photo or when the capture fails."""
+    info = window_info(hwnd)
+    if avatar is None or info is None:
+        return ""
+    try:
+        return avatar_hash(grab_window(hwnd), info.rect, avatar)
+    except CaptureError:
+        return ""
 
 
 def capture_chat(hwnd: int, chat_bounds: Rect, max_side: int) -> bytes:
