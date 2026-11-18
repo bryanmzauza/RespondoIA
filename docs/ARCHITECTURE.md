@@ -93,8 +93,9 @@ contact (a hash is kept, never the picture), or when nothing is stored under
 that name. Otherwise the suggestion goes out without them and the panel asks
 which contact it is. The answer applies to that screen only.
 
-The loader scrolls the open chat with mouse wheel events, after putting the
-cursor on the message area once, and puts the cursor back at the end. Before
+The loader brings WhatsApp to the front, puts the cursor on the message area
+once and scrolls the open chat with mouse wheel events. At the end it puts the
+cursor back where it was, unless the user's own input stopped it. Before
 every event it checks that the user has not touched the mouse or the keyboard
 (raw input tells the app's own events apart), that WhatsApp is in front and
 that its window is the one under the cursor. Any of these stops it at once;
