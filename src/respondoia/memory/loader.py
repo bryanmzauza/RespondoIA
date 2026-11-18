@@ -16,14 +16,19 @@ from respondoia.domain import ChatLine, ChatView
 from respondoia.memory.merge import Overlap, Stored, find_overlap, fingerprint, from_lines
 from respondoia.privacy import normalize_name
 
-SAME_TOP_READS = 3  # the top did not move this many times: the start of the chat
+SAME_TOP_READS = 4  # the top did not move this many times: the start of the chat
+MIN_NOTCHES, MAX_NOTCHES = 2, 6  # per step; more while screens overlap a lot
+NOTCH_PAUSE = (0.06, 0.15)  # seconds between wheel notches
+SCREEN_PAUSE = (0.35, 0.6)  # before reading a screen
+PATIENCE = (1.0, 1.5)  # when the top did not move: WhatsApp may still be loading
+BACK_PAUSE = (0.02, 0.05)  # scrolling back to the newest messages, nothing to read
 
 
 @dataclass(frozen=True)
 class LoadLimits:
     screens: int  # quick_load_screens or max_load_screens
     months: int  # max_load_months; 0 = no limit by date
-    notches: int = 3
+    notches: int = 3  # to start with; the step adapts to the overlap
     stop_on_join: bool = False  # gap mode: stop once the block reaches stored history
 
 
@@ -130,6 +135,7 @@ def load(
         block = list(read().lines)
         screens = 1
         same_top = 0
+        notches = limits.notches
         while True:
             if screens >= limits.screens:
                 raise _Stop("limit")
@@ -138,21 +144,24 @@ def load(
                 raise _Stop("months")
             if limits.stop_on_join and joins(tuple(block)):
                 raise _Stop("joined")
-            scroll(limits.notches, 0.25, 0.6)
-            ports.sleep(ports.random(0.7, 1.3))
+            scroll(notches, *NOTCH_PAUSE)
+            ports.sleep(ports.random(*SCREEN_PAUSE))
             check()
             screen = read().lines
             stored: Sequence[Stored] = from_lines(screen, mask=False)
-            known = from_lines(block, mask=False)
+            # A new screen overlaps the top of the block: no need to compare the rest.
+            known = from_lines(block[: max(len(screen) * 3, 60)], mask=False)
             if stored and known and fingerprint(stored[0]) == fingerprint(known[0]):
                 same_top += 1
                 if same_top >= SAME_TOP_READS:
                     raise _Stop("start")
+                ports.sleep(ports.random(*PATIENCE))
                 continue
             same_top = 0
             overlap = find_overlap(stored, known)
             if overlap is None:
-                scroll(-1, 0.25, 0.6)  # one notch back, in case the list jumped
+                notches = max(MIN_NOTCHES, notches - 1)
+                scroll(-1, *NOTCH_PAUSE)  # one notch back, in case the list jumped
                 check()
                 screen = read().lines
                 stored = from_lines(screen, mask=False)
@@ -161,11 +170,16 @@ def load(
                     raise _Stop("lost")
             block = _stitch(screen, block, overlap)
             screens += 1
+            # Many lines in common: the step can be longer. Few: shorter, so none is skipped.
+            if overlap.length >= 0.6 * len(screen):
+                notches = min(MAX_NOTCHES, notches + 1)
+            elif overlap.length <= 2:
+                notches = max(MIN_NOTCHES, notches - 1)
     except _Stop as stop:
         reason = stop.reason
     if reason in ("limit", "months", "start", "joined", "lost") and scrolled > 0:
         try:
-            scroll(-scrolled, 0.1, 0.2)  # back to the newest messages, still interruptible
+            scroll(-scrolled, *BACK_PAUSE)  # back to the newest messages, still interruptible
         except _Stop:
             pass
     return report(reason)

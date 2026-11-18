@@ -224,7 +224,7 @@ def test_history_is_off_by_default():
     settings = Settings()
     assert not settings.history_enabled and not settings.history_include_groups
     assert (settings.snippets_per_suggestion, settings.quick_load_screens) == (5, 15)
-    assert (settings.max_load_screens, settings.max_load_months) == (80, 6)
+    assert (settings.max_load_screens, settings.max_load_months) == (250, 12)
     assert settings.retention_months == 12
 
 

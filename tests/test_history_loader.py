@@ -12,7 +12,9 @@ class FakeChat:
     """A fictional chat of `n` messages over several days. The window shows `rows` lines;
     each notch moves it by two messages."""
 
-    def __init__(self, n=300, rows=20, title="Ana", per_day=25, first_day=date(2026, 9, 1)):
+    def __init__(
+        self, n=300, rows=20, title="Ana", per_day=25, first_day=date(2026, 9, 1), step=2
+    ):
         self.title = title
         self.messages = []
         for i in range(n):
@@ -30,6 +32,8 @@ class FakeChat:
         self.title_after_reads = None
         self.reads = 0
         self.jump_at_read = None
+        self.step = step  # messages per notch
+        self.stall_reads = set()  # reads after which WhatsApp is still loading: no movement
 
     def read(self):
         self.reads += 1
@@ -53,7 +57,9 @@ class FakeChat:
 
     def scroll(self, notches):
         self.events.append(("scroll", notches))
-        self.bottom = min(len(self.messages), max(self.rows, self.bottom - 2 * notches))
+        if notches > 0 and self.reads in self.stall_reads:
+            return
+        self.bottom = min(len(self.messages), max(self.rows, self.bottom - self.step * notches))
 
     def foreground(self):
         if self.focus_after_reads is not None and self.reads >= self.focus_after_reads:
@@ -86,11 +92,28 @@ def texts(report):
     return [line.text for line in report.lines]
 
 
+def contiguous(report, end=300):
+    found = texts(report)
+    return found == [f"mensagem {i}" for i in range(end - len(found), end)]
+
+
+def bursts(chat):
+    """Notches sent between two reads, in order."""
+    out, current = [], 0
+    for event in chat.events:
+        if event[0] == "scroll" and event[1] > 0:
+            current += 1
+        elif event[0] == "read" and current:
+            out.append(current)
+            current = 0
+    return out
+
+
 def test_loads_until_the_limit_and_scrolls_back():
     chat = FakeChat()
     report = load(HWND, "Ana", LoadLimits(screens=5, months=0), chat.ports())
     assert report.reason == "limit" and report.screens == 5
-    assert texts(report) == [f"mensagem {i}" for i in range(256, 300)]
+    assert contiguous(report) and len(report.lines) > 40
     assert chat.scrolled() == 0 and chat.bottom == 300
 
 
@@ -178,12 +201,39 @@ def test_only_scroll_events_are_sent():
     assert {event[0] for event in chat.events} <= {"read", "scroll", "sleep"}
 
 
-def test_pace_stays_human():
+def test_pace_is_quick_but_never_instant():
     chat = FakeChat()
     report = load(HWND, "Ana", LoadLimits(screens=6, months=0), chat.ports(random.Random(9)))
     sleeps = [event[1] for event in chat.events if event[0] == "sleep"]
-    assert all(0.1 <= s <= 1.3 for s in sleeps)
-    assert sum(1 for s in sleeps if s >= 0.7) == report.screens - 1
+    assert all(0.02 <= s <= 0.6 for s in sleeps)
+    assert sum(1 for s in sleeps if s >= 0.35) == report.screens - 1
+
+
+def test_steps_grow_while_screens_overlap_a_lot():
+    chat = FakeChat(n=600, rows=40)
+    report = load(HWND, "Ana", LoadLimits(screens=12, months=0), chat.ports())
+    assert contiguous(report, 600) and bursts(chat)[0] == 3 and max(bursts(chat)) == 6
+
+
+def test_steps_shrink_when_the_overlap_gets_thin():
+    chat = FakeChat(rows=20, step=6)  # 3 notches leave an overlap of 2
+    report = load(HWND, "Ana", LoadLimits(screens=8, months=0), chat.ports())
+    assert contiguous(report) and report.reason == "limit" and min(bursts(chat)) == 2
+
+
+def test_a_slow_screen_is_not_the_start():
+    chat = FakeChat()
+    chat.stall_reads = {2, 3, 4}  # WhatsApp still loading older messages
+    report = load(HWND, "Ana", LoadLimits(screens=10, months=0), chat.ports())
+    assert report.reason == "limit" and not report.reached_start and contiguous(report)
+
+
+def test_scroll_back_is_quick():
+    chat = FakeChat()
+    load(HWND, "Ana", LoadLimits(screens=5, months=0), chat.ports())
+    last_read = max(i for i, event in enumerate(chat.events) if event[0] == "read")
+    back = [e[1] for e in chat.events[last_read:] if e[0] == "sleep"]
+    assert back and all(s <= 0.05 for s in back) and chat.bottom == 300
 
 
 def test_a_window_over_the_chat_stops_before_any_scroll():

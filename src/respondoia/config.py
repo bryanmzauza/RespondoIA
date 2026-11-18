@@ -46,8 +46,8 @@ class Settings:
     history_include_groups: bool = False
     snippets_per_suggestion: int = 5
     quick_load_screens: int = 15
-    max_load_screens: int = 80
-    max_load_months: int = 6  # 0: no limit by date
+    max_load_screens: int = 250
+    max_load_months: int = 12  # 0: no limit by date
     retention_months: int = 12
 
 
@@ -104,7 +104,7 @@ _KEYS = {
     "history_include_groups": ("history", "include_groups", _is_bool),
     "snippets_per_suggestion": ("history", "snippets_per_suggestion", lambda v: _in(v, 0, 10)),
     "quick_load_screens": ("history", "quick_load_screens", lambda v: _in(v, 1, 80)),
-    "max_load_screens": ("history", "max_load_screens", lambda v: _in(v, 1, 400)),
+    "max_load_screens": ("history", "max_load_screens", lambda v: _in(v, 1, 1000)),
     "max_load_months": ("history", "max_load_months", lambda v: _in(v, 0, 24)),
     "retention_months": ("history", "retention_months", lambda v: _in(v, 1, 120)),
 }
