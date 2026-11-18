@@ -518,3 +518,12 @@ def test_the_automatic_load_never_takes_the_mouse(qtbot, db, tmp_path):
         worker.load("auto_gap", 42, "Marina Duarte", 7)
     assert signal.args[0].reason == "skipped" and desktop.calls == []
     assert not any(event[0] == "scroll" for event in chat.events)
+
+
+def test_the_gap_is_filled_after_the_user_says_same_person(tmp_path):
+    rig = HistoryRig(tmp_path)
+    generation = rig.open_panel(HistoryContext("ask", candidates=((7, "2026-10-01"),)))
+    assert rig.history.calls == []
+    rig.panel.identity_answered.emit(7)
+    rig.worker.history_changed.emit(generation, GAP)
+    assert rig.history.calls == [("load", "auto_gap", 55, "Marina Duarte", 7)]

@@ -713,7 +713,7 @@ class Controller(QObject):
         self._history = result.history
         if self._history_worker is not None:
             self._panel.set_history(result.history)
-            self._fill_new_gap(result)
+            self._fill_new_gap(result.history, result.hwnd, result.chat.title)
         self._last_request = ("suggest",)
         self._panel.show_loading(result.chat.title, result.chat.bounds)
         if result.context is not None:
@@ -1007,10 +1007,9 @@ class Controller(QObject):
         if self._history_worker is not None:
             self.request_history_startup.emit(tuple(self._settings.private_contacts))
 
-    def _fill_new_gap(self, result) -> None:
+    def _fill_new_gap(self, history, hwnd: int, title: str) -> None:
         """New messages this press could not join to what is stored: load the missing part
         in the background, once per contact while the app runs. The panel stays open."""
-        history = result.history
         if (
             history is None
             or history.state != "ready"
@@ -1019,7 +1018,7 @@ class Controller(QObject):
             or history.contact_id in self._auto_filled
             or self._loading
             or self._guard_input is None
-            or not result.hwnd
+            or not hwnd
         ):
             return
         if not self._guard_input.arm(delay_s=0.6):
@@ -1028,9 +1027,7 @@ class Controller(QObject):
         self._loading = True
         self._load_purpose = "auto_gap"
         self._tray.set_loading(True)
-        self.request_history_load.emit(
-            "auto_gap", result.hwnd, result.chat.title, history.contact_id
-        )
+        self.request_history_load.emit("auto_gap", hwnd, title, history.contact_id)
 
     def request_load(self, purpose: str) -> None:
         """Scroll the open chat and read it. The panel closes: WhatsApp needs the focus."""
@@ -1092,6 +1089,9 @@ class Controller(QObject):
         if generation == self._generation and self._active:
             self._history = history
             self._panel.set_history(history)
+            # After "same person", the screen is stored apart: fill the gap behind it.
+            if self._chat is not None:
+                self._fill_new_gap(history, self._hwnd, self._chat.title)
 
     def _on_contact_history(self, on: bool) -> None:
         history = self._history
