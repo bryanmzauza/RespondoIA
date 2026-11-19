@@ -3,7 +3,7 @@
 Usage:
     uv run python evals/run.py --models <id> [<id> ...] --out <dir>
         [--input screenshot|text] [--limit N] [--dry-run]
-        [--set screenshots|style|history] [--profile-dir <dir>] [--only <case id> ...]
+        [--set screenshots|style|history|media] [--profile-dir <dir>] [--only <case id> ...]
         [--memory-dir <dir>] [--no-history]
 
 The style set (tests/style/chats) runs in text mode only. With --profile-dir, each
@@ -18,6 +18,9 @@ evals/history.py. --no-history sends neither.
 
 With --input text the chat goes as masked text built from the fixture JSON, the
 way the app sends what it reads through accessibility.
+
+The media set (tests/media) runs in text mode only. Messages with "picture" send that
+fictional image from tests/media/images as the app sends a pending photo.
 
 Every case runs the "base" variant. Cases with a regenerate block also run
 "selected" (only the selected ids) and "instruction" (only the instruction),
@@ -55,6 +58,7 @@ from respondoia.style.profile import StyleProfile, render
 
 SHOTS = ROOT / "tests" / "screenshots"
 STYLE = ROOT / "tests" / "style"
+MEDIA = ROOT / "tests" / "media"
 COUNT = 3
 WORKERS = 4
 # One retry inside the client, so a case takes at most twice this.
@@ -67,7 +71,12 @@ class ServedModelMismatch(RuntimeError):
 
 
 def load_chats(chat_set: str = "screenshots") -> list[dict]:
-    folders = {"screenshots": SHOTS / "chats", "style": STYLE / "chats", "history": HISTORY}
+    folders = {
+        "screenshots": SHOTS / "chats",
+        "style": STYLE / "chats",
+        "history": HISTORY,
+        "media": MEDIA,
+    }
     folder = folders[chat_set]
     chats = [json.loads(p.read_text(encoding="utf-8")) for p in folder.glob("*/*.json")]
     # Scenario first, then language, so a small --limit still covers both languages.
@@ -84,8 +93,21 @@ def chat_lines(chat: dict) -> tuple[ChatLine, ...]:
             kind=m["kind"],
             text=m["text"],
             quote=m["quote"] or "",
+            duration=m.get("duration", ""),
+            site=m.get("site", ""),
+            shape=m.get("shape", ""),
+            transcript=bool(m.get("transcript")),
         )
         for m in chat["messages"]
+    )
+
+
+def case_pictures(chat: dict) -> tuple[tuple[int, bytes], ...]:
+    """(message id, JPEG) for the messages that carry a picture."""
+    return tuple(
+        (i, (MEDIA / "images" / m["picture"]).read_bytes())
+        for i, m in enumerate(chat["messages"], 1)
+        if m.get("picture")
     )
 
 
@@ -259,7 +281,14 @@ class Runner:
                 instruction = chat["regenerate"]["instruction"]
             if self.input_mode == "text":
                 request = SuggestRequest(
-                    None, COUNT, None, selected, instruction, lines, context=context
+                    None,
+                    COUNT,
+                    None,
+                    selected,
+                    instruction,
+                    lines,
+                    context=context,
+                    pictures=case_pictures(chat) if self.chat_set == "media" else (),
                 )
             else:
                 previous = None if variant == "base" else base
@@ -312,14 +341,14 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="run only the first N cases")
     parser.add_argument("--dry-run", action="store_true", help="count the calls and stop")
     parser.add_argument(
-        "--set", choices=["screenshots", "style", "history"], default="screenshots"
+        "--set", choices=["screenshots", "style", "history", "media"], default="screenshots"
     )
     parser.add_argument("--profile-dir", type=Path, help="persona profiles for the style set")
     parser.add_argument("--only", nargs="+", help="run only these case ids")
     parser.add_argument("--memory-dir", type=Path, help="contact memories for the history set")
     parser.add_argument("--no-history", action="store_true", help="history set without history")
     args = parser.parse_args()
-    if args.set in ("style", "history") and args.input != "text":
+    if args.set in ("style", "history", "media") and args.input != "text":
         print(f"The {args.set} set has no screenshots: use --input text.")
         return 1
     profiles = None
@@ -332,7 +361,11 @@ def main() -> int:
     chats = only_cases(load_chats(args.set), args.only)[: args.limit]
     calls = plan_calls(chats, args.models, None)
     if args.dry_run:
-        print(f"{len(calls)} calls planned, none made")
+        if args.set == "media":
+            pictures = sum(len(case_pictures(chat)) for chat in chats) * len(args.models)
+            print(f"{len(calls)} calls planned, {pictures} pictures, none made")
+        else:
+            print(f"{len(calls)} calls planned, none made")
         return 0
 
     api_key = get_api_key()

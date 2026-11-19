@@ -1,0 +1,47 @@
+{
+  "id": "pt-BR/02-shirt",
+  "language": "pt-BR",
+  "contact": "Diego Prates",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "10:58",
+      "kind": "text",
+      "text": "Oi! Posso ajudar?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:00",
+      "kind": "image",
+      "text": "",
+      "quote": null,
+      "picture": "shirt.jpg",
+      "shape": "1.2"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:00",
+      "kind": "text",
+      "text": "tem dessa no M?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "not_said": [
+      "azul",
+      "verde"
+    ]
+  }
+}

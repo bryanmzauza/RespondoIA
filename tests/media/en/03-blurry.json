@@ -1,0 +1,47 @@
+{
+  "id": "en/03-blurry",
+  "language": "en",
+  "contact": "Sonia Farr",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "2:10 PM",
+      "kind": "text",
+      "text": "Did you find the part at the store?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "2:20 PM",
+      "kind": "image",
+      "text": "",
+      "quote": null,
+      "picture": "blurry-en.jpg",
+      "shape": "1.0"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "2:20 PM",
+      "kind": "text",
+      "text": "look at the price of this one, should I buy it?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null,
+    "confirm_ok": true,
+    "not_said": [
+      "45"
+    ]
+  }
+}

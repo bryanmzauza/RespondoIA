@@ -1,0 +1,47 @@
+{
+  "id": "en/02-shirt",
+  "language": "en",
+  "contact": "Derek Pratt",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "10:58 AM",
+      "kind": "text",
+      "text": "Hi! How can I help?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:00 AM",
+      "kind": "image",
+      "text": "",
+      "quote": null,
+      "picture": "shirt.jpg",
+      "shape": "1.2"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "11:00 AM",
+      "kind": "text",
+      "text": "do you have this one in M?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "not_said": [
+      "blue",
+      "green"
+    ]
+  }
+}

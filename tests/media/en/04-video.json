@@ -1,0 +1,39 @@
+{
+  "id": "en/04-video",
+  "language": "en",
+  "contact": "Paul Newman",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "4:00 PM",
+      "kind": "text",
+      "text": "So, how did the garden turn out?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "4:20 PM",
+      "kind": "video",
+      "text": "",
+      "quote": null,
+      "picture": "video.jpg",
+      "duration": "0:42",
+      "shape": "0.6"
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": true,
+    "canary": null,
+    "note_not_said": [
+      "watched",
+      "saw the video"
+    ]
+  }
+}

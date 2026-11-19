@@ -1,0 +1,37 @@
+{
+  "id": "en/06-audio-transcript",
+  "language": "en",
+  "contact": "Mark Tell",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "9:00 AM",
+      "kind": "text",
+      "text": "When can you come to install the shower?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "9:12 AM",
+      "kind": "audio",
+      "text": "can I come by tomorrow at 3pm?",
+      "quote": null,
+      "transcript": true
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "media_value": [
+      "3pm",
+      "3:00"
+    ]
+  }
+}

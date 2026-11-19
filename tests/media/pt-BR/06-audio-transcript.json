@@ -1,0 +1,36 @@
+{
+  "id": "pt-BR/06-audio-transcript",
+  "language": "pt-BR",
+  "contact": "Marcos Teles",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "09:00",
+      "kind": "text",
+      "text": "Quando você pode vir instalar o chuveiro?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "09:12",
+      "kind": "audio",
+      "text": "posso passar amanhã às 15h?",
+      "quote": null,
+      "transcript": true
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "media_value": [
+      "15"
+    ]
+  }
+}

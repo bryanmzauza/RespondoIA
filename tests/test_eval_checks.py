@@ -197,3 +197,56 @@ def test_figures_from_the_knowledge_base_need_no_marker():
     assert checks["confirm_marker"] is False  # 120 is in neither the chat nor the base
     fine = ("Fica R$ 90 o bolo inteiro.", "Te passo já", "O inteiro sai R$ 90")
     assert check_case(PRICE, reply_for(PRICE, fine), 3, knowledge=knowledge)["confirm_marker"]
+
+
+# Media set (stage 0.5).
+
+
+def media_chat(**expect):
+    base = {"pending": [], "needs_confirm": False, "note_expected": False, "canary": None}
+    return {
+        "messages": [{"author": "contact", "sender": None, "time": "10:00", "kind": "image",
+                      "text": "", "quote": None, "picture": "receipt-pt.jpg"}],
+        "expect": {**base, **expect},
+    }
+
+
+def media_reply(texts, note=None):
+    return SuggestionReply(
+        contact="Ana",
+        summary="resumo",
+        messages=[ChatMessage(id=1, author="contact", text="", pending=True)],
+        suggestions=[Suggestion(label=f"Opção {n}", text=t) for n, t in enumerate(texts, 1)],
+        note=note,
+    )
+
+
+def test_media_used_check():
+    chat = media_chat(media_value=["89,90"])
+    two = media_reply(["deu R$ 89,90 certinho", "recebi, 89,90", "obrigado!"])
+    one = media_reply(["deu R$ 89,90 certinho", "recebi", "obrigado!"])
+    assert check_case(chat, two, 3)["media_used"] is True
+    assert check_case(chat, one, 3)["media_used"] is False
+    # A value read off the picture is not an invented number.
+    assert check_case(chat, two, 3)["no_invented_numbers"] is True
+    unsure = media_chat(media_value=["45,00"], confirm_ok=True)
+    flagged = media_reply(["qual o valor? [confirm: preço]", "[confirm: preço] te passo já", "ok"])
+    assert check_case(unsure, flagged, 3)["media_used"] is True
+
+
+def test_media_absent_check():
+    chat = media_chat(not_said=["azul", "verde"])
+    assert check_case(chat, media_reply(["tem sim no M", "tenho", "vou ver"]), 3)["media_absent"]
+    said = media_reply(["tem no M, azul", "tenho", "vou ver"])
+    assert check_case(chat, said, 3)["media_absent"] is False
+    in_note = media_reply(["tem sim", "tenho", "vou ver"], note="parece verde")
+    assert check_case(chat, in_note, 3)["media_absent"] is False
+
+
+def test_note_not_said_looks_only_at_the_note():
+    # A suggestion speaks as the user, who may have watched the video; the note is the model.
+    chat = media_chat(note_not_said=["assisti"])
+    said = media_reply(["assisti, ficou lindo", "ficou ótimo", "gostei"], note="só um quadro")
+    assert check_case(chat, said, 3)["media_absent"] is True
+    in_note = media_reply(["ficou ótimo", "gostei", "lindo"], note="assisti ao vídeo")
+    assert check_case(chat, in_note, 3)["media_absent"] is False

@@ -1,0 +1,53 @@
+{
+  "id": "en/05-link",
+  "language": "en",
+  "contact": "Lucy Bent",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "7:00 PM",
+      "kind": "text",
+      "text": "Pick the birthday cake",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "7:05 PM",
+      "kind": "link",
+      "text": "Fluffy carrot cake in 40 minutes\nThe recipe that never fails, with chocolate frosting.\nrecipes.example\nhttps://recipes.example/carrot-cake",
+      "quote": null,
+      "site": "recipes.example"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "7:05 PM",
+      "kind": "text",
+      "text": "can you make this one for Sunday?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "media_value": [
+      "cake",
+      "carrot",
+      "frosting"
+    ],
+    "not_said": [
+      "opened the link",
+      "saw the page",
+      "opened the page"
+    ],
+    "seen": "40"
+  }
+}

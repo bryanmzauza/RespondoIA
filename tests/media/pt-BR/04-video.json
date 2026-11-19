@@ -1,0 +1,39 @@
+{
+  "id": "pt-BR/04-video",
+  "language": "pt-BR",
+  "contact": "Paulo Neves",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "16:00",
+      "kind": "text",
+      "text": "E aí, como ficou o jardim?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "16:20",
+      "kind": "video",
+      "text": "",
+      "quote": null,
+      "picture": "video.jpg",
+      "duration": "0:42",
+      "shape": "0.6"
+    }
+  ],
+  "expect": {
+    "pending": [
+      2
+    ],
+    "needs_confirm": false,
+    "note_expected": true,
+    "canary": null,
+    "note_not_said": [
+      "assisti",
+      "vi o vídeo"
+    ]
+  }
+}

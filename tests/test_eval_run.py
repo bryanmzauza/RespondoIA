@@ -169,3 +169,29 @@ def test_persona_messages_are_only_the_personas():
         messages = persona_messages(lang)
         assert "ZZ-OTHER" not in repr(messages)
         assert all(count >= 25 for count in Counter(m.label for m in messages).values())
+
+
+def test_media_case_loads_pictures():
+    from evals.run import case_pictures
+
+    chats = load_chats("media")
+    assert len(chats) == 14
+    assert {c["id"].split("/")[0] for c in chats} == {"en", "pt-BR"}
+    receipt = next(c for c in chats if c["id"] == "pt-BR/01-receipt")
+    pictures = case_pictures(receipt)
+    assert [i for i, _ in pictures] == [2] and pictures[0][1].startswith(b"\xff\xd8")
+    lines = chat_lines(next(c for c in chats if c["id"] == "en/04-video"))
+    video = next(line for line in lines if line.kind == "video")
+    assert (video.duration, video.shape) == ("0:42", "0.6")
+    audio = chat_lines(next(c for c in chats if c["id"] == "pt-BR/06-audio-transcript"))
+    assert any(line.transcript for line in audio)
+
+
+def test_dry_run_counts_image_blocks(tmp_path, monkeypatch, capsys):
+    from evals import run
+
+    argv = ["run.py", "--models", "m", "--out", str(tmp_path), "--set", "media",
+            "--input", "text", "--dry-run"]
+    monkeypatch.setattr("sys.argv", argv)
+    assert run.main() == 0
+    assert capsys.readouterr().out.strip() == "14 calls planned, 10 pictures, none made"

@@ -1,0 +1,47 @@
+{
+  "id": "pt-BR/03-blurry",
+  "language": "pt-BR",
+  "contact": "Sônia Faria",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "14:10",
+      "kind": "text",
+      "text": "Achou a peça na loja?",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:20",
+      "kind": "image",
+      "text": "",
+      "quote": null,
+      "picture": "blurry-pt.jpg",
+      "shape": "1.0"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "14:20",
+      "kind": "text",
+      "text": "olha o preço dessa, compro?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": true,
+    "note_expected": false,
+    "canary": null,
+    "confirm_ok": true,
+    "not_said": [
+      "45"
+    ]
+  }
+}

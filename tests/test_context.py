@@ -290,3 +290,9 @@ def test_prompt_marks_pictures_previews_and_transcripts_as_data():
         '"transcript": true',
     ):
         assert phrase in SYSTEM_PROMPT, phrase
+
+
+def test_prompt_says_a_video_is_one_frame_and_asks_to_name_what_media_shows():
+    assert "only its first frame" in SYSTEM_PROMPT
+    assert "never say you watched it" in SYSTEM_PROMPT
+    assert "name that detail" in SYSTEM_PROMPT

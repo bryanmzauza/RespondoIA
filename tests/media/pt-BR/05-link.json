@@ -1,0 +1,53 @@
+{
+  "id": "pt-BR/05-link",
+  "language": "pt-BR",
+  "contact": "Lúcia Bento",
+  "group": false,
+  "messages": [
+    {
+      "author": "user",
+      "sender": null,
+      "time": "19:00",
+      "kind": "text",
+      "text": "Escolhe o bolo do aniversário",
+      "quote": null
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:05",
+      "kind": "link",
+      "text": "Bolo de cenoura fofinho em 40 minutos\nA receita que nunca falha, com cobertura de chocolate.\nreceitas.example\nhttps://receitas.example/bolo-de-cenoura",
+      "quote": null,
+      "site": "receitas.example"
+    },
+    {
+      "author": "contact",
+      "sender": null,
+      "time": "19:05",
+      "kind": "text",
+      "text": "faz esse pro domingo?",
+      "quote": null
+    }
+  ],
+  "expect": {
+    "pending": [
+      2,
+      3
+    ],
+    "needs_confirm": false,
+    "note_expected": false,
+    "canary": null,
+    "media_value": [
+      "bolo",
+      "cenoura",
+      "cobertura"
+    ],
+    "not_said": [
+      "abri o link",
+      "vi a página",
+      "abri a página"
+    ],
+    "seen": "40"
+  }
+}
