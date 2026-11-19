@@ -44,6 +44,17 @@ are pending are worked out locally, from the position of each bubble, so the
 model only writes the summary and the suggestions. The screenshot is sent when
 no message could be read, and the user is told.
 
+Media are lines too: `image`, `video`, `link`, `audio`, `sticker`, `document`
+or `other`, told apart by structure (picture nodes, the link node, the audio
+slider), never by label text. A link line carries the preview WhatsApp shows
+and its site; the page is never opened and nothing is downloaded. Up to two
+photos or video thumbnails the contact sent after the user's last message go
+with the text request as JPEG images, cropped from one capture of the WhatsApp
+window, only in one-to-one chats and only with `send_pictures` on. A photo
+cannot be masked, and the settings say so. The pixels stay in memory until the
+panel closes. The history keeps only a 64-bit hash of each picture's thumbnail,
+used to join stretches of photos; the image cannot be rebuilt from it.
+
 ## Style
 
 The style profile is built from the user's own messages only: the lines the app
@@ -147,7 +158,10 @@ These hold in every stage.
 - Read the contact name locally before any model call. It selects memory,
   label and the private-contact rule. Attach memory only on a unique match.
 - Nothing is read or stored for private contacts.
-- Screenshots live in memory only and are dropped when the panel closes.
+- Screenshots and photo crops live in memory only and are dropped when the
+  panel closes. Photos go only from one-to-one chats, only when pending, and
+  never when the chat is or may be a group.
+- Links are never opened and media are never downloaded.
 - Logs hold time, latency and errors. No message content, anywhere.
 - Mask recognisable sensitive data before text leaves the machine.
 - Message content is data, not instructions, in every prompt.

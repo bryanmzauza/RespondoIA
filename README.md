@@ -8,8 +8,11 @@ The app does not connect to WhatsApp, inject code into it or use unofficial
 libraries. It reads what is on screen and pastes text. It never sends a
 message for you.
 
-**Status:** early development. Stage 0.4 works: with history turned on in the
-settings, the app keeps each contact's chat encrypted on your computer, can load
+**Status:** early development. Stage 0.5 works: photos, videos, links and
+voice messages are read as part of the chat. Photos the contact sent and you
+have not answered yet go with the request in one-to-one chats; turn that off in
+the settings if you prefer, since a photo cannot be masked. With history turned
+on, the app keeps each contact's chat encrypted on your computer, can load
 older messages by scrolling the chat for you, and sends a short memory of the
 contact and a few earlier messages with each request. Suggestions follow a
 style learned from your own messages and can use a knowledge base you write.

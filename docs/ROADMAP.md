@@ -12,7 +12,7 @@ stage is done. `main` always holds the last finished stage.
 | 0.2 Local reading | `stage/0.2-local-reading` |
 | 0.3 Style and context | `stage/0.3-style-context` |
 | 0.4 History | `stage/0.4-history` |
-| 0.5 Media | `stage/0.5-media` (created when the stage starts) |
+| 0.5 Media | `stage/0.5-media` |
 | 0.6 Follow mode and automatic suggestions | `stage/0.6-follow` (created when the stage starts) |
 | 0.7 Local model | `stage/0.7-local-ai` (created when the stage starts) |
 | 0.8 Release | `stage/0.8-release` (created when the stage starts) |
@@ -112,11 +112,13 @@ Exit criteria:
 
 ## 0.5 Media
 
-- [ ] Pending photos and video thumbnails sent as images, cropped from the
+- [x] Pending photos and video thumbnails sent as images, cropped from the
       WhatsApp window, one-to-one chats only, with a setting to turn it off
-- [ ] Link previews read from the screen and masked. Links are never opened
-- [ ] Audio and video length; WhatsApp's own transcript when it is on screen
-- [ ] Photos and other media read as lines, so long history loads keep their
+- [x] Link previews read from the screen and masked. Links are never opened
+- [ ] Audio and video length; WhatsApp's own transcript when it is on screen.
+      WhatsApp Desktop does not expose them to accessibility today: the fields
+      are in place and stay empty
+- [x] Photos and other media read as lines, so long history loads keep their
       thread through stretches of photos
 
 Exit criteria:

@@ -37,6 +37,8 @@ save_screenshots = false
 log_content = false
 crop_to_chat = true
 mask_sensitive_data = true
+# Pending photos from the contact go with the request, one-to-one chats only.
+# Photos cannot be masked.
 send_pictures = true
 private_contacts = []
 
