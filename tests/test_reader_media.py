@@ -200,3 +200,23 @@ def walk_dicts(node):
     yield node
     for child in node.get("children", []):
         yield from walk_dicts(child)
+
+
+def test_document_card_with_buttons_below_is_still_a_document():
+    # Seen on a contact's PDF: "open" and "save as" buttons under the card make the bubble
+    # taller than the card, which must still not be read as a quote.
+    data = json.loads((FIXTURES / "media-self.json").read_text(encoding="utf-8"))
+    rows = [n for n in walk_dicts(data) if n.get("aria_role") == "row"]
+    bubble = rows[DOCUMENT]["children"][0]["children"][0]
+    l, t, r, b = bubble["rect"]
+    bubble["rect"] = [l, t, r, b + 40]
+    rows[DOCUMENT]["rect"][3] += 42
+    for name, left in (("Ver", l), ("Salvar como...", l + 168)):
+        bubble["children"].append({
+            "control_type": "Button", "name": name, "automation_id": "", "aria_role": "button",
+            "rect": [left, b + 2, left + 168, b + 39], "children": [],
+        })
+    panel = next(n for n in walk(node_from_dict(data)) if n.automation_id == "main")
+    line = read_lines(panel)[DOCUMENT]
+    assert (line.kind, line.quote, line.time) == ("document", "", "09:08")
+    assert line.text == "Orçamento cozinha\n2 páginas"

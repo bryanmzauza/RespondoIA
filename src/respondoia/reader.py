@@ -24,8 +24,6 @@ _SENDER_BAND = 30
 _PHOTO_SIDE = 80
 _EMOJI_SIDE = 32  # images smaller than this are emoji drawn inline
 _AVATAR_SIDE = 16  # a picture in the header at least this big is the contact's photo
-# A button this tall against its bubble is a card (a document), not a quote.
-_CARD_SHARE = 0.9
 # The site under a link preview. A data format, like the time.
 _DOMAIN_RE = re.compile(r"^(?:[a-z0-9-]+\.)+[a-z]{2,}$")
 
@@ -277,13 +275,17 @@ def _read_row(row: UiNode) -> ChatLine | None:
     buttons = [n for n in nodes if n.control_type == "Button" and texts_in(n)]
     status = [n for n in buttons if is_status(n)]
     in_status = {id(m) for n in status for m in _walk(n)}
-    # A document card is a button as tall as its bubble. One that also holds the read
-    # receipt wraps a message the reader reads as text (seen in the 0.4 probe).
+    # A document card is a button that holds the message's own time, the lowest one; a
+    # quote sits above it. One that also holds the read receipt wraps a message the reader
+    # reads as text (seen in the 0.4 probe).
+    clocks = [n for n in texts_in(bubble) if TIME_RE.match(n.name.strip())]
+    lowest = max(clocks, key=lambda n: (n.rect.bottom, n.rect.right), default=None)
     card = next(
         (
             n
             for n in buttons
-            if n.rect.height >= _CARD_SHARE * bubble.rect.height
+            if lowest is not None
+            and any(m is lowest for m in _walk(n))
             and not any(id(m) in in_status for m in _walk(n))
         ),
         None,
