@@ -220,3 +220,31 @@ def test_document_card_with_buttons_below_is_still_a_document():
     line = read_lines(panel)[DOCUMENT]
     assert (line.kind, line.quote, line.time) == ("document", "", "09:08")
     assert line.text == "Orçamento cozinha\n2 páginas"
+
+
+def scaled(name, factor):
+    """The fixture as UI Automation gives it at another display scale (physical pixels)."""
+
+    def scale(node):
+        out = dict(node)
+        out["rect"] = [round(v * factor) for v in node["rect"]]
+        out["children"] = [scale(c) for c in node.get("children", [])]
+        return out
+
+    data = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+    return next(n for n in walk(node_from_dict(scale(data))) if n.automation_id == "main")
+
+
+def test_group_senders_survive_150_percent_scaling():
+    # Final review: a 23 px name button is 35 px at 150%; it is still a name.
+    from respondoia.config import Settings
+    from respondoia.domain import OpenChat
+    from respondoia.media import may_send_pictures
+
+    for factor in (1.25, 1.5, 2.0):
+        senders = [line.sender for line in read_lines(scaled("msgs-group.json", factor))]
+        assert senders == ["Bia Rocha", "Leandro Pires", "", "Bia Rocha"], factor
+        lines = read_lines(scaled("media-group.json", factor))
+        assert lines[0].sender == "Bia Rocha", factor
+        chat = OpenChat("Turma do Vôlei", Rect(0, 0, 9999, 9999), messages=Rect(0, 0, 9999, 9999))
+        assert not may_send_pictures(Settings(), chat, lines, known_group=False), factor

@@ -224,7 +224,9 @@ def _combine(
         if old is None or new is None:
             out.append(old or new)
         elif _same(old, new, fingerprint(old), fingerprint(new)):
-            out.append(old if old.sent_on or not new.sent_on else new)
+            kept = old if old.sent_on or not new.sent_on else new
+            # A re-read adds what an older read lacked; a stored hash is never lost.
+            out.append(replace(kept, shape=old.shape or new.shape, look=old.look or new.look))
         elif _edited(old, new):
             out.append(replace(new, sent_on=old.sent_on or new.sent_on))
             changed += 1

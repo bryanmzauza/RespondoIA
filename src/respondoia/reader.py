@@ -20,6 +20,7 @@ TIME_RE = re.compile(r"^\d{1,2}:\d{2}(\s?[AaPp]\.?\s?[Mm]\.?)?$")
 _BUBBLE_SHARE = 0.97
 # A group sender's name sits this close to the top of the bubble.
 _SENDER_BAND = 30
+_NAME_HEIGHT = 48  # a name button is 23 px at 100%, 46 at 200%; pictures are 80+
 # Smaller pictures inside a bubble are avatars, not photos.
 _PHOTO_SIDE = 80
 _EMOJI_SIDE = 32  # images smaller than this are emoji drawn inline
@@ -326,7 +327,8 @@ def _read_row(row: UiNode) -> ChatLine | None:
         for n in nodes:
             near_top = n.rect.top - bubble.rect.top <= _SENDER_BAND
             # A name is a wide, short button; a play button is square, a picture tall.
-            wide = n.rect.width >= 1.5 * n.rect.height and n.rect.height <= _SENDER_BAND
+            # Below a picture's height at any display scale (rects are physical pixels).
+            wide = n.rect.width >= 1.5 * n.rect.height and n.rect.height < _NAME_HEIGHT
             is_name = n.control_type == "Button" and n is not quote and n.name.strip()
             if is_name and near_top and wide:
                 if n.rect.top < first_text_top:

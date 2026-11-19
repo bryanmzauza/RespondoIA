@@ -159,8 +159,9 @@ These hold in every stage.
   label and the private-contact rule. Attach memory only on a unique match.
 - Nothing is read or stored for private contacts.
 - Screenshots and photo crops live in memory only and are dropped when the
-  panel closes. Photos go only from one-to-one chats, only when pending, and
-  never when the chat is or may be a group.
+  panel closes. Photos go only when pending, never when the app knows or sees
+  that the chat is a group. A group seen for the first time on a screen with
+  photos and no sender's name looks like a one-to-one chat.
 - Links are never opened and media are never downloaded.
 - Logs hold time, latency and errors. No message content, anywhere.
 - Mask recognisable sensitive data before text leaves the machine.

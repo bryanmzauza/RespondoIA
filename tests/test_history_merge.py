@@ -345,3 +345,25 @@ def test_one_hashed_picture_at_the_seam_joins_two_tall_screens():
     assert find_overlap(older, newer, seam=True).length == 1
     unhashed = [photo("", shape="1.3"), photo("")], [photo("0f0f0f0f0f0f0f0f"), tall(LONG)]
     assert find_overlap(*unhashed, seam=True) is None
+
+
+def test_reread_photos_keep_their_shape_and_look():
+    # Final review: dated 0.4 photo rows re-read by 0.5 gain the shape and the hash, so a
+    # later screen of photos alone still joins; a stored hash is never wiped.
+    def text(value, time, day="2026-11-10"):
+        return Stored(day, time, "contact", "", "text", value, "")
+
+    def pic(time, shape="", look="", day="2026-11-10"):
+        return Stored(day, time, "contact", "", "image", "", "", shape, look)
+
+    a, b = "00000000000000ff", "ff00000000000000"
+    old = [text("olha", "10:00"), pic("10:01"), pic("10:01"), text("gostou?", "10:02")]
+    new = [text("olha", "10:00", ""), pic("10:01", "1.4", a, ""), pic("10:01", "1.4", b, ""),
+           text("gostou?", "10:02", "")]
+    first = merge([old], new)
+    assert [(m.shape, m.look) for m in first.result[1:3]] == [("1.4", a), ("1.4", b)]
+    again = merge([first.result], [pic("10:01", "1.4", a, ""), pic("10:01", "1.4", b, "")])
+    assert (again.gap, again.added) == (False, 0)
+    stored = [text("olha", "10:00", ""), pic("10:01", "1.4", a, ""), text("gostou?", "10:02", "")]
+    reread = [text("olha", "10:00"), pic("10:01", "1.4", ""), text("gostou?", "10:02")]
+    assert merge([stored], reread).result[1].look == a
